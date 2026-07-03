@@ -144,12 +144,15 @@ a { color: inherit; text-decoration: none; }
   margin-top: 44px;
 }
 
-/* Floating stickers — overlap the giant title like Slush */
+/* Floating stickers — die-cut white border like Slush, no blur */
 .sticker {
   position: absolute;
   z-index: 2;
   width: clamp(72px, 9vw, 150px);
-  filter: drop-shadow(0 10px 14px rgba(10, 30, 60, 0.28));
+  filter:
+    drop-shadow(3px 0 0 #ffffff) drop-shadow(-3px 0 0 #ffffff)
+    drop-shadow(0 3px 0 #ffffff) drop-shadow(0 -3px 0 #ffffff)
+    drop-shadow(0 8px 6px rgba(10, 30, 60, 0.12));
   animation: float 5s ease-in-out infinite;
   user-select: none;
   pointer-events: none;
@@ -161,7 +164,7 @@ a { color: inherit; text-decoration: none; }
 .sticker--photo { bottom: 30%; left: 13%; transform: rotate(-10deg); animation-delay: 3s; width: clamp(60px, 7.5vw, 124px); }
 .sticker--spark1, .sticker--spark2, .sticker--spark3 {
   width: clamp(18px, 2.2vw, 36px);
-  filter: drop-shadow(0 3px 4px rgba(10, 30, 60, 0.25));
+  filter: none;
   animation: spin-float 6s ease-in-out infinite;
 }
 .sticker--spark1 { bottom: 42%; left: 10.5%; animation-delay: 0.6s; }
@@ -232,7 +235,7 @@ a { color: inherit; text-decoration: none; }
   height: 84px;
   margin: 0 auto;
   transform: rotate(-6deg);
-  filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.3));
   transition: transform 0.3s var(--ease-smooth);
 }
 .dropzone:hover .dropzone__emoji svg, .dropzone.is-dragover .dropzone__emoji svg { transform: rotate(4deg) scale(1.08); }
@@ -365,7 +368,7 @@ a { color: inherit; text-decoration: none; }
   position: absolute;
   right: 22px; bottom: 18px;
   transform: rotate(10deg);
-  filter: drop-shadow(0 5px 0 rgba(0,0,0,0.2));
+  filter: drop-shadow(0 6px 5px rgba(0,0,0,0.18));
   transition: transform 0.35s var(--ease-smooth);
 }
 .leak-card__emoji svg { width: 78px; height: 78px; display: block; }
