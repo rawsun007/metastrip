@@ -2,6 +2,8 @@
 
 **Your photos. Untracked.**
 
+Live at [metastrip.vercel.app](https://metastrip.vercel.app/)
+
 Your photos quietly carry hidden metadata: your exact GPS location, your device model, and the exact second you took them. MetaStrip shows you everything a photo leaks, then strips it, **100% in your browser**. No upload, no server, no account. Your photo never leaves your device.
 
 ## Features
