@@ -27,6 +27,22 @@ fileInput.addEventListener("change", () => {
 );
 dropzone.addEventListener("drop", (e) => handleFiles(e.dataTransfer.files));
 
+/* Paste a photo from the clipboard anywhere on the page */
+document.addEventListener("paste", (e) => {
+  const items = e.clipboardData && e.clipboardData.items;
+  if (!items) return;
+  const files = [];
+  for (const item of items) {
+    if (item.kind === "file" && item.type.startsWith("image/")) {
+      const f = item.getAsFile();
+      if (f) files.push(f);
+    }
+  }
+  if (!files.length) return;
+  e.preventDefault();
+  handleFiles(files);
+});
+
 function formatBytes(n) {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
