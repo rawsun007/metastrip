@@ -220,13 +220,57 @@ function buildActions(file, meta) {
     }
   });
 
+  const copyBtn = document.createElement("button");
+  copyBtn.className = "pill pill--copy";
+  copyBtn.textContent = "COPY CLEAN";
+  copyBtn.title = "Copies the stripped image to your clipboard";
+  copyBtn.addEventListener("click", async () => {
+    copyBtn.disabled = true;
+    copyBtn.textContent = "COPYING…";
+    try {
+      if (!navigator.clipboard || !window.ClipboardItem) throw new Error("clipboard unsupported");
+      const buffer = await file.arrayBuffer();
+      let result = stripMetadata(buffer);
+      if (!result) result = await stripViaCanvas(file);
+      if (!result) throw new Error("unsupported format");
+
+      // Clipboards only reliably accept PNG, so redraw the clean bytes as PNG.
+      // Pixels come from the stripped file, so nothing sensitive rides along.
+      const cleanBlob = new Blob([result.bytes], { type: result.lossless ? file.type : "image/jpeg" });
+      const pngBlob = await toPngBlob(cleanBlob);
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": pngBlob })]);
+      copyBtn.textContent = "COPIED, PASTE AWAY";
+    } catch (err) {
+      console.error(err);
+      copyBtn.textContent = "COPY BLOCKED BY BROWSER";
+    } finally {
+      setTimeout(() => {
+        copyBtn.disabled = false;
+        copyBtn.textContent = "COPY CLEAN";
+      }, 3000);
+    }
+  });
+
   const note = document.createElement("span");
   note.className = "result-card__note";
   note.textContent =
     meta.format === "other" ? "This format will get a fresh JPEG re-encode." : "Lossless. Zero quality loss.";
 
-  actions.append(btn, note);
+  actions.append(btn, copyBtn, note);
   return actions;
+}
+
+async function toPngBlob(blob) {
+  if (blob.type === "image/png") return blob;
+  const bitmap = await createImageBitmap(blob);
+  const canvas = document.createElement("canvas");
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  canvas.getContext("2d").drawImage(bitmap, 0, 0);
+  bitmap.close();
+  const png = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+  if (!png) throw new Error("png conversion failed");
+  return png;
 }
 
 function showComparison(actionsEl, beforeMeta, cleanBuffer) {
