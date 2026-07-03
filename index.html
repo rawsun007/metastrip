@@ -37,6 +37,18 @@
     </div>
   </section>
 
+  <!-- ===== APP ===== -->
+  <section class="app" id="app">
+    <h2 class="section-title section-title--light">DROP IT.<br>SEE THE LEAK.</h2>
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload photos to inspect and clean">
+      <span class="dropzone__emoji" aria-hidden="true">🖼️</span>
+      <p class="dropzone__text">Drag photos here — or click to choose</p>
+      <p class="dropzone__hint">JPEG &amp; PNG · nothing ever uploads · works offline</p>
+      <input type="file" id="fileInput" accept="image/*" multiple hidden />
+    </div>
+    <div class="results" id="results"></div>
+  </section>
+
   <script src="js/app.js"></script>
 </body>
 </html>
