@@ -112,8 +112,56 @@ async function renderCard(file) {
     body.appendChild(clean);
   }
 
+  body.appendChild(buildActions(file, meta));
+
   card.append(preview, body);
   return card;
+}
+
+function buildActions(file, meta) {
+  const actions = document.createElement("div");
+  actions.className = "result-card__actions";
+
+  const btn = document.createElement("button");
+  btn.className = "pill pill--strip";
+  btn.textContent = "✂️ STRIP & DOWNLOAD";
+  btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    btn.textContent = "STRIPPING…";
+    try {
+      const buffer = await file.arrayBuffer();
+      let result = stripMetadata(buffer);
+      if (!result) result = await stripViaCanvas(file);
+      if (!result) throw new Error("unsupported format");
+
+      const blob = new Blob([result.bytes], { type: result.lossless ? file.type : "image/jpeg" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = cleanFilename(file.name, !result.lossless);
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
+
+      const saved = file.size - blob.size;
+      btn.textContent = "✅ CLEANED";
+      note.textContent = result.lossless
+        ? `Lossless — pixels untouched. ${saved > 0 ? formatBytes(saved) + " of metadata removed." : "Metadata removed."}`
+        : "Re-encoded via canvas (format has no lossless path). Metadata gone.";
+    } catch (err) {
+      console.error(err);
+      btn.textContent = "❌ FAILED — TRY ANOTHER FILE";
+    } finally {
+      btn.disabled = false;
+      setTimeout(() => (btn.textContent = "✂️ STRIP & DOWNLOAD"), 4000);
+    }
+  });
+
+  const note = document.createElement("span");
+  note.className = "result-card__note";
+  note.textContent =
+    meta.format === "other" ? "Will re-encode to JPEG to remove metadata." : "Lossless — zero quality loss.";
+
+  actions.append(btn, note);
+  return actions;
 }
 
 function escapeHtml(s) {
