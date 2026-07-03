@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your photos know where you live — MetaStrip Blog</title>
+  <meta name="description" content="Every photo from your phone carries GPS coordinates. Here is how that bites people in real life, and how to check your own photos in ten seconds." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23fb4903'/><text x='50' y='68' font-size='52' font-family='Arial Black' font-weight='900' text-anchor='middle' fill='white'>M</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:ital,wght@0,400;0,500;0,700;0,800;1,800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body class="blog-body">
+
+  <header class="nav">
+    <a class="nav__logo" href="../index.html" aria-label="MetaStrip home">M</a>
+    <nav class="nav__links" aria-label="Main">
+      <a class="pill pill--nav" href="../index.html#app">CLEAN A PHOTO</a>
+      <a class="pill pill--nav" href="../index.html#blog">ALL POSTS</a>
+    </nav>
+    <a class="pill pill--dark" href="https://github.com/rawsun007/metastrip" target="_blank" rel="noopener">GITHUB</a>
+  </header>
+
+  <article class="post">
+    <p class="post__meta">By Roshan Ramani, July 2026</p>
+    <h1 class="post__title">YOUR PHOTOS KNOW WHERE YOU LIVE</h1>
+
+    <p>Here is a small experiment. Open your camera roll, pick any photo you took at home, and run it through a metadata viewer. There is a very good chance you will find your latitude and longitude sitting right there, accurate to a few meters.</p>
+
+    <p>I am not exaggerating for effect. Phones write GPS coordinates into photos by default. It lives in a hidden block of the file called EXIF, along with your camera model, the exact second the shot was taken, and sometimes more. You never see it, but it travels with the file everywhere the file goes.</p>
+
+    <h2>Where this actually bites people</h2>
+
+    <p>The classic case is selling stuff online. You photograph your old sofa in your living room, upload it to a classifieds site, and the listing now quietly includes the coordinates of your living room. Anyone who downloads the image can read them. Some sites clean this up for you. Plenty do not.</p>
+
+    <p>It also happens with photos sent over email, shared through cloud drive links, posted on forums, attached to blog posts, or uploaded to smaller apps that never thought about it. The big social networks mostly strip metadata when you post. Almost nothing else does.</p>
+
+    <p>There have been real cases of stalkers finding people through photo metadata, and the famous one where a tech magazine interview revealed a fugitive's location because a staffer posted a photo straight from the phone. This is not a theoretical problem.</p>
+
+    <h2>Check your own photos right now</h2>
+
+    <p>You do not need to install anything. Drop a photo into <a href="../index.html#app">MetaStrip</a> and it shows you everything the file is carrying. If there are GPS coordinates in there, you get a map link so you can see exactly what a stranger would see.</p>
+
+    <p>The whole thing runs in your browser. Your photo never uploads anywhere, which felt like the only honest way to build a privacy tool. If it leaks, hit the strip button and you get back the exact same image with nothing attached.</p>
+
+    <p>Ten seconds, and you will know what your photos have been saying about you.</p>
+
+    <div class="post__cta">
+      <a class="pill pill--strip pill--big" href="../index.html#app">CHECK A PHOTO NOW</a>
+    </div>
+  </article>
+
+  <footer class="post__footer">
+    <p>MetaStrip runs fully on your device. No cookies, no tracking, no server.</p>
+  </footer>
+
+</body>
+</html>

@@ -534,3 +534,76 @@ a { color: inherit; text-decoration: none; }
   .hero__title, .hero__tagline, .hero__ctas, .hero__tube,
   .sticker, .sticker svg, .marquee__track, .faq__item p { animation: none; }
 }
+
+/* ===== Blog ===== */
+.blog { padding: 110px clamp(20px, 5vw, 72px); max-width: 1320px; margin: 0 auto; }
+.blog__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 64px;
+}
+.blog-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  border-radius: var(--radius-card);
+  padding: 36px 30px;
+  color: var(--color-text-dark);
+  transition: transform 0.35s var(--ease-smooth);
+}
+.blog-card:hover { transform: translateY(-8px) rotate(1deg); }
+.blog-card--orange { background: var(--accent-orange); color: #ffffff; }
+.blog-card--yellow { background: var(--accent-yellow); }
+.blog-card--green { background: var(--accent-green); }
+.blog-card__tag {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  border: 2px solid currentColor;
+  border-radius: var(--radius-pill);
+  padding: 5px 14px;
+}
+.blog-card h3 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(24px, 2.2vw, 32px);
+  line-height: 1;
+}
+.blog-card p { font-size: 14.5px; font-weight: 500; line-height: 1.55; }
+.blog-card__read { font-weight: 800; font-size: 14px; margin-top: auto; }
+
+@media (max-width: 900px) {
+  .blog__grid { grid-template-columns: 1fr; max-width: 480px; margin-inline: auto; }
+}
+
+/* ===== Blog post pages ===== */
+.blog-body { background: #ffffff; color: var(--color-text-dark); }
+.blog-body .nav { position: relative; }
+.blog-body .nav__logo { border-color: rgba(0,0,0,0.2); }
+.blog-body .pill--nav { border-color: rgba(0,0,0,0.25); }
+.post { max-width: 760px; margin: 0 auto; padding: 48px 24px 40px; }
+.post__meta { color: #777777; font-size: 14px; font-weight: 600; }
+.post__title {
+  font-family: var(--font-display);
+  font-size: clamp(38px, 6vw, 72px);
+  line-height: 0.98;
+  margin: 14px 0 34px;
+}
+.post p { font-size: 17.5px; line-height: 1.75; margin-bottom: 22px; }
+.post h2 {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.05;
+  margin: 40px 0 16px;
+}
+.post a { color: var(--accent-orange); font-weight: 700; text-decoration: underline; }
+.post__cta { margin-top: 44px; }
+.post__cta .pill { text-decoration: none; color: var(--color-text-dark); }
+.post__footer {
+  text-align: center;
+  color: #999999;
+  font-size: 13.5px;
+  padding: 40px 20px 56px;
+}

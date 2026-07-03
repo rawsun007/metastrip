@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How MetaStrip cleans a photo without touching a single pixel — MetaStrip Blog</title>
+  <meta name="description" content="Most metadata removers re-compress your image and quietly lower its quality. Here is how lossless stripping works and why it matters." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23fb4903'/><text x='50' y='68' font-size='52' font-family='Arial Black' font-weight='900' text-anchor='middle' fill='white'>M</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:ital,wght@0,400;0,500;0,700;0,800;1,800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body class="blog-body">
+
+  <header class="nav">
+    <a class="nav__logo" href="../index.html" aria-label="MetaStrip home">M</a>
+    <nav class="nav__links" aria-label="Main">
+      <a class="pill pill--nav" href="../index.html#app">CLEAN A PHOTO</a>
+      <a class="pill pill--nav" href="../index.html#blog">ALL POSTS</a>
+    </nav>
+    <a class="pill pill--dark" href="https://github.com/rawsun007/metastrip" target="_blank" rel="noopener">GITHUB</a>
+  </header>
+
+  <article class="post">
+    <p class="post__meta">By Roshan Ramani, July 2026</p>
+    <h1 class="post__title">HOW METASTRIP CLEANS A PHOTO WITHOUT TOUCHING A SINGLE PIXEL</h1>
+
+    <p>Most online metadata removers work by opening your image, redrawing it, and saving a brand new copy. The metadata is gone, sure, but your photo also got re-compressed along the way. Do that a couple of times and you can start to see it. Muddy edges, blocky gradients, the usual JPEG rot.</p>
+
+    <p>MetaStrip takes a different route, and I think it is worth explaining because it is also the reason the tool can promise zero quality loss with a straight face.</p>
+
+    <h2>A photo file is a box of labeled parcels</h2>
+
+    <p>A JPEG is not one solid blob. It is a sequence of labeled segments. Some segments hold the actual compressed image data. Others hold the color profile so the image renders correctly. And a few hold metadata. EXIF with your camera and GPS info, XMP with editing history, sometimes plain text comments.</p>
+
+    <p>PNG works the same way with chunks instead of segments. Image data in some chunks, text and timestamps and EXIF in others.</p>
+
+    <p>Because everything is labeled, you can walk through the file byte by byte, keep the parcels the image needs, and simply not copy the ones that carry metadata. The pixel data passes through untouched. Not re-encoded, not resampled, literally the same bytes in the same order.</p>
+
+    <h2>What we keep and what we drop</h2>
+
+    <p>MetaStrip drops the EXIF block, XMP, editor scraps and comments. It deliberately keeps the color profile and the color transform segments, because removing those is how some tools end up shifting the colors of your photo. The goal is a file that looks identical everywhere, because it is identical everywhere it counts.</p>
+
+    <h2>Why this can run in your browser</h2>
+
+    <p>Walking file segments is simple work. It needs no server, no upload, no library, just a few hundred lines of JavaScript reading bytes. That is the entire tool. It is open source, so you can <a href="https://github.com/rawsun007/metastrip">read every line on GitHub</a> and confirm your photo never goes anywhere.</p>
+
+    <p>Try it on a photo you care about. Strip it, then compare the two files side by side at full zoom. You will not find a difference, because there is none.</p>
+
+    <div class="post__cta">
+      <a class="pill pill--strip pill--big" href="../index.html#app">TRY IT ON A PHOTO</a>
+    </div>
+  </article>
+
+  <footer class="post__footer">
+    <p>MetaStrip runs fully on your device. No cookies, no tracking, no server.</p>
+  </footer>
+
+</body>
+</html>
