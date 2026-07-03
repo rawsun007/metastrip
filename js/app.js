@@ -43,11 +43,13 @@ async function handleFiles(fileList) {
   resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+const icon = (id, cls = "icon") => `<svg class="${cls}" aria-hidden="true"><use href="#${id}"></use></svg>`;
+
 const RISK_META = {
-  location: { icon: "📍", chip: "chip--location" },
-  identity: { icon: "🪪", chip: "chip--identity" },
-  device: { icon: "📷", chip: "chip--device" },
-  time: { icon: "🕑", chip: "chip--time" },
+  location: { icon: icon("st-pin") },
+  identity: { icon: icon("st-idcard") },
+  device: { icon: icon("st-camera") },
+  time: { icon: icon("st-clock") },
 };
 
 async function renderCard(file) {
@@ -80,7 +82,7 @@ async function renderCard(file) {
     alert.className = "gps-alert";
     alert.innerHTML = `
       <div>
-        <strong>📍 THIS PHOTO LEAKS YOUR LOCATION</strong>
+        <strong>${icon("st-pin", "icon icon--alert")} THIS PHOTO LEAKS YOUR LOCATION</strong>
         <p>${lat.toFixed(6)}, ${lon.toFixed(6)}${alt != null ? ` · ${alt.toFixed(0)}m altitude` : ""}</p>
       </div>
       <a class="pill pill--dark" href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" rel="noopener">SEE ON MAP ↗</a>
@@ -92,11 +94,11 @@ async function renderCard(file) {
     const list = document.createElement("dl");
     list.className = "meta-list";
     for (const f of meta.fields) {
-      const { icon } = RISK_META[f.risk] || RISK_META.device;
+      const riskIcon = (RISK_META[f.risk] || RISK_META.device).icon;
       const row = document.createElement("div");
       row.className = "meta-list__row";
       row.innerHTML = `
-        <dt>${icon} ${escapeHtml(f.label)}</dt>
+        <dt>${riskIcon} ${escapeHtml(f.label)}</dt>
         <dd>${escapeHtml(f.value)}</dd>
       `;
       list.appendChild(row);
@@ -105,10 +107,10 @@ async function renderCard(file) {
   } else {
     const clean = document.createElement("p");
     clean.className = "meta-clean";
-    clean.textContent =
+    clean.innerHTML =
       meta.format === "other"
-        ? "⚠️ Format not fully supported yet — metadata may still be present."
-        : "✅ No readable metadata found. This photo looks clean already.";
+        ? `${icon("st-warn")} Format not fully supported yet — metadata may still be present.`
+        : `${icon("st-shield")} No readable metadata found. This photo looks clean already.`;
     body.appendChild(clean);
   }
 
@@ -124,10 +126,10 @@ function buildActions(file, meta) {
 
   const btn = document.createElement("button");
   btn.className = "pill pill--strip";
-  btn.textContent = "✂️ STRIP & DOWNLOAD";
+  btn.innerHTML = `${icon("st-scissors")} STRIP & DOWNLOAD`;
   btn.addEventListener("click", async () => {
     btn.disabled = true;
-    btn.textContent = "STRIPPING…";
+    btn.innerHTML = "STRIPPING…";
     try {
       const buffer = await file.arrayBuffer();
       let result = stripMetadata(buffer);
@@ -142,16 +144,16 @@ function buildActions(file, meta) {
       setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
 
       const saved = file.size - blob.size;
-      btn.textContent = "✅ CLEANED";
+      btn.innerHTML = `${icon("st-shield")} CLEANED`;
       note.textContent = result.lossless
         ? `Lossless — pixels untouched. ${saved > 0 ? formatBytes(saved) + " of metadata removed." : "Metadata removed."}`
         : "Re-encoded via canvas (format has no lossless path). Metadata gone.";
     } catch (err) {
       console.error(err);
-      btn.textContent = "❌ FAILED — TRY ANOTHER FILE";
+      btn.innerHTML = `${icon("st-warn")} FAILED — TRY ANOTHER FILE`;
     } finally {
       btn.disabled = false;
-      setTimeout(() => (btn.textContent = "✂️ STRIP & DOWNLOAD"), 4000);
+      setTimeout(() => (btn.innerHTML = `${icon("st-scissors")} STRIP & DOWNLOAD`), 4000);
     }
   });
 

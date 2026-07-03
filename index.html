@@ -13,6 +13,65 @@
 </head>
 <body>
 
+  <!-- ===== STICKER SPRITE (Slush-style hand-drawn icons) ===== -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="st-pin" viewBox="0 0 100 100">
+        <path d="M50 8 C30 8 16 23 16 42 C16 66 50 92 50 92 C50 92 84 66 84 42 C84 23 70 8 50 8 Z" fill="#fb4903" stroke="#0a0a0a" stroke-width="5" stroke-linejoin="round"/>
+        <circle cx="50" cy="41" r="13" fill="#ffffff" stroke="#0a0a0a" stroke-width="4"/>
+        <path d="M30 20 Q38 13 47 12" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.85"/>
+      </symbol>
+      <symbol id="st-camera" viewBox="0 0 120 100">
+        <rect x="42" y="12" width="36" height="20" rx="8" fill="#5c4ade" stroke="#0a0a0a" stroke-width="5"/>
+        <rect x="8" y="26" width="104" height="62" rx="14" fill="#5c4ade" stroke="#0a0a0a" stroke-width="5"/>
+        <circle cx="60" cy="57" r="21" fill="#ffffff" stroke="#0a0a0a" stroke-width="5"/>
+        <circle cx="60" cy="57" r="10" fill="#4da2ff" stroke="#0a0a0a" stroke-width="4"/>
+        <rect x="20" y="38" width="14" height="9" rx="4" fill="#ffd731" stroke="#0a0a0a" stroke-width="3.5"/>
+        <circle cx="98" cy="40" r="5" fill="#ffd731" stroke="#0a0a0a" stroke-width="3.5"/>
+        <path d="M18 32 Q14 32 12 36" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+      </symbol>
+      <symbol id="st-polaroid" viewBox="0 0 100 110">
+        <rect x="8" y="6" width="84" height="98" rx="10" fill="#ffffff" stroke="#0a0a0a" stroke-width="5"/>
+        <rect x="17" y="15" width="66" height="62" fill="#4da2ff" stroke="#0a0a0a" stroke-width="4"/>
+        <circle cx="38" cy="33" r="8" fill="#ffd731" stroke="#0a0a0a" stroke-width="3.5"/>
+        <path d="M17 77 L40 47 L57 77 Z" fill="#55db9c" stroke="#0a0a0a" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M50 77 L69 53 L83 77 Z" fill="#55db9c" stroke="#0a0a0a" stroke-width="4" stroke-linejoin="round"/>
+        <rect x="26" y="88" width="48" height="7" rx="3.5" fill="#0a0a0a" opacity="0.18"/>
+      </symbol>
+      <symbol id="st-scissors" viewBox="0 0 100 100">
+        <path d="M32 12 L62 68" stroke="#0a0a0a" stroke-width="8" stroke-linecap="round"/>
+        <path d="M68 12 L38 68" stroke="#0a0a0a" stroke-width="8" stroke-linecap="round"/>
+        <circle cx="30" cy="80" r="13" fill="#55db9c" stroke="#0a0a0a" stroke-width="5"/>
+        <circle cx="70" cy="80" r="13" fill="#55db9c" stroke="#0a0a0a" stroke-width="5"/>
+        <circle cx="50" cy="45" r="6" fill="#ffd731" stroke="#0a0a0a" stroke-width="3.5"/>
+      </symbol>
+      <symbol id="st-clock" viewBox="0 0 100 100">
+        <circle cx="27" cy="19" r="10" fill="#fb4903" stroke="#0a0a0a" stroke-width="4"/>
+        <circle cx="73" cy="19" r="10" fill="#fb4903" stroke="#0a0a0a" stroke-width="4"/>
+        <circle cx="50" cy="54" r="35" fill="#ffd731" stroke="#0a0a0a" stroke-width="5"/>
+        <path d="M50 54 L50 33" stroke="#0a0a0a" stroke-width="6" stroke-linecap="round"/>
+        <path d="M50 54 L66 61" stroke="#0a0a0a" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="50" cy="54" r="4.5" fill="#0a0a0a"/>
+      </symbol>
+      <symbol id="st-idcard" viewBox="0 0 120 90">
+        <rect x="6" y="8" width="108" height="74" rx="12" fill="#e9ccff" stroke="#0a0a0a" stroke-width="5"/>
+        <circle cx="34" cy="40" r="13" fill="#4da2ff" stroke="#0a0a0a" stroke-width="4"/>
+        <rect x="56" y="28" width="44" height="9" rx="4.5" fill="#0a0a0a"/>
+        <rect x="56" y="44" width="30" height="9" rx="4.5" fill="#0a0a0a" opacity="0.55"/>
+        <rect x="18" y="62" width="84" height="7" rx="3.5" fill="#fb4903" stroke="#0a0a0a" stroke-width="2.5"/>
+      </symbol>
+      <symbol id="st-shield" viewBox="0 0 100 110">
+        <path d="M50 6 L88 20 L88 52 C88 80 70 96 50 104 C30 96 12 80 12 52 L12 20 Z" fill="#55db9c" stroke="#0a0a0a" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M32 54 L46 68 L70 40" fill="none" stroke="#0a0a0a" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="st-warn" viewBox="0 0 110 100">
+        <path d="M55 8 L104 92 L6 92 Z" fill="#ffd731" stroke="#0a0a0a" stroke-width="5" stroke-linejoin="round"/>
+        <rect x="50" y="36" width="10" height="30" rx="5" fill="#0a0a0a"/>
+        <circle cx="55" cy="79" r="6" fill="#0a0a0a"/>
+      </symbol>
+    </defs>
+  </svg>
+
   <!-- ===== NAV ===== -->
   <header class="nav">
     <a class="nav__logo" href="#top" aria-label="MetaStrip home">M</a>
@@ -26,9 +85,10 @@
 
   <!-- ===== HERO ===== -->
   <section class="hero" id="top">
-    <span class="sticker sticker--pin" aria-hidden="true">📍</span>
-    <span class="sticker sticker--cam" aria-hidden="true">📷</span>
-    <span class="sticker sticker--sat" aria-hidden="true">🛰️</span>
+    <span class="sticker sticker--pin" aria-hidden="true"><svg><use href="#st-pin"/></svg></span>
+    <span class="sticker sticker--cam" aria-hidden="true"><svg><use href="#st-camera"/></svg></span>
+    <span class="sticker sticker--cut" aria-hidden="true"><svg><use href="#st-scissors"/></svg></span>
+    <span class="sticker sticker--photo" aria-hidden="true"><svg><use href="#st-polaroid"/></svg></span>
     <h1 class="hero__title">METASTRIP</h1>
     <p class="hero__tagline">Your photos. Untracked.</p>
     <div class="hero__ctas">
@@ -41,7 +101,7 @@
   <section class="app" id="app">
     <h2 class="section-title section-title--light">DROP IT.<br>SEE THE LEAK.</h2>
     <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload photos to inspect and clean">
-      <span class="dropzone__emoji" aria-hidden="true">🖼️</span>
+      <span class="dropzone__emoji" aria-hidden="true"><svg><use href="#st-polaroid"/></svg></span>
       <p class="dropzone__text">Drag photos here — or click to choose</p>
       <p class="dropzone__hint">JPEG &amp; PNG · nothing ever uploads · works offline</p>
       <input type="file" id="fileInput" accept="image/*" multiple hidden />
@@ -57,19 +117,19 @@
         <h3>YOUR EXACT<br>LOCATION</h3>
         <p>Phones embed GPS coordinates in every photo. Post one from home and anyone can pull your address off it.</p>
         <a class="pill pill--dark" href="#app">SEE IT LEAK ↗</a>
-        <span class="leak-card__emoji" aria-hidden="true">📍</span>
+        <span class="leak-card__emoji" aria-hidden="true"><svg><use href="#st-pin"/></svg></span>
       </article>
       <article class="leak-card leak-card--violet">
         <h3>YOUR DEVICE<br>FINGERPRINT</h3>
         <p>Camera make, model, lens, software — even serial numbers and owner names. Enough to tie photos back to you.</p>
         <a class="pill pill--dark" href="#app">SEE IT LEAK ↗</a>
-        <span class="leak-card__emoji" aria-hidden="true">📷</span>
+        <span class="leak-card__emoji" aria-hidden="true"><svg><use href="#st-camera"/></svg></span>
       </article>
       <article class="leak-card leak-card--blue">
         <h3>YOUR<br>TIMELINE</h3>
         <p>Exact timestamps down to the second. Combine with GPS and a stranger knows where you were, and when.</p>
         <a class="pill pill--dark" href="#app">SEE IT LEAK ↗</a>
-        <span class="leak-card__emoji" aria-hidden="true">🕑</span>
+        <span class="leak-card__emoji" aria-hidden="true"><svg><use href="#st-clock"/></svg></span>
       </article>
     </div>
   </section>
