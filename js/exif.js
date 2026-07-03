@@ -36,7 +36,32 @@ function parseMetadata(buffer) {
   const bytes = new Uint8Array(buffer);
   if (bytes[0] === 0xff && bytes[1] === 0xd8) return parseJpeg(bytes);
   if (isPng(bytes)) return parsePng(bytes);
+  if (isHeic(bytes)) return parseHeic(bytes);
   return { fields: [], gps: null, format: "other" };
+}
+
+const HEIC_BRANDS = new Set(["heic", "heix", "hevc", "hevx", "heif", "mif1", "msf1"]);
+
+function isHeic(b) {
+  if (b.length < 12) return false;
+  if (asciiSlice(b, 4, 8) !== "ftyp") return false;
+  return HEIC_BRANDS.has(asciiSlice(b, 8, 12));
+}
+
+/* HEIC embeds its EXIF as a verbatim TIFF blob behind an "Exif\0\0"
+   signature, so a signature scan plus the shared TIFF parser reads it
+   without touching the ISO-BMFF box tree. */
+function parseHeic(bytes) {
+  const result = { fields: [], gps: null, format: "heic" };
+  const limit = bytes.length - 6;
+  for (let i = 0; i < limit; i++) {
+    if (bytes[i] === 0x45 && bytes[i + 1] === 0x78 && bytes[i + 2] === 0x69 &&
+        bytes[i + 3] === 0x66 && bytes[i + 4] === 0 && bytes[i + 5] === 0) {
+      parseTiff(bytes, i + 6, result, null);
+      break;
+    }
+  }
+  return result;
 }
 
 function isPng(b) {

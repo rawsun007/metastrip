@@ -50,7 +50,7 @@ function formatBytes(n) {
 }
 
 async function handleFiles(fileList) {
-  const files = [...fileList].filter((f) => f.type.startsWith("image/"));
+  const files = [...fileList].filter((f) => f.type.startsWith("image/") || /\.(heic|heif)$/i.test(f.name));
   if (!files.length) return;
   for (const file of files) {
     const card = await renderCard(file);
@@ -89,6 +89,27 @@ stripAllBtn.addEventListener("click", async () => {
 
 const icon = (id, cls = "icon") => `<svg class="${cls}" aria-hidden="true"><use href="#${id}"></use></svg>`;
 
+/* heic2any is 1.3MB, so it loads only the first time a HEIC shows up */
+let heicLibPromise = null;
+function ensureHeicLib() {
+  if (!heicLibPromise) {
+    heicLibPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "vendor/heic2any.min.js";
+      script.onload = () => resolve(window.heic2any);
+      script.onerror = () => reject(new Error("could not load HEIC converter"));
+      document.head.appendChild(script);
+    });
+  }
+  return heicLibPromise;
+}
+
+async function heicToJpegBlob(file, quality) {
+  const heic2any = await ensureHeicLib();
+  const out = await heic2any({ blob: file, toType: "image/jpeg", quality });
+  return Array.isArray(out) ? out[0] : out;
+}
+
 const RISK_META = {
   location: { icon: icon("st-pin") },
   identity: { icon: icon("st-idcard") },
@@ -117,8 +138,6 @@ async function renderCard(file) {
   const preview = document.createElement("img");
   preview.className = "result-card__preview";
   preview.alt = `Preview of ${file.name}`;
-  preview.src = URL.createObjectURL(file);
-  preview.addEventListener("load", () => URL.revokeObjectURL(preview.src), { once: true });
 
   const body = document.createElement("div");
   body.className = "result-card__body";
@@ -132,6 +151,16 @@ async function renderCard(file) {
     meta = parseMetadata(await file.arrayBuffer());
   } catch (err) {
     console.error("metadata parse failed", err);
+  }
+
+  if (meta.format === "heic") {
+    // browsers other than Safari cannot show HEIC, so preview via conversion
+    heicToJpegBlob(file, 0.5)
+      .then((blob) => { preview.src = URL.createObjectURL(blob); })
+      .catch(() => { preview.alt = "HEIC preview unavailable"; });
+  } else {
+    preview.src = URL.createObjectURL(file);
+    preview.addEventListener("load", () => URL.revokeObjectURL(preview.src), { once: true });
   }
 
   if (meta.gps) {
@@ -250,6 +279,7 @@ function buildActions(file, meta) {
 
       let result;
       if (keepingSome) {
+        // in-place redaction works for JPEG, PNG and HEIC alike
         const remove = [];
         for (const b of boxes) {
           if (!b.checked) continue;
@@ -257,6 +287,9 @@ function buildActions(file, meta) {
           else remove.push(meta.fields[Number(b.dataset.field)]);
         }
         result = selectiveStrip(buffer, remove);
+      } else if (meta.format === "heic") {
+        const jpeg = await heicToJpegBlob(file, 0.92);
+        result = { bytes: new Uint8Array(await jpeg.arrayBuffer()), lossless: false };
       } else {
         result = stripMetadata(buffer);
         if (!result) result = await stripViaCanvas(file);
@@ -319,7 +352,11 @@ function buildActions(file, meta) {
   const note = document.createElement("span");
   note.className = "result-card__note";
   note.textContent =
-    meta.format === "other" ? "This format will get a fresh JPEG re-encode." : "Lossless. Zero quality loss.";
+    meta.format === "heic"
+      ? "Converts to a clean JPEG, or untick fields to redact the HEIC in place."
+      : meta.format === "other"
+        ? "This format will get a fresh JPEG re-encode."
+        : "Lossless. Zero quality loss.";
 
   actions.append(btn, copyBtn, note);
   return actions;
