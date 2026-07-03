@@ -69,6 +69,71 @@ function concat(parts) {
   return out;
 }
 
+/* ---------- Selective stripping ----------
+   Redacts chosen fields in place: JPEG EXIF entries are zeroed
+   byte-for-byte, PNG text chunks are cut out whole, and PNG eXIf
+   redactions get their chunk CRC recomputed so the file stays valid. */
+
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c;
+  }
+  return t;
+})();
+
+function crc32(bytes, start, end) {
+  let c = 0xffffffff;
+  for (let i = start; i < end; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xff] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+
+/** Redact only the given fields (from parseMetadata) inside the file.
+    Returns { bytes, lossless: true }. */
+function selectiveStrip(buffer, removeFields) {
+  const out = new Uint8Array(buffer.slice(0));
+  const cuts = [];
+  const crcChunks = new Map();
+
+  for (const f of removeFields) {
+    if (!f) continue;
+    if (f.mode === "cut" && f.chunkRange) {
+      cuts.push(f.chunkRange);
+    } else if (f.ranges) {
+      for (const [a, b] of f.ranges) out.fill(0, a, b);
+      if (f.crcChunk) crcChunks.set(f.crcChunk.start, f.crcChunk);
+    }
+  }
+
+  // fix CRCs of PNG chunks we zeroed inside (CRC covers type + data)
+  const view = new DataView(out.buffer);
+  for (const chunk of crcChunks.values()) {
+    const crc = crc32(out, chunk.start + 4, chunk.dataEnd);
+    view.setUint32(chunk.dataEnd, crc);
+  }
+
+  if (!cuts.length) return { bytes: out, lossless: true };
+
+  // splice out whole-chunk cuts, back to front after merging overlaps
+  cuts.sort((p, q) => p[0] - q[0]);
+  const merged = [cuts[0].slice()];
+  for (const [a, b] of cuts.slice(1)) {
+    const last = merged[merged.length - 1];
+    if (a <= last[1]) last[1] = Math.max(last[1], b);
+    else merged.push([a, b]);
+  }
+  const kept = [];
+  let pos = 0;
+  for (const [a, b] of merged) {
+    kept.push(out.subarray(pos, a));
+    pos = b;
+  }
+  kept.push(out.subarray(pos));
+  return { bytes: concat(kept), lossless: true };
+}
+
 /** Fallback for formats without a lossless stripper: re-encode via canvas. */
 async function stripViaCanvas(file) {
   const bitmap = await createImageBitmap(await blobFromFile(file));

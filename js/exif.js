@@ -55,12 +55,18 @@ function parseJpeg(bytes) {
     const length = (bytes[offset + 2] << 8) | bytes[offset + 3];
     const segStart = offset + 4;
     if (marker === 0xe1 && hasPrefix(bytes, segStart, "Exif\0\0")) {
-      parseTiff(bytes, segStart + 6, result);
+      parseTiff(bytes, segStart + 6, result, null);
     } else if (marker === 0xe1 && hasPrefix(bytes, segStart, "http://ns.adobe.com/xap/1.0/")) {
-      result.fields.push({ label: "XMP metadata", value: "present (editing history, IDs)", risk: "device" });
+      result.fields.push({
+        label: "XMP metadata", value: "present (editing history, IDs)", risk: "device",
+        mode: "zero", ranges: [[segStart, segStart + length - 2]],
+      });
     } else if (marker === 0xfe) {
       const comment = asciiSlice(bytes, segStart, Math.min(segStart + length - 2, bytes.length)).trim();
-      if (comment) result.fields.push({ label: "Comment", value: comment, risk: "device" });
+      if (comment) result.fields.push({
+        label: "Comment", value: comment, risk: "device",
+        mode: "zero", ranges: [[segStart, segStart + length - 2]],
+      });
     }
     offset = segStart + length - 2;
   }
@@ -86,20 +92,30 @@ function asciiSlice(bytes, start, end) {
 
 /* ---------- TIFF / IFD (shared by JPEG EXIF and PNG eXIf) ---------- */
 
-function parseTiff(bytes, tiffStart, result) {
+function parseTiff(bytes, tiffStart, result, crcChunk) {
   if (tiffStart + 8 > bytes.length) return;
   const view = new DataView(bytes.buffer, bytes.byteOffset);
   const le = bytes[tiffStart] === 0x49; // "II" little-endian, "MM" big-endian
   if (view.getUint16(tiffStart + 2, le) !== 42) return;
   const ifd0 = tiffStart + view.getUint32(tiffStart + 4, le);
 
+  const firstField = result.fields.length;
   const pointers = {};
   readIfd(view, bytes, tiffStart, ifd0, le, IFD0_TAGS, result.fields, "device", pointers);
   if (pointers[EXIF_IFD_POINTER]) {
-    readIfd(view, bytes, tiffStart, tiffStart + pointers[EXIF_IFD_POINTER], le, EXIF_TAGS, result.fields, "time", pointers);
+    readIfd(view, bytes, tiffStart, tiffStart + pointers[EXIF_IFD_POINTER].value, le, EXIF_TAGS, result.fields, "time", pointers);
   }
   if (pointers[GPS_IFD_POINTER]) {
-    result.gps = readGps(view, bytes, tiffStart, tiffStart + pointers[GPS_IFD_POINTER], le);
+    result.gps = readGps(view, bytes, tiffStart, tiffStart + pointers[GPS_IFD_POINTER].value, le);
+    if (result.gps) {
+      // also blank the pointer entry itself so nothing references the dead IFD
+      result.gps.ranges.push([pointers[GPS_IFD_POINTER].offset, pointers[GPS_IFD_POINTER].offset + 12]);
+      result.gps.mode = "zero";
+      if (crcChunk) result.gps.crcChunk = crcChunk;
+    }
+  }
+  if (crcChunk) {
+    for (let i = firstField; i < result.fields.length; i++) result.fields[i].crcChunk = crcChunk;
   }
 }
 
@@ -114,7 +130,7 @@ function readIfd(view, bytes, tiffStart, ifdOffset, le, tagMap, fields, defaultR
     const num = view.getUint32(entry + 4, le);
 
     if (tag === EXIF_IFD_POINTER || tag === GPS_IFD_POINTER) {
-      pointers[tag] = view.getUint32(entry + 8, le);
+      pointers[tag] = { value: view.getUint32(entry + 8, le), offset: entry };
       continue;
     }
     const label = tagMap[tag];
@@ -126,7 +142,14 @@ function readIfd(view, bytes, tiffStart, ifdOffset, le, tagMap, fields, defaultR
     let risk = defaultRisk;
     if (/date|taken|digitized|modified/i.test(label)) risk = "time";
     if (/serial|owner|artist/i.test(label)) risk = "identity";
-    fields.push({ label, value: String(value), risk });
+
+    const size = (TYPE_SIZES[type] || 1) * num;
+    const ranges = [[entry, entry + 12]];
+    if (size > 4) {
+      const off = tiffStart + view.getUint32(entry + 8, le);
+      if (off + size <= bytes.length) ranges.push([off, off + size]);
+    }
+    fields.push({ label, value: String(value), risk, mode: "zero", ranges });
   }
 }
 
@@ -184,12 +207,18 @@ function readGps(view, bytes, tiffStart, gpsOffset, le) {
   if (gpsOffset + 2 > bytes.length) return null;
   const count = view.getUint16(gpsOffset, le);
   const raw = {};
+  const ranges = [[gpsOffset, Math.min(gpsOffset + 2 + count * 12 + 4, bytes.length)]];
   for (let i = 0; i < count; i++) {
     const entry = gpsOffset + 2 + i * 12;
     if (entry + 12 > bytes.length) return null;
     const tag = view.getUint16(entry, le);
     const type = view.getUint16(entry + 2, le);
     const num = view.getUint32(entry + 4, le);
+    const size = (TYPE_SIZES[type] || 1) * num;
+    if (size > 4) {
+      const off = tiffStart + view.getUint32(entry + 8, le);
+      if (off + size <= bytes.length) ranges.push([off, off + size]);
+    }
     if (tag === 1 || tag === 3) { // LatRef / LonRef
       raw[tag] = asciiSlice(bytes, entry + 8, entry + 8 + 2);
     } else if (tag === 2 || tag === 4) { // Lat / Lon: 3 rationals
@@ -209,7 +238,7 @@ function readGps(view, bytes, tiffStart, gpsOffset, le) {
   const lat = dmsToDecimal(raw[2]) * (raw[1] === "S" ? -1 : 1);
   const lon = dmsToDecimal(raw[4]) * (raw[3] === "W" ? -1 : 1);
   if (!isFinite(lat) || !isFinite(lon) || (lat === 0 && lon === 0)) return null;
-  return { lat, lon, alt: raw.alt ?? null };
+  return { lat, lon, alt: raw.alt ?? null, ranges };
 }
 
 function dmsToDecimal([d, m, s]) {
@@ -228,14 +257,15 @@ function parsePng(bytes) {
     const length = view.getUint32(offset);
     const type = asciiSlice(bytes, offset + 4, offset + 8);
     const dataStart = offset + 8;
+    const chunkEnd = dataStart + length + 4;
     if (type === "eXIf") {
-      parseTiff(bytes, dataStart, result);
+      parseTiff(bytes, dataStart, result, { start: offset, dataStart, dataEnd: dataStart + length });
     } else if (PNG_TEXT_CHUNKS.has(type)) {
       const keyword = asciiSlice(bytes, dataStart, Math.min(dataStart + 80, dataStart + length));
       const valueStart = dataStart + keyword.length + 1;
       let value = type === "tEXt" ? asciiSlice(bytes, valueStart, dataStart + length) : "(embedded text)";
       if (value.length > 120) value = value.slice(0, 120) + "…";
-      result.fields.push({ label: `PNG ${keyword || type}`, value, risk: "device" });
+      result.fields.push({ label: `PNG ${keyword || type}`, value, risk: "device", mode: "cut", chunkRange: [offset, chunkEnd] });
     } else if (type === "tIME" && length >= 7) {
       const y = view.getUint16(dataStart);
       const [mo, day, h, mi, s] = [1, 2, 3, 4, 5].map((i) => bytes[dataStart + i]);
@@ -243,10 +273,12 @@ function parsePng(bytes) {
         label: "Last modified",
         value: `${y}-${pad(mo)}-${pad(day)} ${pad(h)}:${pad(mi)}:${pad(s)}`,
         risk: "time",
+        mode: "cut",
+        chunkRange: [offset, chunkEnd],
       });
     }
     if (type === "IEND") break;
-    offset = dataStart + length + 4; // skip data + CRC
+    offset = chunkEnd; // skip data + CRC
   }
   return result;
 }

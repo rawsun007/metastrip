@@ -159,17 +159,31 @@ async function renderCard(file) {
   if (meta.fields.length || meta.gps) {
     const list = document.createElement("dl");
     list.className = "meta-list";
-    for (const f of meta.fields) {
+    const rows = [];
+    if (meta.gps) rows.push({ label: "GPS location", value: `${meta.gps.lat.toFixed(6)}, ${meta.gps.lon.toFixed(6)}`, risk: "location", isGps: true });
+    meta.fields.forEach((f, i) => rows.push({ ...f, fieldIndex: i }));
+    for (const f of rows) {
       const riskIcon = (RISK_META[f.risk] || RISK_META.device).icon;
       const row = document.createElement("div");
       row.className = "meta-list__row";
+      const removable = f.isGps || (f.ranges || f.chunkRange);
       row.innerHTML = `
-        <dt>${riskIcon} ${escapeHtml(f.label)}</dt>
+        <dt>
+          <label class="meta-check">
+            <input type="checkbox" checked ${removable ? "" : "disabled"}
+              ${f.isGps ? 'data-gps="1"' : `data-field="${f.fieldIndex}"`} />
+            <span></span>
+          </label>
+          ${riskIcon} ${escapeHtml(f.label)}
+        </dt>
         <dd>${escapeHtml(f.value)}</dd>
       `;
       list.appendChild(row);
     }
-    body.appendChild(list);
+    const hint = document.createElement("p");
+    hint.className = "meta-list__hint";
+    hint.textContent = "Everything ticked gets removed. Untick anything you want to keep.";
+    body.append(list, hint);
   } else {
     const clean = document.createElement("p");
     clean.className = "meta-clean";
@@ -230,8 +244,23 @@ function buildActions(file, meta) {
     btn.innerHTML = "STRIPPING…";
     try {
       const buffer = await file.arrayBuffer();
-      let result = stripMetadata(buffer);
-      if (!result) result = await stripViaCanvas(file);
+      const card = actions.closest(".result-card");
+      const boxes = card ? [...card.querySelectorAll(".meta-check input:not(:disabled)")] : [];
+      const keepingSome = boxes.length > 0 && boxes.some((b) => !b.checked);
+
+      let result;
+      if (keepingSome) {
+        const remove = [];
+        for (const b of boxes) {
+          if (!b.checked) continue;
+          if (b.dataset.gps) remove.push(meta.gps);
+          else remove.push(meta.fields[Number(b.dataset.field)]);
+        }
+        result = selectiveStrip(buffer, remove);
+      } else {
+        result = stripMetadata(buffer);
+        if (!result) result = await stripViaCanvas(file);
+      }
       if (!result) throw new Error("unsupported format");
 
       const blob = new Blob([result.bytes], { type: result.lossless ? file.type : "image/jpeg" });
