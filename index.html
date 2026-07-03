@@ -49,6 +49,87 @@
     <div class="results" id="results"></div>
   </section>
 
+  <!-- ===== WHAT LEAKS ===== -->
+  <section class="leaks" id="leaks">
+    <h2 class="section-title section-title--dark">Privacy for humans.<br>Not just paranoids.</h2>
+    <div class="leaks__grid">
+      <article class="leak-card leak-card--yellow">
+        <h3>YOUR EXACT<br>LOCATION</h3>
+        <p>Phones embed GPS coordinates in every photo. Post one from home and anyone can pull your address off it.</p>
+        <a class="pill pill--dark" href="#app">SEE IT LEAK ↗</a>
+        <span class="leak-card__emoji" aria-hidden="true">📍</span>
+      </article>
+      <article class="leak-card leak-card--violet">
+        <h3>YOUR DEVICE<br>FINGERPRINT</h3>
+        <p>Camera make, model, lens, software — even serial numbers and owner names. Enough to tie photos back to you.</p>
+        <a class="pill pill--dark" href="#app">SEE IT LEAK ↗</a>
+        <span class="leak-card__emoji" aria-hidden="true">📷</span>
+      </article>
+      <article class="leak-card leak-card--blue">
+        <h3>YOUR<br>TIMELINE</h3>
+        <p>Exact timestamps down to the second. Combine with GPS and a stranger knows where you were, and when.</p>
+        <a class="pill pill--dark" href="#app">SEE IT LEAK ↗</a>
+        <span class="leak-card__emoji" aria-hidden="true">🕑</span>
+      </article>
+    </div>
+  </section>
+
+  <!-- ===== MARQUEE ===== -->
+  <section class="marquee" aria-hidden="true">
+    <div class="marquee__track">
+      <span class="marquee__tile marquee__tile--white">GET CLEAN</span>
+      <span class="marquee__tile marquee__tile--yellow">GET CLEAN</span>
+      <span class="marquee__tile marquee__tile--green">GET CLEAN</span>
+      <span class="marquee__tile marquee__tile--blue">GET CLEAN</span>
+      <span class="marquee__tile marquee__tile--orange">GET CLEAN</span>
+      <span class="marquee__tile marquee__tile--white">GET CLEAN</span>
+      <span class="marquee__tile marquee__tile--yellow">GET CLEAN</span>
+      <span class="marquee__tile marquee__tile--green">GET CLEAN</span>
+      <span class="marquee__tile marquee__tile--blue">GET CLEAN</span>
+      <span class="marquee__tile marquee__tile--orange">GET CLEAN</span>
+    </div>
+  </section>
+
+  <!-- ===== FAQ ===== -->
+  <section class="faq" id="faq">
+    <h2 class="section-title section-title--dark">QUESTIONS?</h2>
+    <div class="faq__list">
+      <details class="faq__item">
+        <summary>Does my photo get uploaded anywhere?</summary>
+        <p>No. Everything — reading and stripping — happens in your browser with plain JavaScript. There is no server, no analytics on your files, no account. Turn off your Wi-Fi after the page loads and it still works.</p>
+      </details>
+      <details class="faq__item">
+        <summary>Does stripping reduce image quality?</summary>
+        <p>No. For JPEG and PNG, MetaStrip removes metadata segments byte-by-byte without touching the compressed pixel data — the image itself is bit-for-bit identical. Other formats fall back to a high-quality re-encode.</p>
+      </details>
+      <details class="faq__item">
+        <summary>Don't Instagram / WhatsApp already strip metadata?</summary>
+        <p>Big social platforms mostly do — but email, cloud drives, marketplaces, forums, blogs, and many messaging apps don't. If you're selling something on a classifieds site with photos taken at home, your address may be attached.</p>
+      </details>
+      <details class="faq__item">
+        <summary>What formats are supported?</summary>
+        <p>JPEG and PNG get full metadata inspection and lossless stripping. Other browser-readable images (WebP, AVIF, etc.) are cleaned via canvas re-encode.</p>
+      </details>
+      <details class="faq__item">
+        <summary>Is it open source?</summary>
+        <p>Yes — the whole thing is a few hundred lines of dependency-free JavaScript. <a href="https://github.com/rawsun007/metastrip">Read every byte on GitHub</a>.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="footer__cta">
+      <h2>STRIP YOUR PHOTOS.<br><em>THEN POST IT ALL.</em></h2>
+      <a class="pill pill--dark pill--big" href="#app">CLEAN A PHOTO ↑</a>
+    </div>
+    <div class="footer__row">
+      <a class="footer__tile" href="https://github.com/rawsun007" target="_blank" rel="noopener">GITHUB</a>
+      <a class="footer__tile" href="https://x.com/roshanramani007" target="_blank" rel="noopener">X</a>
+      <p class="footer__credit">Built by <a href="https://roshan-ramani.vercel.app/">Roshan Ramani</a> · 100% client-side · no cookies, no tracking</p>
+    </div>
+  </footer>
+
   <script src="js/exif.js"></script>
   <script src="js/stripper.js"></script>
   <script src="js/app.js"></script>
