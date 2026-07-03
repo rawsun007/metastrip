@@ -654,3 +654,29 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 820px) {
   .creator__card { grid-template-columns: 1fr; justify-items: start; }
 }
+
+/* ===== Per-button hover colors, spread across the palette ===== */
+.nav__links .pill:nth-child(1):hover { background: var(--accent-orange); color: #ffffff; }
+.nav__links .pill:nth-child(2):hover { background: var(--accent-yellow); color: #0a0a0a; }
+.nav__links .pill:nth-child(3):hover { background: var(--accent-blue); color: #0a0a0a; }
+.nav__links .pill:nth-child(4):hover { background: var(--accent-green); color: #0a0a0a; }
+.nav > .pill--dark:hover { background: var(--accent-purple); color: #ffffff; }
+
+.hero__ctas .pill--light:hover { background: var(--accent-green); color: #0a0a0a; }
+
+.leak-card--yellow .pill--dark:hover { background: var(--accent-orange); color: #ffffff; }
+.leak-card--violet .pill--dark:hover { background: var(--accent-purple); color: #ffffff; }
+.leak-card--blue .pill--dark:hover { background: var(--accent-yellow); color: #0a0a0a; }
+
+.gps-alert .pill--dark:hover { background: var(--accent-yellow); color: #0a0a0a; }
+
+.creator__links .pill:nth-child(1):hover { background: var(--accent-blue); color: #0a0a0a; }
+.creator__links .pill:nth-child(2):hover { background: var(--accent-purple); color: #ffffff; }
+.creator__links .pill:nth-child(3):hover { background: var(--accent-yellow); color: #0a0a0a; }
+.creator__links .pill:nth-child(4):hover { background: var(--accent-green); color: #0a0a0a; }
+
+.footer__cta .pill--dark:hover { background: var(--accent-orange); color: #ffffff; }
+.footer__tile:nth-child(1):hover { background: var(--accent-green); }
+.footer__tile:nth-child(2):hover { background: var(--accent-blue); }
+
+.pill--strip:hover { background: var(--accent-yellow); color: #0a0a0a; }
