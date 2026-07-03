@@ -22,51 +22,88 @@
     targets.forEach((el) => io.observe(el));
   }
 
-  /* ----- Smooth FAQ accordion ----- */
-  if (reduced) return; // native instant toggle is the accessible default
+  /* ----- Smooth FAQ accordion -----
+     Animates the whole <details> box height so open and close both
+     glide, and siblings below slide along with it. */
+  if (reduced) return; // native instant toggle stays for reduced motion
 
   const EASE = "cubic-bezier(0.32, 0.72, 0, 1)";
+  const accordions = [];
 
-  function expand(item, answer) {
-    item.dataset.busy = "1";
-    item.open = true;
-    const h = answer.scrollHeight;
-    const anim = answer.animate(
-      [{ height: "0px", opacity: 0 }, { height: h + "px", opacity: 1 }],
-      { duration: 400, easing: EASE }
-    );
-    anim.onfinish = () => delete item.dataset.busy;
-  }
+  class Accordion {
+    constructor(el) {
+      this.el = el;
+      this.summary = el.querySelector("summary");
+      this.content = el.querySelector(".faq__answer");
+      this.animation = null;
+      this.isClosing = false;
+      this.isExpanding = false;
+      this.summary.addEventListener("click", (e) => this.onClick(e));
+    }
 
-  function collapse(item, answer) {
-    item.dataset.busy = "1";
-    const h = answer.scrollHeight;
-    const anim = answer.animate(
-      [{ height: h + "px", opacity: 1 }, { height: "0px", opacity: 0 }],
-      { duration: 320, easing: EASE }
-    );
-    anim.onfinish = () => {
-      item.open = false;
-      delete item.dataset.busy;
-    };
-  }
+    chromeHeight() {
+      const cs = getComputedStyle(this.el);
+      return (
+        parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) +
+        parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth)
+      );
+    }
 
-  document.querySelectorAll(".faq__item").forEach((item) => {
-    const summary = item.querySelector("summary");
-    const answer = item.querySelector(".faq__answer");
-    if (!summary || !answer) return;
-    summary.addEventListener("click", (e) => {
+    onClick(e) {
       e.preventDefault();
-      if (item.dataset.busy) return;
-      if (item.open) {
-        collapse(item, answer);
-      } else {
-        document.querySelectorAll(".faq__item[open]").forEach((other) => {
-          const otherAnswer = other.querySelector(".faq__answer");
-          if (other !== item && otherAnswer && !other.dataset.busy) collapse(other, otherAnswer);
+      this.el.style.overflow = "hidden";
+      if (this.isClosing || !this.el.open) {
+        accordions.forEach((a) => {
+          if (a !== this && a.el.open && !a.isClosing) a.shrink();
         });
-        expand(item, answer);
+        this.open();
+      } else if (this.isExpanding || this.el.open) {
+        this.shrink();
       }
-    });
-  });
+    }
+
+    shrink() {
+      this.isClosing = true;
+      this.el.style.overflow = "hidden";
+      const startHeight = `${this.el.offsetHeight}px`;
+      const endHeight = `${this.summary.offsetHeight + this.chromeHeight()}px`;
+      if (this.animation) this.animation.cancel();
+      this.animation = this.el.animate(
+        { height: [startHeight, endHeight] },
+        { duration: 320, easing: EASE }
+      );
+      this.animation.onfinish = () => this.onAnimationFinish(false);
+      this.animation.oncancel = () => (this.isClosing = false);
+    }
+
+    open() {
+      this.el.style.height = `${this.el.offsetHeight}px`;
+      this.el.open = true;
+      requestAnimationFrame(() => this.expand());
+    }
+
+    expand() {
+      this.isExpanding = true;
+      const startHeight = `${this.el.offsetHeight}px`;
+      const endHeight = `${this.summary.offsetHeight + this.content.offsetHeight + this.chromeHeight()}px`;
+      if (this.animation) this.animation.cancel();
+      this.animation = this.el.animate(
+        { height: [startHeight, endHeight] },
+        { duration: 400, easing: EASE }
+      );
+      this.animation.onfinish = () => this.onAnimationFinish(true);
+      this.animation.oncancel = () => (this.isExpanding = false);
+    }
+
+    onAnimationFinish(open) {
+      this.el.open = open;
+      this.animation = null;
+      this.isClosing = false;
+      this.isExpanding = false;
+      this.el.style.height = "";
+      this.el.style.overflow = "";
+    }
+  }
+
+  document.querySelectorAll(".faq__item").forEach((el) => accordions.push(new Accordion(el)));
 })();
