@@ -16,21 +16,34 @@
   <!-- ===== STICKER SPRITE (Slush-style hand-drawn icons) ===== -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
-      <symbol id="st-pin" viewBox="0 0 100 100">
+      <!-- 4-point sparkle -->
+      <symbol id="st-spark" viewBox="0 0 40 40">
+        <path d="M20 2 L25 15 L38 20 L25 25 L20 38 L15 25 L2 20 L15 15 Z" fill="#ffffff" stroke="#0a0a0a" stroke-width="3" stroke-linejoin="round"/>
+      </symbol>
+      <!-- Map pin (3D extruded) -->
+      <symbol id="st-pin" viewBox="0 0 100 106">
+        <path d="M55 15 C35 15 21 30 21 49 C21 73 55 99 55 99 C55 99 89 73 89 49 C89 30 75 15 55 15 Z" fill="#a83102" stroke="#0a0a0a" stroke-width="5" stroke-linejoin="round"/>
         <path d="M50 8 C30 8 16 23 16 42 C16 66 50 92 50 92 C50 92 84 66 84 42 C84 23 70 8 50 8 Z" fill="#fb4903" stroke="#0a0a0a" stroke-width="5" stroke-linejoin="round"/>
         <circle cx="50" cy="41" r="13" fill="#ffffff" stroke="#0a0a0a" stroke-width="4"/>
         <path d="M30 20 Q38 13 47 12" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.85"/>
       </symbol>
-      <symbol id="st-camera" viewBox="0 0 120 100">
+      <!-- Camera (3D extruded) -->
+      <symbol id="st-camera" viewBox="0 0 128 108">
+        <g transform="translate(7,9)">
+          <rect x="42" y="12" width="36" height="20" rx="8" fill="#3b2fb3" stroke="#0a0a0a" stroke-width="5"/>
+          <rect x="8" y="26" width="104" height="62" rx="14" fill="#3b2fb3" stroke="#0a0a0a" stroke-width="5"/>
+        </g>
         <rect x="42" y="12" width="36" height="20" rx="8" fill="#5c4ade" stroke="#0a0a0a" stroke-width="5"/>
         <rect x="8" y="26" width="104" height="62" rx="14" fill="#5c4ade" stroke="#0a0a0a" stroke-width="5"/>
         <circle cx="60" cy="57" r="21" fill="#ffffff" stroke="#0a0a0a" stroke-width="5"/>
         <circle cx="60" cy="57" r="10" fill="#4da2ff" stroke="#0a0a0a" stroke-width="4"/>
         <rect x="20" y="38" width="14" height="9" rx="4" fill="#ffd731" stroke="#0a0a0a" stroke-width="3.5"/>
         <circle cx="98" cy="40" r="5" fill="#ffd731" stroke="#0a0a0a" stroke-width="3.5"/>
-        <path d="M18 32 Q14 32 12 36" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+        <path d="M22 80 Q40 84 58 82" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
       </symbol>
-      <symbol id="st-polaroid" viewBox="0 0 100 110">
+      <!-- Polaroid (3D extruded) -->
+      <symbol id="st-polaroid" viewBox="0 0 104 116">
+        <rect x="14" y="13" width="84" height="98" rx="10" fill="#b9b9b9" stroke="#0a0a0a" stroke-width="5"/>
         <rect x="8" y="6" width="84" height="98" rx="10" fill="#ffffff" stroke="#0a0a0a" stroke-width="5"/>
         <rect x="17" y="15" width="66" height="62" fill="#4da2ff" stroke="#0a0a0a" stroke-width="4"/>
         <circle cx="38" cy="33" r="8" fill="#ffd731" stroke="#0a0a0a" stroke-width="3.5"/>
@@ -38,33 +51,53 @@
         <path d="M50 77 L69 53 L83 77 Z" fill="#55db9c" stroke="#0a0a0a" stroke-width="4" stroke-linejoin="round"/>
         <rect x="26" y="88" width="48" height="7" rx="3.5" fill="#0a0a0a" opacity="0.18"/>
       </symbol>
-      <symbol id="st-scissors" viewBox="0 0 100 100">
+      <!-- Scissors (3D extruded) -->
+      <symbol id="st-scissors" viewBox="0 0 104 104">
+        <g transform="translate(4,6)">
+          <path d="M32 12 L62 68" stroke="#0a0a0a" stroke-width="8" stroke-linecap="round" opacity="0.9"/>
+          <path d="M68 12 L38 68" stroke="#0a0a0a" stroke-width="8" stroke-linecap="round" opacity="0.9"/>
+          <circle cx="30" cy="78" r="13" fill="#2fa06c" stroke="#0a0a0a" stroke-width="5"/>
+          <circle cx="70" cy="78" r="13" fill="#2fa06c" stroke="#0a0a0a" stroke-width="5"/>
+        </g>
         <path d="M32 12 L62 68" stroke="#0a0a0a" stroke-width="8" stroke-linecap="round"/>
         <path d="M68 12 L38 68" stroke="#0a0a0a" stroke-width="8" stroke-linecap="round"/>
-        <circle cx="30" cy="80" r="13" fill="#55db9c" stroke="#0a0a0a" stroke-width="5"/>
-        <circle cx="70" cy="80" r="13" fill="#55db9c" stroke="#0a0a0a" stroke-width="5"/>
-        <circle cx="50" cy="45" r="6" fill="#ffd731" stroke="#0a0a0a" stroke-width="3.5"/>
+        <circle cx="30" cy="78" r="13" fill="#55db9c" stroke="#0a0a0a" stroke-width="5"/>
+        <circle cx="70" cy="78" r="13" fill="#55db9c" stroke="#0a0a0a" stroke-width="5"/>
+        <circle cx="50" cy="43" r="6" fill="#ffd731" stroke="#0a0a0a" stroke-width="3.5"/>
       </symbol>
-      <symbol id="st-clock" viewBox="0 0 100 100">
+      <!-- Alarm clock (3D extruded) -->
+      <symbol id="st-clock" viewBox="0 0 104 104">
+        <g transform="translate(5,7)">
+          <circle cx="27" cy="19" r="10" fill="#b33303" stroke="#0a0a0a" stroke-width="4"/>
+          <circle cx="73" cy="19" r="10" fill="#b33303" stroke="#0a0a0a" stroke-width="4"/>
+          <circle cx="50" cy="54" r="35" fill="#cfa30a" stroke="#0a0a0a" stroke-width="5"/>
+        </g>
         <circle cx="27" cy="19" r="10" fill="#fb4903" stroke="#0a0a0a" stroke-width="4"/>
         <circle cx="73" cy="19" r="10" fill="#fb4903" stroke="#0a0a0a" stroke-width="4"/>
         <circle cx="50" cy="54" r="35" fill="#ffd731" stroke="#0a0a0a" stroke-width="5"/>
         <path d="M50 54 L50 33" stroke="#0a0a0a" stroke-width="6" stroke-linecap="round"/>
         <path d="M50 54 L66 61" stroke="#0a0a0a" stroke-width="6" stroke-linecap="round"/>
         <circle cx="50" cy="54" r="4.5" fill="#0a0a0a"/>
+        <path d="M28 36 Q34 28 43 25" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.75"/>
       </symbol>
-      <symbol id="st-idcard" viewBox="0 0 120 90">
+      <!-- ID card (3D extruded) -->
+      <symbol id="st-idcard" viewBox="0 0 126 96">
+        <rect x="12" y="14" width="108" height="74" rx="12" fill="#c39fe0" stroke="#0a0a0a" stroke-width="5"/>
         <rect x="6" y="8" width="108" height="74" rx="12" fill="#e9ccff" stroke="#0a0a0a" stroke-width="5"/>
         <circle cx="34" cy="40" r="13" fill="#4da2ff" stroke="#0a0a0a" stroke-width="4"/>
         <rect x="56" y="28" width="44" height="9" rx="4.5" fill="#0a0a0a"/>
         <rect x="56" y="44" width="30" height="9" rx="4.5" fill="#0a0a0a" opacity="0.55"/>
-        <rect x="18" y="62" width="84" height="7" rx="3.5" fill="#fb4903" stroke="#0a0a0a" stroke-width="2.5"/>
+        <rect x="16" y="62" width="88" height="7" rx="3.5" fill="#fb4903" stroke="#0a0a0a" stroke-width="2.5"/>
       </symbol>
-      <symbol id="st-shield" viewBox="0 0 100 110">
+      <!-- Shield (3D extruded) -->
+      <symbol id="st-shield" viewBox="0 0 104 118">
+        <path d="M55 12 L93 26 L93 58 C93 86 75 102 55 110 C35 102 17 86 17 58 L17 26 Z" fill="#2fa06c" stroke="#0a0a0a" stroke-width="5" stroke-linejoin="round"/>
         <path d="M50 6 L88 20 L88 52 C88 80 70 96 50 104 C30 96 12 80 12 52 L12 20 Z" fill="#55db9c" stroke="#0a0a0a" stroke-width="5" stroke-linejoin="round"/>
         <path d="M32 54 L46 68 L70 40" fill="none" stroke="#0a0a0a" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
       </symbol>
-      <symbol id="st-warn" viewBox="0 0 110 100">
+      <!-- Warning (3D extruded) -->
+      <symbol id="st-warn" viewBox="0 0 114 106">
+        <path d="M59 14 L108 98 L10 98 Z" fill="#cfa30a" stroke="#0a0a0a" stroke-width="5" stroke-linejoin="round"/>
         <path d="M55 8 L104 92 L6 92 Z" fill="#ffd731" stroke="#0a0a0a" stroke-width="5" stroke-linejoin="round"/>
         <rect x="50" y="36" width="10" height="30" rx="5" fill="#0a0a0a"/>
         <circle cx="55" cy="79" r="6" fill="#0a0a0a"/>
@@ -85,10 +118,39 @@
 
   <!-- ===== HERO ===== -->
   <section class="hero" id="top">
+    <svg class="hero__tube" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <linearGradient id="tubeGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#6db3ff"/>
+          <stop offset="0.5" stop-color="#2e86f5"/>
+          <stop offset="1" stop-color="#1462d4"/>
+        </linearGradient>
+        <filter id="foam" x="-20%" y="-20%" width="140%" height="140%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" seed="7" result="n"/>
+          <feDiffuseLighting in="n" lighting-color="#ffffff" surfaceScale="1.5" result="l">
+            <feDistantLight azimuth="235" elevation="62"/>
+          </feDiffuseLighting>
+          <feComposite in="l" in2="SourceGraphic" operator="in" result="lit"/>
+          <feBlend in="SourceGraphic" in2="lit" mode="multiply"/>
+        </filter>
+      </defs>
+      <path d="M-150 700 C 250 950, 430 250, 800 430 C 1170 610, 1260 60, 1760 230"
+            fill="none" stroke="#1a5fb8" stroke-width="235" stroke-linecap="round"
+            opacity="0.3" transform="translate(14,30)" style="filter: blur(26px)"/>
+      <path d="M-150 700 C 250 950, 430 250, 800 430 C 1170 610, 1260 60, 1760 230"
+            fill="none" stroke="url(#tubeGrad)" stroke-width="220" stroke-linecap="round"
+            filter="url(#foam)"/>
+      <path d="M-150 700 C 250 950, 430 250, 800 430 C 1170 610, 1260 60, 1760 230"
+            fill="none" stroke="#ffffff" stroke-width="70" stroke-linecap="round"
+            opacity="0.22" transform="translate(-20,-34)" style="filter: blur(30px)"/>
+    </svg>
     <span class="sticker sticker--pin" aria-hidden="true"><svg><use href="#st-pin"/></svg></span>
     <span class="sticker sticker--cam" aria-hidden="true"><svg><use href="#st-camera"/></svg></span>
     <span class="sticker sticker--cut" aria-hidden="true"><svg><use href="#st-scissors"/></svg></span>
     <span class="sticker sticker--photo" aria-hidden="true"><svg><use href="#st-polaroid"/></svg></span>
+    <span class="sticker sticker--spark1" aria-hidden="true"><svg><use href="#st-spark"/></svg></span>
+    <span class="sticker sticker--spark2" aria-hidden="true"><svg><use href="#st-spark"/></svg></span>
+    <span class="sticker sticker--spark3" aria-hidden="true"><svg><use href="#st-spark"/></svg></span>
     <h1 class="hero__title">METASTRIP</h1>
     <p class="hero__tagline">Your photos. Untracked.</p>
     <div class="hero__ctas">
