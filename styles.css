@@ -1,0 +1,160 @@
+/* ============================================================
+   MetaStrip — design system inspired by slush.app
+   Dark canvas, vivid accents, giant condensed type, pill shapes
+   ============================================================ */
+
+:root {
+  --color-bg: #000000;
+  --color-hero: #dceeff;
+  --color-text: #ffffff;
+  --color-text-dark: #0a0a0a;
+  --color-muted: #999999;
+  --color-border: #222222;
+
+  --accent-orange: #fb4903;
+  --accent-yellow: #ffd731;
+  --accent-blue: #4da2ff;
+  --accent-green: #55db9c;
+  --accent-violet: #e9ccff;
+  --accent-purple: #5c4ade;
+
+  --font-display: "Anton", "Arial Narrow", sans-serif;
+  --font-body: "Archivo", "Helvetica Neue", sans-serif;
+
+  --radius-card: 30px;
+  --radius-pill: 999px;
+  --gap: 16px;
+
+  --ease-smooth: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+img { max-width: 100%; display: block; }
+a { color: inherit; text-decoration: none; }
+
+/* ===== Pills / buttons ===== */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-pill);
+  padding: 12px 26px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.25s var(--ease-smooth), background 0.25s, color 0.25s;
+}
+.pill:hover { transform: scale(1.05); }
+.pill:active { transform: scale(0.97); }
+
+.pill--nav {
+  background: #ffffff;
+  color: var(--color-text-dark);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+.pill--dark { background: #000000; color: #ffffff; }
+.pill--light { background: #ffffff; color: var(--color-text-dark); border-color: #000000; }
+.pill--accent { background: var(--accent-orange); color: #ffffff; cursor: default; }
+.pill--big { padding: 18px 34px; font-size: 15px; }
+
+/* ===== Nav ===== */
+.nav {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
+  padding: 28px clamp(20px, 4vw, 56px);
+}
+.nav__logo {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--color-text-dark);
+  font-family: var(--font-display);
+  font-size: 26px;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid rgba(0,0,0,0.1);
+  transition: transform 0.25s var(--ease-smooth);
+}
+.nav__logo:hover { transform: rotate(-8deg) scale(1.08); }
+.nav__links { display: flex; gap: 10px; }
+
+/* ===== Hero ===== */
+.hero {
+  position: relative;
+  min-height: 92vh;
+  background: var(--color-hero);
+  color: var(--color-text-dark);
+  border-radius: 0 0 var(--radius-card) var(--radius-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 140px 20px 80px;
+  overflow: hidden;
+}
+.hero__title {
+  font-family: var(--font-display);
+  font-size: clamp(72px, 17.5vw, 300px);
+  line-height: 0.9;
+  letter-spacing: 0.01em;
+  color: #0a0a0a;
+  user-select: none;
+}
+.hero__tagline {
+  font-size: clamp(24px, 4vw, 56px);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin-top: 24px;
+}
+.hero__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 44px;
+}
+
+/* Floating stickers */
+.sticker {
+  position: absolute;
+  font-size: clamp(48px, 7vw, 110px);
+  filter: drop-shadow(0 6px 0 rgba(0, 0, 0, 0.18));
+  animation: float 5s ease-in-out infinite;
+  user-select: none;
+  pointer-events: none;
+}
+.sticker--pin { top: 22%; left: 12%; transform: rotate(-14deg); animation-delay: 0s; }
+.sticker--cam { top: 30%; right: 12%; transform: rotate(12deg); animation-delay: 1.2s; }
+.sticker--sat { bottom: 18%; left: 22%; transform: rotate(8deg); animation-delay: 2.1s; }
+
+@keyframes float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -18px; }
+}
+
+@media (max-width: 640px) {
+  .nav__links { display: none; }
+  .sticker--sat { display: none; }
+}
