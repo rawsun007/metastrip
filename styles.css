@@ -728,3 +728,19 @@ a { color: inherit; text-decoration: none; }
   60% { transform: rotate(-7deg) scale(1.25); }
   to { transform: rotate(-7deg) scale(1); }
 }
+
+/* ===== Strip all bar ===== */
+.strip-all {
+  margin-top: 32px;
+  background: #111111;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 18px 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  animation: card-in 0.5s var(--ease-smooth);
+}
+.strip-all p { font-weight: 700; font-size: 15px; }

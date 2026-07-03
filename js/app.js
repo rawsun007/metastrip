@@ -56,8 +56,36 @@ async function handleFiles(fileList) {
     const card = await renderCard(file);
     resultsEl.prepend(card);
   }
+  updateStripAllBar();
   resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+
+/* ----- Strip all ----- */
+const stripAllBar = document.getElementById("stripAllBar");
+const stripAllBtn = document.getElementById("stripAllBtn");
+const stripAllLabel = document.getElementById("stripAllLabel");
+
+function updateStripAllBar() {
+  const count = resultsEl.children.length;
+  stripAllBar.hidden = count < 2;
+  if (count >= 2) stripAllLabel.textContent = `${count} photos loaded`;
+}
+
+stripAllBtn.addEventListener("click", async () => {
+  const buttons = [...resultsEl.querySelectorAll(".result-card .pill--strip")];
+  if (!buttons.length) return;
+  stripAllBtn.disabled = true;
+  for (let i = 0; i < buttons.length; i++) {
+    stripAllBtn.textContent = `STRIPPING ${i + 1} OF ${buttons.length}`;
+    buttons[i].click();
+    await new Promise((r) => setTimeout(r, 700));
+  }
+  stripAllBtn.textContent = "ALL CLEANED";
+  setTimeout(() => {
+    stripAllBtn.disabled = false;
+    stripAllBtn.textContent = "STRIP ALL & DOWNLOAD";
+  }, 3000);
+});
 
 const icon = (id, cls = "icon") => `<svg class="${cls}" aria-hidden="true"><use href="#${id}"></use></svg>`;
 
