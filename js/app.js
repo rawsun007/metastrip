@@ -52,6 +52,20 @@ const RISK_META = {
   time: { icon: icon("st-clock") },
 };
 
+function scoreMeta(meta) {
+  if (meta.gps) return { label: "LEAKING", cls: "score-badge--leak" };
+  if (meta.fields.length) return { label: "RISKY", cls: "score-badge--risky" };
+  return { label: "CLEAN", cls: "score-badge--clean" };
+}
+
+function makeBadge(meta) {
+  const { label, cls } = scoreMeta(meta);
+  const badge = document.createElement("span");
+  badge.className = `score-badge ${cls}`;
+  badge.textContent = label;
+  return badge;
+}
+
 async function renderCard(file) {
   const card = document.createElement("article");
   card.className = "result-card";
@@ -116,7 +130,11 @@ async function renderCard(file) {
 
   body.appendChild(buildActions(file, meta));
 
-  card.append(preview, body);
+  const media = document.createElement("div");
+  media.className = "result-card__media";
+  media.append(preview, makeBadge(meta));
+
+  card.append(media, body);
   return card;
 }
 
@@ -198,6 +216,13 @@ function showComparison(actionsEl, beforeMeta, cleanBuffer) {
     </div>
   `;
   actionsEl.after(compare);
+
+  const badge = card.querySelector(".score-badge");
+  if (badge) {
+    const fresh = makeBadge(afterMeta);
+    badge.replaceWith(fresh);
+    fresh.classList.add("score-badge--flip");
+  }
 }
 
 function escapeHtml(s) {
