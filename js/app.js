@@ -109,8 +109,8 @@ async function renderCard(file) {
     clean.className = "meta-clean";
     clean.innerHTML =
       meta.format === "other"
-        ? `${icon("st-warn")} Format not fully supported yet — metadata may still be present.`
-        : `${icon("st-shield")} No readable metadata found. This photo looks clean already.`;
+        ? `${icon("st-warn")} This format is not fully supported yet, so something may still be hiding in there.`
+        : `${icon("st-shield")} Nothing readable in here. This photo already looks clean.`;
     body.appendChild(clean);
   }
 
@@ -146,11 +146,11 @@ function buildActions(file, meta) {
       const saved = file.size - blob.size;
       btn.innerHTML = `${icon("st-shield")} CLEANED`;
       note.textContent = result.lossless
-        ? `Lossless — pixels untouched. ${saved > 0 ? formatBytes(saved) + " of metadata removed." : "Metadata removed."}`
-        : "Re-encoded via canvas (format has no lossless path). Metadata gone.";
+        ? `Done. Pixels untouched${saved > 0 ? ", " + formatBytes(saved) + " of metadata gone" : ""}.`
+        : "Done. This format needed a fresh re-encode, and the metadata is gone.";
     } catch (err) {
       console.error(err);
-      btn.innerHTML = `${icon("st-warn")} FAILED — TRY ANOTHER FILE`;
+      btn.innerHTML = `${icon("st-warn")} THAT ONE FAILED, TRY ANOTHER`;
     } finally {
       btn.disabled = false;
       setTimeout(() => (btn.innerHTML = `${icon("st-scissors")} STRIP & DOWNLOAD`), 4000);
@@ -160,7 +160,7 @@ function buildActions(file, meta) {
   const note = document.createElement("span");
   note.className = "result-card__note";
   note.textContent =
-    meta.format === "other" ? "Will re-encode to JPEG to remove metadata." : "Lossless — zero quality loss.";
+    meta.format === "other" ? "This format will get a fresh JPEG re-encode." : "Lossless. Zero quality loss.";
 
   actions.append(btn, note);
   return actions;

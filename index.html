@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MetaStrip — Your photos. Untracked.</title>
-  <meta name="description" content="Your photos leak your location, device, and timeline. See it, then strip it — 100% in your browser. No upload. No server. No account." />
+  <title>MetaStrip | Your photos. Untracked.</title>
+  <meta name="description" content="Your photos quietly carry your location, your device details and the exact time you took them. See it, then strip it, right in your browser. No upload, no server, no account." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23fb4903'/><text x='50' y='68' font-size='52' font-family='Arial Black' font-weight='900' text-anchor='middle' fill='white'>M</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -160,8 +160,8 @@
     <h2 class="section-title section-title--light reveal">DROP IT.<br>SEE THE LEAK.</h2>
     <div class="dropzone reveal" id="dropzone" tabindex="0" role="button" aria-label="Upload photos to inspect and clean">
       <span class="dropzone__emoji" aria-hidden="true"><svg><use href="#st-polaroid"/></svg></span>
-      <p class="dropzone__text">Drag photos here — or click to choose</p>
-      <p class="dropzone__hint">JPEG &amp; PNG · nothing ever uploads · works offline</p>
+      <p class="dropzone__text">Drag a photo here, or click to choose one</p>
+      <p class="dropzone__hint">JPEG and PNG. Nothing leaves your device, it even works with Wi-Fi off.</p>
       <input type="file" id="fileInput" accept="image/*" multiple hidden />
     </div>
     <div class="results" id="results"></div>
@@ -179,7 +179,7 @@
       </article>
       <article class="leak-card leak-card--violet reveal" style="--d:.12s">
         <h3>YOUR DEVICE<br>FINGERPRINT</h3>
-        <p>Camera make, model, lens, software — even serial numbers and owner names. Enough to tie photos back to you.</p>
+        <p>Camera make, model, lens, software, sometimes even a serial number and an owner name. Plenty to tie a photo back to you.</p>
         <a class="pill pill--dark" href="#app">SEE IT LEAK ↗</a>
         <span class="leak-card__emoji" aria-hidden="true"><svg><use href="#st-camera"/></svg></span>
       </article>
@@ -239,15 +239,15 @@
     <div class="faq__list">
       <details class="faq__item reveal" style="--d:0.00s">
         <summary>Does my photo get uploaded anywhere?</summary>
-        <p>No. Everything — reading and stripping — happens in your browser with plain JavaScript. There is no server, no analytics on your files, no account. Turn off your Wi-Fi after the page loads and it still works.</p>
+        <p>No. All the reading and stripping happens right in your browser with plain JavaScript. There is no server, no account, and we never see your files. Turn off your Wi-Fi after the page loads and it still works.</p>
       </details>
       <details class="faq__item reveal" style="--d:0.08s">
         <summary>Does stripping reduce image quality?</summary>
-        <p>No. For JPEG and PNG, MetaStrip removes metadata segments byte-by-byte without touching the compressed pixel data — the image itself is bit-for-bit identical. Other formats fall back to a high-quality re-encode.</p>
+        <p>No. For JPEG and PNG, MetaStrip removes the metadata blocks byte by byte and never touches the compressed pixel data. The image itself stays bit for bit identical. Other formats fall back to a high quality re-encode.</p>
       </details>
       <details class="faq__item reveal" style="--d:0.16s">
         <summary>Don't Instagram / WhatsApp already strip metadata?</summary>
-        <p>Big social platforms mostly do — but email, cloud drives, marketplaces, forums, blogs, and many messaging apps don't. If you're selling something on a classifieds site with photos taken at home, your address may be attached.</p>
+        <p>Most big social feeds do. Email, cloud drives, marketplaces, forums, blogs and plenty of messaging apps do not. If you sell something on a classifieds site with photos taken at home, your address may be riding along.</p>
       </details>
       <details class="faq__item reveal" style="--d:0.24s">
         <summary>What formats are supported?</summary>
@@ -255,7 +255,7 @@
       </details>
       <details class="faq__item reveal" style="--d:0.32s">
         <summary>Is it open source?</summary>
-        <p>Yes — the whole thing is a few hundred lines of dependency-free JavaScript. <a href="https://github.com/rawsun007/metastrip">Read every byte on GitHub</a>.</p>
+        <p>Yes. The whole thing is a few hundred lines of plain JavaScript with zero dependencies. <a href="https://github.com/rawsun007/metastrip">Read every byte on GitHub</a>.</p>
       </details>
     </div>
   </section>
@@ -269,7 +269,7 @@
     <div class="footer__row">
       <a class="footer__tile" href="https://github.com/rawsun007" target="_blank" rel="noopener">GITHUB</a>
       <a class="footer__tile" href="https://x.com/roshanramani007" target="_blank" rel="noopener">X</a>
-      <p class="footer__credit">Built by <a href="https://roshan-ramani.vercel.app/">Roshan Ramani</a> · 100% client-side · no cookies, no tracking</p>
+      <p class="footer__credit">Built by <a href="https://roshan-ramani.vercel.app/">Roshan Ramani</a>. Runs fully on your device. No cookies, no tracking.</p>
     </div>
   </footer>
 
