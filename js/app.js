@@ -418,3 +418,29 @@ function showComparison(actionsEl, beforeMeta, cleanBuffer) {
 function escapeHtml(s) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
+
+/* ----- PWA: service worker + shared photos from the Android share sheet ----- */
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js").catch(() => {});
+}
+
+(async function pickUpSharedPhotos() {
+  if (!/[?&]shared=/.test(location.search) || !("caches" in window)) return;
+  try {
+    const inbox = await caches.open("share-inbox");
+    const keys = await inbox.keys();
+    const files = [];
+    for (const req of keys) {
+      const res = await inbox.match(req);
+      if (!res) continue;
+      const blob = await res.blob();
+      const name = decodeURIComponent(res.headers.get("X-Name") || "shared.jpg");
+      files.push(new File([blob], name, { type: blob.type }));
+      await inbox.delete(req);
+    }
+    history.replaceState(null, "", location.pathname);
+    if (files.length) handleFiles(files);
+  } catch (err) {
+    console.error("shared photo pickup failed", err);
+  }
+})();
