@@ -148,6 +148,7 @@ function buildActions(file, meta) {
       note.textContent = result.lossless
         ? `Done. Pixels untouched${saved > 0 ? ", " + formatBytes(saved) + " of metadata gone" : ""}.`
         : "Done. This format needed a fresh re-encode, and the metadata is gone.";
+      showComparison(actions, meta, await blob.arrayBuffer());
     } catch (err) {
       console.error(err);
       btn.innerHTML = `${icon("st-warn")} THAT ONE FAILED, TRY ANOTHER`;
@@ -164,6 +165,39 @@ function buildActions(file, meta) {
 
   actions.append(btn, note);
   return actions;
+}
+
+function showComparison(actionsEl, beforeMeta, cleanBuffer) {
+  const card = actionsEl.closest(".result-card");
+  if (!card || card.querySelector(".strip-compare")) return;
+
+  let afterMeta = { fields: [], gps: null };
+  try {
+    afterMeta = parseMetadata(cleanBuffer);
+  } catch (err) {
+    console.error("post-strip parse failed", err);
+  }
+
+  const describe = (m) => {
+    const parts = [];
+    if (m.gps) parts.push("location");
+    if (m.fields.length) parts.push(`${m.fields.length} ${m.fields.length === 1 ? "field" : "fields"}`);
+    return parts.length ? parts.join(" and ") : "nothing";
+  };
+
+  const compare = document.createElement("div");
+  compare.className = "strip-compare";
+  compare.innerHTML = `
+    <div class="strip-compare__col strip-compare__col--before">
+      <span>BEFORE</span>
+      <strong>${describe(beforeMeta)}</strong>
+    </div>
+    <div class="strip-compare__col strip-compare__col--after">
+      <span>AFTER</span>
+      <strong>${describe(afterMeta)}</strong>
+    </div>
+  `;
+  actionsEl.after(compare);
 }
 
 function escapeHtml(s) {
