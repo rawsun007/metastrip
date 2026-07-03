@@ -755,3 +755,22 @@ a { color: inherit; text-decoration: none; }
 }
 .pill--copy:hover { background: var(--accent-blue); color: #0a0a0a; border-color: #0a0a0a; }
 .pill--copy:disabled { opacity: 0.6; cursor: wait; transform: none; }
+
+/* ===== Mini map ===== */
+.gps-alert__actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.mini-map { margin-top: 14px; animation: card-in 0.5s var(--ease-smooth); }
+.mini-map__frame {
+  position: relative;
+  width: 256px;
+  height: 256px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 3px solid #0a0a0a;
+}
+.mini-map__frame img { display: block; }
+.mini-map__pin {
+  position: absolute;
+  transform: translate(-50%, -100%);
+}
+.mini-map__pin .icon { width: 34px; height: 34px; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.4)); }
+.mini-map__credit { color: var(--color-muted); font-size: 12px; margin-top: 8px; }

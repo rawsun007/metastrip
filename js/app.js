@@ -141,10 +141,18 @@ async function renderCard(file) {
     alert.innerHTML = `
       <div>
         <strong>${icon("st-pin", "icon icon--alert")} THIS PHOTO LEAKS YOUR LOCATION</strong>
-        <p>${lat.toFixed(6)}, ${lon.toFixed(6)}${alt != null ? ` · ${alt.toFixed(0)}m altitude` : ""}</p>
+        <p>${lat.toFixed(6)}, ${lon.toFixed(6)}${alt != null ? `, ${alt.toFixed(0)}m altitude` : ""}</p>
       </div>
-      <a class="pill pill--dark" href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" rel="noopener">OPEN THE MAP</a>
+      <div class="gps-alert__actions">
+        <button class="pill pill--dark gps-alert__minimap-btn" type="button">SHOW MINI MAP</button>
+        <a class="pill pill--dark" href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" rel="noopener">OPEN THE MAP</a>
+      </div>
     `;
+    alert.querySelector(".gps-alert__minimap-btn").addEventListener("click", (e) => {
+      const btn = e.currentTarget;
+      btn.remove();
+      alert.after(buildMiniMap(lat, lon));
+    });
     body.appendChild(alert);
   }
 
@@ -180,6 +188,34 @@ async function renderCard(file) {
 
   card.append(media, body);
   return card;
+}
+
+/* Mini map: one OpenStreetMap tile, loaded only when asked, with the
+   pin placed at the exact fraction of the tile the coordinates fall on. */
+function tileMath(lat, lon, zoom) {
+  const n = 2 ** zoom;
+  const xFloat = ((lon + 180) / 360) * n;
+  const latRad = (lat * Math.PI) / 180;
+  const yFloat = ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n;
+  const x = Math.floor(xFloat);
+  const y = Math.floor(yFloat);
+  return { x, y, px: (xFloat - x) * 256, py: (yFloat - y) * 256 };
+}
+
+function buildMiniMap(lat, lon) {
+  const zoom = 14;
+  const { x, y, px, py } = tileMath(lat, lon, zoom);
+  const map = document.createElement("div");
+  map.className = "mini-map";
+  map.innerHTML = `
+    <div class="mini-map__frame">
+      <img src="https://tile.openstreetmap.org/${zoom}/${x}/${y}.png" width="256" height="256"
+           alt="Map around the location this photo leaks" loading="lazy" />
+      <span class="mini-map__pin" style="left:${px.toFixed(0)}px; top:${py.toFixed(0)}px">${icon("st-pin", "icon icon--pin")}</span>
+    </div>
+    <p class="mini-map__credit">Map tile from OpenStreetMap, fetched only because you asked.</p>
+  `;
+  return map;
 }
 
 function buildActions(file, meta) {
