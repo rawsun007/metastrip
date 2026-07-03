@@ -156,8 +156,8 @@
 
   <!-- ===== APP ===== -->
   <section class="app" id="app">
-    <h2 class="section-title section-title--light">DROP IT.<br>SEE THE LEAK.</h2>
-    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload photos to inspect and clean">
+    <h2 class="section-title section-title--light reveal">DROP IT.<br>SEE THE LEAK.</h2>
+    <div class="dropzone reveal" id="dropzone" tabindex="0" role="button" aria-label="Upload photos to inspect and clean">
       <span class="dropzone__emoji" aria-hidden="true"><svg><use href="#st-polaroid"/></svg></span>
       <p class="dropzone__text">Drag photos here — or click to choose</p>
       <p class="dropzone__hint">JPEG &amp; PNG · nothing ever uploads · works offline</p>
@@ -168,21 +168,21 @@
 
   <!-- ===== WHAT LEAKS ===== -->
   <section class="leaks" id="leaks">
-    <h2 class="section-title section-title--dark">Privacy for humans.<br>Not just paranoids.</h2>
+    <h2 class="section-title section-title--dark reveal">Privacy for humans.<br>Not just paranoids.</h2>
     <div class="leaks__grid">
-      <article class="leak-card leak-card--yellow">
+      <article class="leak-card leak-card--yellow reveal">
         <h3>YOUR EXACT<br>LOCATION</h3>
         <p>Phones embed GPS coordinates in every photo. Post one from home and anyone can pull your address off it.</p>
         <a class="pill pill--dark" href="#app">SEE IT LEAK ↗</a>
         <span class="leak-card__emoji" aria-hidden="true"><svg><use href="#st-pin"/></svg></span>
       </article>
-      <article class="leak-card leak-card--violet">
+      <article class="leak-card leak-card--violet reveal" style="--d:.12s">
         <h3>YOUR DEVICE<br>FINGERPRINT</h3>
         <p>Camera make, model, lens, software — even serial numbers and owner names. Enough to tie photos back to you.</p>
         <a class="pill pill--dark" href="#app">SEE IT LEAK ↗</a>
         <span class="leak-card__emoji" aria-hidden="true"><svg><use href="#st-camera"/></svg></span>
       </article>
-      <article class="leak-card leak-card--blue">
+      <article class="leak-card leak-card--blue reveal" style="--d:.24s">
         <h3>YOUR<br>TIMELINE</h3>
         <p>Exact timestamps down to the second. Combine with GPS and a stranger knows where you were, and when.</p>
         <a class="pill pill--dark" href="#app">SEE IT LEAK ↗</a>
@@ -209,25 +209,25 @@
 
   <!-- ===== FAQ ===== -->
   <section class="faq" id="faq">
-    <h2 class="section-title section-title--dark">QUESTIONS?</h2>
+    <h2 class="section-title section-title--dark reveal">QUESTIONS?</h2>
     <div class="faq__list">
-      <details class="faq__item">
+      <details class="faq__item reveal" style="--d:0.00s">
         <summary>Does my photo get uploaded anywhere?</summary>
         <p>No. Everything — reading and stripping — happens in your browser with plain JavaScript. There is no server, no analytics on your files, no account. Turn off your Wi-Fi after the page loads and it still works.</p>
       </details>
-      <details class="faq__item">
+      <details class="faq__item reveal" style="--d:0.08s">
         <summary>Does stripping reduce image quality?</summary>
         <p>No. For JPEG and PNG, MetaStrip removes metadata segments byte-by-byte without touching the compressed pixel data — the image itself is bit-for-bit identical. Other formats fall back to a high-quality re-encode.</p>
       </details>
-      <details class="faq__item">
+      <details class="faq__item reveal" style="--d:0.16s">
         <summary>Don't Instagram / WhatsApp already strip metadata?</summary>
         <p>Big social platforms mostly do — but email, cloud drives, marketplaces, forums, blogs, and many messaging apps don't. If you're selling something on a classifieds site with photos taken at home, your address may be attached.</p>
       </details>
-      <details class="faq__item">
+      <details class="faq__item reveal" style="--d:0.24s">
         <summary>What formats are supported?</summary>
         <p>JPEG and PNG get full metadata inspection and lossless stripping. Other browser-readable images (WebP, AVIF, etc.) are cleaned via canvas re-encode.</p>
       </details>
-      <details class="faq__item">
+      <details class="faq__item reveal" style="--d:0.32s">
         <summary>Is it open source?</summary>
         <p>Yes — the whole thing is a few hundred lines of dependency-free JavaScript. <a href="https://github.com/rawsun007/metastrip">Read every byte on GitHub</a>.</p>
       </details>
@@ -236,7 +236,7 @@
 
   <!-- ===== FOOTER ===== -->
   <footer class="footer">
-    <div class="footer__cta">
+    <div class="footer__cta reveal">
       <h2>STRIP YOUR PHOTOS.<br><em>THEN POST IT ALL.</em></h2>
       <a class="pill pill--dark pill--big" href="#app">CLEAN A PHOTO ↑</a>
     </div>
@@ -247,6 +247,7 @@
     </div>
   </footer>
 
+  <script src="js/motion.js"></script>
   <script src="js/exif.js"></script>
   <script src="js/stripper.js"></script>
   <script src="js/app.js"></script>
