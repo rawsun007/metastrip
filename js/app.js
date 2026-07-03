@@ -66,7 +66,7 @@ async function renderCard(file) {
   body.className = "result-card__body";
   body.innerHTML = `
     <h3 class="result-card__name">${escapeHtml(file.name)}</h3>
-    <p class="result-card__sub">${escapeHtml(file.type || "unknown type")} · ${formatBytes(file.size)}</p>
+    <p class="result-card__sub">${escapeHtml(file.type || "unknown type")}, ${formatBytes(file.size)}</p>
   `;
 
   let meta = { fields: [], gps: null, format: "other" };
@@ -85,7 +85,7 @@ async function renderCard(file) {
         <strong>${icon("st-pin", "icon icon--alert")} THIS PHOTO LEAKS YOUR LOCATION</strong>
         <p>${lat.toFixed(6)}, ${lon.toFixed(6)}${alt != null ? ` · ${alt.toFixed(0)}m altitude` : ""}</p>
       </div>
-      <a class="pill pill--dark" href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" rel="noopener">SEE ON MAP ↗</a>
+      <a class="pill pill--dark" href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" rel="noopener">OPEN THE MAP</a>
     `;
     body.appendChild(alert);
   }

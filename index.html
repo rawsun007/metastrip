@@ -174,19 +174,19 @@
       <article class="leak-card leak-card--yellow reveal">
         <h3>YOUR EXACT<br>LOCATION</h3>
         <p>Phones embed GPS coordinates in every photo. Post one from home and anyone can pull your address off it.</p>
-        <a class="pill pill--dark" href="#app">SEE IT LEAK ↗</a>
+        <a class="pill pill--dark" href="#app">SEE IT LEAK</a>
         <span class="leak-card__emoji" aria-hidden="true"><svg><use href="#st-pin"/></svg></span>
       </article>
       <article class="leak-card leak-card--violet reveal" style="--d:.12s">
         <h3>YOUR DEVICE<br>FINGERPRINT</h3>
         <p>Camera make, model, lens, software, sometimes even a serial number and an owner name. Plenty to tie a photo back to you.</p>
-        <a class="pill pill--dark" href="#app">SEE IT LEAK ↗</a>
+        <a class="pill pill--dark" href="#app">SEE IT LEAK</a>
         <span class="leak-card__emoji" aria-hidden="true"><svg><use href="#st-camera"/></svg></span>
       </article>
       <article class="leak-card leak-card--blue reveal" style="--d:.24s">
         <h3>YOUR<br>TIMELINE</h3>
         <p>Exact timestamps down to the second. Combine with GPS and a stranger knows where you were, and when.</p>
-        <a class="pill pill--dark" href="#app">SEE IT LEAK ↗</a>
+        <a class="pill pill--dark" href="#app">SEE IT LEAK</a>
         <span class="leak-card__emoji" aria-hidden="true"><svg><use href="#st-clock"/></svg></span>
       </article>
     </div>
@@ -216,20 +216,39 @@
         <span class="blog-card__tag">PRIVACY</span>
         <h3>YOUR PHOTOS KNOW WHERE YOU LIVE</h3>
         <p>Pick any photo you took at home and there is a good chance your exact coordinates are inside it. Here is how that bites people.</p>
-        <span class="blog-card__read">READ ↗</span>
+        <span class="blog-card__read">READ THE POST</span>
       </a>
       <a class="blog-card blog-card--yellow reveal" href="blog/who-strips-your-metadata.html" style="--d:.12s">
         <span class="blog-card__tag">GUIDE</span>
         <h3>INSTAGRAM STRIPS METADATA. YOUR EMAIL DOES NOT.</h3>
         <p>A practical map of where your photo metadata survives and where it dies, including the sneaky high quality send trap.</p>
-        <span class="blog-card__read">READ ↗</span>
+        <span class="blog-card__read">READ THE POST</span>
       </a>
       <a class="blog-card blog-card--green reveal" href="blog/lossless-explained.html" style="--d:.24s">
         <span class="blog-card__tag">HOW IT WORKS</span>
         <h3>CLEANING A PHOTO WITHOUT TOUCHING A PIXEL</h3>
         <p>Most removers quietly re-compress your image. Here is how lossless stripping works and why your photo stays identical.</p>
-        <span class="blog-card__read">READ ↗</span>
+        <span class="blog-card__read">READ THE POST</span>
       </a>
+    </div>
+  </section>
+
+  <!-- ===== CREATOR ===== -->
+  <section class="creator" id="creator">
+    <div class="creator__card reveal">
+      <img class="creator__photo" src="assets/roshan.jpg" alt="Roshan Ramani smiling" width="825" height="1100" loading="lazy" />
+      <div class="creator__info">
+        <span class="creator__tag">MEET THE MAKER</span>
+        <h2>HEY, I AM ROSHAN.</h2>
+        <p>I am a developer from Surat, India. I build web apps and AI automations, and I made MetaStrip after realizing how many people share photos with their home address quietly tucked inside.</p>
+        <p>This tool is my answer. Free, open source, and it never sees your files. If you want to talk tools, automations or work, my inbox is open.</p>
+        <div class="creator__links">
+          <a class="pill pill--dark" href="https://www.linkedin.com/in/roshan-ramani-0510102b2" target="_blank" rel="noopener">LINKEDIN</a>
+          <a class="pill pill--dark" href="https://github.com/rawsun007" target="_blank" rel="noopener">GITHUB</a>
+          <a class="pill pill--dark" href="https://x.com/roshanramani007" target="_blank" rel="noopener">X</a>
+          <a class="pill pill--dark" href="https://roshan-ramani.vercel.app/" target="_blank" rel="noopener">PORTFOLIO</a>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -239,23 +258,23 @@
     <div class="faq__list">
       <details class="faq__item reveal" style="--d:0.00s">
         <summary>Does my photo get uploaded anywhere?</summary>
-        <p>No. All the reading and stripping happens right in your browser with plain JavaScript. There is no server, no account, and we never see your files. Turn off your Wi-Fi after the page loads and it still works.</p>
+        <div class="faq__answer"><p>No. All the reading and stripping happens right in your browser with plain JavaScript. There is no server, no account, and we never see your files. Turn off your Wi-Fi after the page loads and it still works.</p></div>
       </details>
       <details class="faq__item reveal" style="--d:0.08s">
         <summary>Does stripping reduce image quality?</summary>
-        <p>No. For JPEG and PNG, MetaStrip removes the metadata blocks byte by byte and never touches the compressed pixel data. The image itself stays bit for bit identical. Other formats fall back to a high quality re-encode.</p>
+        <div class="faq__answer"><p>No. For JPEG and PNG, MetaStrip removes the metadata blocks byte by byte and never touches the compressed pixel data. The image itself stays bit for bit identical. Other formats fall back to a high quality re-encode.</p></div>
       </details>
       <details class="faq__item reveal" style="--d:0.16s">
         <summary>Don't Instagram / WhatsApp already strip metadata?</summary>
-        <p>Most big social feeds do. Email, cloud drives, marketplaces, forums, blogs and plenty of messaging apps do not. If you sell something on a classifieds site with photos taken at home, your address may be riding along.</p>
+        <div class="faq__answer"><p>Most big social feeds do. Email, cloud drives, marketplaces, forums, blogs and plenty of messaging apps do not. If you sell something on a classifieds site with photos taken at home, your address may be riding along.</p></div>
       </details>
       <details class="faq__item reveal" style="--d:0.24s">
         <summary>What formats are supported?</summary>
-        <p>JPEG and PNG get full metadata inspection and lossless stripping. Other browser-readable images (WebP, AVIF, etc.) are cleaned via canvas re-encode.</p>
+        <div class="faq__answer"><p>JPEG and PNG get full metadata inspection and lossless stripping. Other browser-readable images (WebP, AVIF, etc.) are cleaned via canvas re-encode.</p></div>
       </details>
       <details class="faq__item reveal" style="--d:0.32s">
         <summary>Is it open source?</summary>
-        <p>Yes. The whole thing is a few hundred lines of plain JavaScript with zero dependencies. <a href="https://github.com/rawsun007/metastrip">Read every byte on GitHub</a>.</p>
+        <div class="faq__answer"><p>Yes. The whole thing is a few hundred lines of plain JavaScript with zero dependencies. <a href="https://github.com/rawsun007/metastrip">Read every byte on GitHub</a>.</p></div>
       </details>
     </div>
   </section>
@@ -264,7 +283,7 @@
   <footer class="footer">
     <div class="footer__cta reveal">
       <h2>STRIP YOUR PHOTOS.<br><em>THEN POST IT ALL.</em></h2>
-      <a class="pill pill--dark pill--big" href="#app">CLEAN A PHOTO ↑</a>
+      <a class="pill pill--dark pill--big" href="#app">CLEAN A PHOTO</a>
     </div>
     <div class="footer__row">
       <a class="footer__tile" href="https://github.com/rawsun007" target="_blank" rel="noopener">GITHUB</a>
