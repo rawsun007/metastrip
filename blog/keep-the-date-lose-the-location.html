@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Keep the date, lose the location | MetaStrip Blog</title>
+  <meta name="description" content="Sometimes you want some metadata gone and some kept. How selective stripping redacts exactly the fields you tick, byte by byte, with zero quality loss." />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="Keep the date, lose the location | MetaStrip Blog" />
+  <meta property="og:description" content="Sometimes you want some metadata gone and some kept. How selective stripping redacts exactly the fields you tick, byte by byte, with zero quality loss." />
+  <meta property="og:image" content="https://metastrip.vercel.app/assets/og.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://metastrip.vercel.app/assets/og.jpg" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23fb4903'/><text x='50' y='68' font-size='52' font-family='Arial Black' font-weight='900' text-anchor='middle' fill='white'>M</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:ital,wght@0,400;0,500;0,700;0,800;1,800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body class="blog-body">
+
+  <header class="nav">
+    <a class="nav__logo" href="../index.html" aria-label="MetaStrip home">M</a>
+    <nav class="nav__links" aria-label="Main">
+      <a class="pill pill--nav" href="../index.html#app">CLEAN A PHOTO</a>
+      <a class="pill pill--nav" href="../index.html#blog">ALL POSTS</a>
+    </nav>
+    <a class="pill pill--dark" href="https://github.com/rawsun007/metastrip" target="_blank" rel="noopener">GITHUB</a>
+  </header>
+
+  <article class="post">
+    <p class="post__meta">By Roshan Ramani, July 2026</p>
+    <h1 class="post__title">KEEP THE DATE, LOSE THE LOCATION</h1>
+
+    <p>Metadata removal is usually all or nothing. Every tool nukes the whole block, and that is the right default. But sometimes you actually want to keep a piece of it.</p>
+
+    <p>Maybe you are submitting a photo to a contest that requires the capture date. Maybe you are selling a camera and want the listing photo to prove which model took it. Maybe you keep dates for your own archive but want the coordinates gone before the album goes to the family group chat.</p>
+
+    <h2>Tick what goes, untick what stays</h2>
+
+    <p>When you drop a photo into <a href="../index.html#app">MetaStrip</a>, every field it finds gets a checkbox, all ticked by default. Leave it that way and you get the classic full strip. Untick the fields you want to keep, hit strip, and only the ticked ones disappear.</p>
+
+    <p>So keep the date and lose the location is exactly two clicks: untick the date fields, strip, done.</p>
+
+    <h2>How it works without breaking your photo</h2>
+
+    <p>This part is worth explaining because doing it wrong corrupts files. Metadata inside a JPEG lives in a structure of labeled entries, each pointing at its data. MetaStrip finds the exact bytes belonging to each field you ticked and overwrites them with zeros, in place. Nothing shifts, nothing gets re-encoded, the pixel data is not touched. For location it wipes the entire GPS directory, every value it points at, and the pointer itself, so no trace of the coordinates survives anywhere in the file.</p>
+
+    <p>PNG files get the same treatment with one extra step. PNG protects each chunk with a checksum, so after redacting inside one, MetaStrip recalculates the checksum to keep the file strictly valid.</p>
+
+    <p>The result passes any validator, opens everywhere, and is pixel for pixel identical to the original. The removed fields are not just hidden, the bytes are gone. I tested this by searching the output file for the original coordinate values at the raw byte level. Nothing.</p>
+
+    <h2>The default is still everything</h2>
+
+    <p>To be clear, if you do not have a reason to keep something, keep nothing. The full strip remains the safest option and the one I use for anything going to a stranger. Selective mode exists for the cases where the notebook has one page you actually need.</p>
+
+    <div class="post__cta">
+      <a class="pill pill--strip pill--big" href="../index.html#app">TRY SELECTIVE STRIPPING</a>
+    </div>
+  </article>
+
+  <footer class="post__footer">
+    <p>MetaStrip runs fully on your device. No cookies, no tracking, no server.</p>
+  </footer>
+
+</body>
+</html>

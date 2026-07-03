@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>What is EXIF, in plain words | MetaStrip Blog</title>
+  <meta name="description" content="EXIF is the hidden notebook inside every photo. A five minute explainer with no jargon, and how to read your own." />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="What is EXIF, in plain words | MetaStrip Blog" />
+  <meta property="og:description" content="EXIF is the hidden notebook inside every photo. A five minute explainer with no jargon, and how to read your own." />
+  <meta property="og:image" content="https://metastrip.vercel.app/assets/og.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://metastrip.vercel.app/assets/og.jpg" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23fb4903'/><text x='50' y='68' font-size='52' font-family='Arial Black' font-weight='900' text-anchor='middle' fill='white'>M</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:ital,wght@0,400;0,500;0,700;0,800;1,800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body class="blog-body">
+
+  <header class="nav">
+    <a class="nav__logo" href="../index.html" aria-label="MetaStrip home">M</a>
+    <nav class="nav__links" aria-label="Main">
+      <a class="pill pill--nav" href="../index.html#app">CLEAN A PHOTO</a>
+      <a class="pill pill--nav" href="../index.html#blog">ALL POSTS</a>
+    </nav>
+    <a class="pill pill--dark" href="https://github.com/rawsun007/metastrip" target="_blank" rel="noopener">GITHUB</a>
+  </header>
+
+  <article class="post">
+    <p class="post__meta">By Roshan Ramani, July 2026</p>
+    <h1 class="post__title">WHAT IS EXIF, IN PLAIN WORDS</h1>
+
+    <p>Imagine every photo you take comes with a little notebook stapled to the back. The camera writes in it automatically. What device took this. Which lens. What the exposure settings were. The exact date and time, down to the second. And if location was on, the precise GPS coordinates of where you were standing.</p>
+
+    <p>That notebook is EXIF. It stands for Exchangeable Image File Format, and it has been part of digital photography since the nineties. You never see it, but it is inside almost every photo your phone has ever taken.</p>
+
+    <h2>Why does it exist at all?</h2>
+
+    <p>For genuinely good reasons. Photographers use it to remember camera settings. Photo apps use it to sort your library by date and put your pictures on a map. Printing services use it to orient the image the right way up. EXIF is not a conspiracy, it is a convenience feature that predates social media by a decade.</p>
+
+    <p>The problem is that the notebook stays stapled to the photo when the photo leaves your hands. Convenience data in your own library becomes surveillance data in someone else's.</p>
+
+    <h2>What exactly gets written in there</h2>
+
+    <p>The usual contents of a phone photo: camera make and model, so your exact device. The software version. Date and time taken, plus time zone on newer phones. Focal length, aperture and ISO. And the big one, GPS latitude, longitude and often altitude, if your camera app has location access.</p>
+
+    <p>Some cameras also write an owner name or a serial number. Edited photos may carry XMP data too, which can include editing history from apps like Lightroom.</p>
+
+    <h2>Read your own notebook</h2>
+
+    <p>The fastest way to make this real is to look at one of your own photos. Drop it into <a href="../index.html#app">MetaStrip</a> and it lists every field it finds, with a map link if there are coordinates. It runs in your browser, so the photo never leaves your device.</p>
+
+    <p>Once you see your home coordinates printed under a photo of your breakfast, the abstract idea of metadata becomes very concrete. And removing it takes one click from there.</p>
+
+    <div class="post__cta">
+      <a class="pill pill--strip pill--big" href="../index.html#app">READ A PHOTO NOW</a>
+    </div>
+  </article>
+
+  <footer class="post__footer">
+    <p>MetaStrip runs fully on your device. No cookies, no tracking, no server.</p>
+  </footer>
+
+</body>
+</html>

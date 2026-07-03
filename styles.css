@@ -800,3 +800,7 @@ a { color: inherit; text-decoration: none; }
 .meta-check input:disabled + span { opacity: 0.35; }
 .meta-list__hint { color: var(--color-muted); font-size: 12.5px; margin-top: 8px; }
 .meta-list__row dt { display: flex; align-items: center; gap: 4px; }
+
+.blog-card--blue { background: var(--accent-blue); }
+.blog-card--violet { background: var(--accent-violet); }
+.blog-card--purple { background: var(--accent-purple); color: #ffffff; }
