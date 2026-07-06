@@ -65,6 +65,23 @@ const stripAllBar = document.getElementById("stripAllBar");
 const stripAllBtn = document.getElementById("stripAllBtn");
 const stripAllLabel = document.getElementById("stripAllLabel");
 
+const sampleBtn = document.getElementById("sampleBtn");
+sampleBtn.addEventListener("click", async () => {
+  sampleBtn.disabled = true;
+  sampleBtn.textContent = "Loading sample...";
+  try {
+    const res = await fetch("assets/sample-photo.jpg");
+    const blob = await res.blob();
+    const file = new File([blob], "sample-photo.jpg", { type: "image/jpeg" });
+    await handleFiles([file]);
+  } catch (err) {
+    console.error("sample photo load failed", err);
+  } finally {
+    sampleBtn.disabled = false;
+    sampleBtn.textContent = "Try a sample photo";
+  }
+});
+
 function updateStripAllBar() {
   const count = resultsEl.children.length;
   stripAllBar.hidden = count < 2;
