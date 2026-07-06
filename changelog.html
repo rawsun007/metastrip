@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Changelog | MetaStrip</title>
+  <meta name="description" content="Everything shipped on MetaStrip, in order, from the first commit to today." />
+  <link rel="canonical" href="https://metastrip.vercel.app/changelog.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Changelog | MetaStrip" />
+  <meta property="og:description" content="Everything shipped on MetaStrip, in order, from the first commit to today." />
+  <meta property="og:image" content="https://metastrip.vercel.app/assets/og.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://metastrip.vercel.app/assets/og.jpg" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23fb4903'/><text x='50' y='68' font-size='52' font-family='Arial Black' font-weight='900' text-anchor='middle' fill='white'>M</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:ital,wght@0,400;0,500;0,700;0,800;1,800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body class="blog-body">
+
+  <header class="nav">
+    <a class="nav__logo" href="index.html" aria-label="MetaStrip home">M</a>
+    <nav class="nav__links" aria-label="Main">
+      <a class="pill pill--nav" href="index.html#app">CLEAN A PHOTO</a>
+      <a class="pill pill--nav" href="index.html#blog">BLOG</a>
+      <a class="pill pill--nav" href="changelog.html">CHANGELOG</a>
+    </nav>
+    <a class="pill pill--dark nav__github" href="https://github.com/rawsun007/metastrip" target="_blank" rel="noopener">GITHUB</a>
+    <button class="nav__burger" id="navBurger" aria-label="Open menu" aria-expanded="false" aria-controls="navSheet">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <div class="nav__sheet" id="navSheet">
+    <a class="pill pill--nav" href="index.html#app">CLEAN A PHOTO</a>
+    <a class="pill pill--nav" href="index.html#blog">BLOG</a>
+    <a class="pill pill--nav" href="changelog.html">CHANGELOG</a>
+    <a class="pill pill--dark" href="https://github.com/rawsun007/metastrip" target="_blank" rel="noopener">GITHUB</a>
+  </div>
+
+  <article class="post">
+    <p class="post__meta">Every change, in order</p>
+    <h1 class="post__title">CHANGELOG</h1>
+    <p>MetaStrip is built in the open, one feature at a time, each one tested and shipped on its own. This page tracks all of it. Newest first.</p>
+
+    <div class="changelog">
+
+      <section class="changelog__entry">
+        <div class="changelog__date">
+          <span class="changelog__date-text">2026-07-06</span>
+          <span class="changelog__badge changelog__badge--fix">MOBILE + SEO</span>
+        </div>
+        <h2>Fixed the mobile menu, made the site findable</h2>
+        <ul>
+          <li>Fixed the nav menu vanishing on mobile across all six blog posts, with no way back to the tool. Added a proper hamburger menu everywhere.</li>
+          <li>Added a "try a sample photo" button, so anyone without a leaky photo handy can still see the full leak-to-clean flow.</li>
+          <li>Added <code>sitemap.xml</code>, <code>robots.txt</code>, and JSON-LD structured data on every page for search engines.</li>
+          <li>Ran a full mobile audit with real device viewports (320px through 390px): zero horizontal overflow anywhere, even with a photo loaded, the mini map open, and metadata checkboxes showing.</li>
+        </ul>
+      </section>
+
+      <section class="changelog__entry">
+        <div class="changelog__date">
+          <span class="changelog__date-text">2026-07-03</span>
+          <span class="changelog__badge">GROWTH</span>
+        </div>
+        <h2>Live domain, analytics, more reading</h2>
+        <ul>
+          <li>Moved to the live <a href="https://metastrip.vercel.app/">metastrip.vercel.app</a> domain, with share previews and the README updated to match.</li>
+          <li>Added Vercel Web Analytics, cookieless, on every page.</li>
+          <li>Wrote three more blog posts: what EXIF actually is in plain words, how to stop your phone from geotagging every photo, and how selective stripping works under the hood.</li>
+        </ul>
+      </section>
+
+      <section class="changelog__entry">
+        <div class="changelog__date">
+          <span class="changelog__date-text">2026-07-03</span>
+          <span class="changelog__badge changelog__badge--feat">POWER FEATURES</span>
+        </div>
+        <h2>Selective stripping, HEIC, and going installable</h2>
+        <ul>
+          <li>Selective stripping: a checkbox next to every field found, so you can keep the date and lose the location, or any combination. JPEG entries are zeroed byte by byte, PNG chunks get their checksums recomputed, nothing else in the file shifts.</li>
+          <li>HEIC support: iPhone photos now get read, redacted in place, or converted to a clean JPEG.</li>
+          <li>A before-and-after comparison showing exactly what a strip removed.</li>
+          <li>A privacy score badge on every photo: leaking, risky, or clean.</li>
+          <li>An on-demand mini map in the GPS alert, one OpenStreetMap tile, fetched only if you ask for it.</li>
+          <li>Paste a photo straight from the clipboard, no file picker needed.</li>
+          <li>Strip every loaded photo at once with one button.</li>
+          <li>Copy the cleaned photo straight to the clipboard, ready to paste into a chat.</li>
+          <li>Installable as a PWA, with offline support and an Android share-target so a photo can be shared into MetaStrip straight from the gallery.</li>
+        </ul>
+      </section>
+
+      <section class="changelog__entry">
+        <div class="changelog__date">
+          <span class="changelog__date-text">2026-07-03</span>
+          <span class="changelog__badge">DESIGN</span>
+        </div>
+        <h2>The look: stickers, motion, a creator you can meet</h2>
+        <ul>
+          <li>Replaced every emoji with hand-drawn SVG stickers in the site's own palette, then gave them real dimensional depth and a die-cut white border.</li>
+          <li>Added a soft 3D foam-textured hero background built from pure SVG filters, no image assets.</li>
+          <li>Entrance animations on load, scroll reveals down the page, a smooth height-animated FAQ accordion, and buttons that bounce and shift color on hover, spread across the full palette instead of one repeated color.</li>
+          <li>Added a "meet the maker" section with a round profile photo (metadata stripped with MetaStrip itself before publishing) and links out to LinkedIn, GitHub, X, and the portfolio.</li>
+          <li>Rewrote every line of copy to sound like a person wrote it, no em dashes anywhere on the site.</li>
+        </ul>
+      </section>
+
+      <section class="changelog__entry">
+        <div class="changelog__date">
+          <span class="changelog__date-text">2026-07-03</span>
+          <span class="changelog__badge changelog__badge--feat">LAUNCH</span>
+        </div>
+        <h2>The first version</h2>
+        <ul>
+          <li>Built the core engine: a dependency-free byte-level parser reading EXIF, GPS, and PNG text chunks, plus a lossless stripper that removes metadata without ever touching a pixel.</li>
+          <li>Drag-and-drop and click-to-upload, with live preview cards and a GPS leak alert linking straight to a map.</li>
+          <li>Three original blog posts on photo privacy, and the what-leaks explainer cards on the homepage.</li>
+          <li>Everything runs in the browser. No upload, no server, no account, from the very first commit.</li>
+        </ul>
+      </section>
+
+    </div>
+
+    <div class="post__cta">
+      <a class="pill pill--strip pill--big" href="index.html#app">TRY THE LATEST VERSION</a>
+    </div>
+  </article>
+
+  <footer class="post__footer">
+    <p>MetaStrip runs fully on your device. Your photos never upload. No cookies, just anonymous page counts.</p>
+  </footer>
+
+  <script>
+    (function () {
+      const burger = document.getElementById("navBurger");
+      const sheet = document.getElementById("navSheet");
+      function closeSheet() {
+        sheet.classList.remove("is-open");
+        burger.setAttribute("aria-expanded", "false");
+      }
+      burger.addEventListener("click", () => {
+        const open = sheet.classList.toggle("is-open");
+        burger.setAttribute("aria-expanded", String(open));
+      });
+      sheet.querySelectorAll("a").forEach((a) => a.addEventListener("click", closeSheet));
+    })();
+  </script>
+</body>
+</html>
