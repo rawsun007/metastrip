@@ -39,8 +39,17 @@
       <a class="pill pill--nav" href="../index.html#app">CLEAN A PHOTO</a>
       <a class="pill pill--nav" href="../index.html#blog">ALL POSTS</a>
     </nav>
-    <a class="pill pill--dark" href="https://github.com/rawsun007/metastrip" target="_blank" rel="noopener">GITHUB</a>
+    <a class="pill pill--dark nav__github" href="https://github.com/rawsun007/metastrip" target="_blank" rel="noopener">GITHUB</a>
+    <button class="nav__burger" id="navBurger" aria-label="Open menu" aria-expanded="false" aria-controls="navSheet">
+      <span></span><span></span><span></span>
+    </button>
   </header>
+
+  <div class="nav__sheet" id="navSheet">
+    <a class="pill pill--nav" href="../index.html#app">CLEAN A PHOTO</a>
+    <a class="pill pill--nav" href="../index.html#blog">ALL POSTS</a>
+    <a class="pill pill--dark" href="https://github.com/rawsun007/metastrip" target="_blank" rel="noopener">GITHUB</a>
+  </div>
 
   <article class="post">
     <p class="post__meta">By Roshan Ramani, July 2026</p>
@@ -77,5 +86,20 @@
     <p>MetaStrip runs fully on your device. Your photos never upload. No cookies, just anonymous page counts.</p>
   </footer>
 
+  <script>
+    (function () {
+      const burger = document.getElementById("navBurger");
+      const sheet = document.getElementById("navSheet");
+      function closeSheet() {
+        sheet.classList.remove("is-open");
+        burger.setAttribute("aria-expanded", "false");
+      }
+      burger.addEventListener("click", () => {
+        const open = sheet.classList.toggle("is-open");
+        burger.setAttribute("aria-expanded", String(open));
+      });
+      sheet.querySelectorAll("a").forEach((a) => a.addEventListener("click", closeSheet));
+    })();
+  </script>
 </body>
 </html>
