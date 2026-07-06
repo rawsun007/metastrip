@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://metastrip.vercel.app/</loc>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://metastrip.vercel.app/blog/photos-know-where-you-live.html</loc>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://metastrip.vercel.app/blog/who-strips-your-metadata.html</loc>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://metastrip.vercel.app/blog/lossless-explained.html</loc>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://metastrip.vercel.app/blog/what-is-exif.html</loc>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://metastrip.vercel.app/blog/stop-geotagging.html</loc>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://metastrip.vercel.app/blog/keep-the-date-lose-the-location.html</loc>
+    <priority>0.7</priority>
+  </url>
+</urlset>

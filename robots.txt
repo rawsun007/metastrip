@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://metastrip.vercel.app/sitemap.xml
