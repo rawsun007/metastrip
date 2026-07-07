@@ -299,10 +299,19 @@ function miniMapShell() {
 /* Must run only after `frame` is attached to the document. Leaflet reads
    the container's real layout size on init; on a detached node that size
    is zero, which throws off centering until the map is visible. */
+// Plain geometric strokes instead of the "+"/"−" text glyphs Leaflet
+// ships by default: those two characters sit at different optical centers
+// in most fonts, which is what made the buttons look misaligned. A cross
+// and a single bar drawn on the same baseline can't ever disagree.
+const ZOOM_IN_SVG = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M8 2 L8 14 M2 8 L14 8" stroke="#0a0a0a" stroke-width="2.4" stroke-linecap="round"/></svg>';
+const ZOOM_OUT_SVG = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 8 L14 8" stroke="#0a0a0a" stroke-width="2.4" stroke-linecap="round"/></svg>';
+const RECENTER_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="6.5" fill="none" stroke="#0a0a0a" stroke-width="2.4"/><circle cx="12" cy="12" r="2" fill="#0a0a0a"/><path d="M12 1 L12 4.5 M12 19.5 L12 23 M1 12 L4.5 12 M19.5 12 L23 12" stroke="#0a0a0a" stroke-width="2.4" stroke-linecap="round"/></svg>';
+
 function initMiniMap(L, frame, lat, lon) {
   const map = L.map(frame, {
     center: [lat, lon],
     zoom: 15,
+    zoomControl: false,
     scrollWheelZoom: false,
     attributionControl: true,
   });
@@ -319,6 +328,29 @@ function initMiniMap(L, frame, lat, lon) {
     iconAnchor: [17, 36],
   });
   L.marker([lat, lon], { icon: pinIcon, keyboard: false }).addTo(map);
+
+  L.control
+    .zoom({ position: "topleft", zoomInTitle: "Zoom in", zoomOutTitle: "Zoom out", zoomInText: ZOOM_IN_SVG, zoomOutText: ZOOM_OUT_SVG })
+    .addTo(map);
+
+  const RecenterControl = L.Control.extend({
+    options: { position: "topleft" },
+    onAdd() {
+      const container = L.DomUtil.create("div", "leaflet-bar leaflet-control mini-map__recenter");
+      const link = L.DomUtil.create("a", "", container);
+      link.href = "#";
+      link.title = "Back to the leaked location";
+      link.setAttribute("aria-label", "Back to the leaked location");
+      link.innerHTML = RECENTER_SVG;
+      L.DomEvent.disableClickPropagation(container);
+      L.DomEvent.on(link, "click", (e) => {
+        L.DomEvent.preventDefault(e);
+        map.setView([lat, lon], 15);
+      });
+      return container;
+    },
+  });
+  new RecenterControl().addTo(map);
 
   // re-check size once layout has definitely settled, then recenter exactly
   requestAnimationFrame(() => {
