@@ -244,6 +244,24 @@ async function renderCard(file) {
   const card = document.createElement("article");
   card.className = "result-card";
 
+  const dismissBtn = document.createElement("button");
+  dismissBtn.className = "result-card__dismiss";
+  dismissBtn.type = "button";
+  dismissBtn.innerHTML = "&times;";
+  dismissBtn.setAttribute("aria-label", `Remove ${file.name} from the list`);
+  dismissBtn.addEventListener("click", () => {
+    card.classList.add("is-removing");
+    card.addEventListener(
+      "animationend",
+      () => {
+        card.remove();
+        updateStripAllBar();
+      },
+      { once: true }
+    );
+  });
+  card.appendChild(dismissBtn);
+
   const preview = document.createElement("img");
   preview.className = "result-card__preview";
   preview.alt = `Preview of ${file.name}`;
