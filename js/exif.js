@@ -2,28 +2,31 @@
    Reads EXIF (JPEG APP1 + PNG eXIf), PNG text chunks, and GPS IFD.
    Pure byte-level parsing, no dependencies, runs entirely in the browser. */
 
+/* Each tag carries its own risk category up front, rather than being
+   inferred from a shared per-IFD default plus regex patches, so a new
+   tag can never silently inherit the wrong icon. */
 const IFD0_TAGS = {
-  0x010f: "Camera make",
-  0x0110: "Camera model",
-  0x0131: "Software",
-  0x0132: "Modified",
-  0x013b: "Artist",
-  0x8298: "Copyright",
+  0x010f: { label: "Camera make", risk: "device" },
+  0x0110: { label: "Camera model", risk: "device" },
+  0x0131: { label: "Software", risk: "device" },
+  0x0132: { label: "Modified", risk: "time" },
+  0x013b: { label: "Artist", risk: "identity" },
+  0x8298: { label: "Copyright", risk: "identity" },
 };
 
 const EXIF_TAGS = {
-  0x9003: "Taken",
-  0x9004: "Digitized",
-  0x829a: "Exposure time",
-  0x829d: "F-number",
-  0x8827: "ISO",
-  0x920a: "Focal length",
-  0xa433: "Lens make",
-  0xa434: "Lens model",
-  0xa002: "Pixel width",
-  0xa003: "Pixel height",
-  0xa430: "Owner name",
-  0xa431: "Camera serial no.",
+  0x9003: { label: "Taken", risk: "time" },
+  0x9004: { label: "Digitized", risk: "time" },
+  0x829a: { label: "Exposure time", risk: "settings" },
+  0x829d: { label: "F-number", risk: "settings" },
+  0x8827: { label: "ISO", risk: "settings" },
+  0x920a: { label: "Focal length", risk: "settings" },
+  0xa433: { label: "Lens make", risk: "device" },
+  0xa434: { label: "Lens model", risk: "device" },
+  0xa002: { label: "Pixel width", risk: "dimensions" },
+  0xa003: { label: "Pixel height", risk: "dimensions" },
+  0xa430: { label: "Owner name", risk: "identity" },
+  0xa431: { label: "Camera serial no.", risk: "identity" },
 };
 
 const EXIF_IFD_POINTER = 0x8769;
@@ -126,9 +129,9 @@ function parseTiff(bytes, tiffStart, result, crcChunk) {
 
   const firstField = result.fields.length;
   const pointers = {};
-  readIfd(view, bytes, tiffStart, ifd0, le, IFD0_TAGS, result.fields, "device", pointers);
+  readIfd(view, bytes, tiffStart, ifd0, le, IFD0_TAGS, result.fields, pointers);
   if (pointers[EXIF_IFD_POINTER]) {
-    readIfd(view, bytes, tiffStart, tiffStart + pointers[EXIF_IFD_POINTER].value, le, EXIF_TAGS, result.fields, "time", pointers);
+    readIfd(view, bytes, tiffStart, tiffStart + pointers[EXIF_IFD_POINTER].value, le, EXIF_TAGS, result.fields, pointers);
   }
   if (pointers[GPS_IFD_POINTER]) {
     result.gps = readGps(view, bytes, tiffStart, tiffStart + pointers[GPS_IFD_POINTER].value, le);
@@ -144,7 +147,7 @@ function parseTiff(bytes, tiffStart, result, crcChunk) {
   }
 }
 
-function readIfd(view, bytes, tiffStart, ifdOffset, le, tagMap, fields, defaultRisk, pointers) {
+function readIfd(view, bytes, tiffStart, ifdOffset, le, tagMap, fields, pointers) {
   if (ifdOffset + 2 > bytes.length) return;
   const count = view.getUint16(ifdOffset, le);
   for (let i = 0; i < count; i++) {
@@ -158,15 +161,11 @@ function readIfd(view, bytes, tiffStart, ifdOffset, le, tagMap, fields, defaultR
       pointers[tag] = { value: view.getUint32(entry + 8, le), offset: entry };
       continue;
     }
-    const label = tagMap[tag];
-    if (!label) continue;
+    const tagInfo = tagMap[tag];
+    if (!tagInfo) continue;
 
     const value = readTagValue(view, bytes, tiffStart, entry, type, num, le);
     if (value === null || value === "") continue;
-
-    let risk = defaultRisk;
-    if (/date|taken|digitized|modified/i.test(label)) risk = "time";
-    if (/serial|owner|artist/i.test(label)) risk = "identity";
 
     const size = (TYPE_SIZES[type] || 1) * num;
     const ranges = [[entry, entry + 12]];
@@ -174,7 +173,7 @@ function readIfd(view, bytes, tiffStart, ifdOffset, le, tagMap, fields, defaultR
       const off = tiffStart + view.getUint32(entry + 8, le);
       if (off + size <= bytes.length) ranges.push([off, off + size]);
     }
-    fields.push({ label, value: String(value), risk, mode: "zero", ranges });
+    fields.push({ label: tagInfo.label, value: String(value), risk: tagInfo.risk, mode: "zero", ranges });
   }
 }
 

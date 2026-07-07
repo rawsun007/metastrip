@@ -132,6 +132,8 @@ const RISK_META = {
   identity: { icon: icon("st-idcard") },
   device: { icon: icon("st-camera") },
   time: { icon: icon("st-clock") },
+  settings: { icon: icon("st-aperture") },
+  dimensions: { icon: icon("st-resize") },
 };
 
 function scoreMeta(meta) {
