@@ -196,10 +196,21 @@ async function renderCard(file) {
         <a class="pill pill--dark" href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" rel="noopener">OPEN THE MAP</a>
       </div>
     `;
-    alert.querySelector(".gps-alert__minimap-btn").addEventListener("click", (e) => {
+    alert.querySelector(".gps-alert__minimap-btn").addEventListener("click", async (e) => {
       const btn = e.currentTarget;
-      btn.remove();
-      alert.after(buildMiniMap(lat, lon));
+      btn.disabled = true;
+      btn.textContent = "LOADING MAP...";
+      try {
+        const L = await ensureLeaflet();
+        const mapEl = miniMapShell();
+        btn.remove();
+        alert.after(mapEl); // attach to the document first, so Leaflet sees real layout size
+        initMiniMap(L, mapEl.querySelector(".mini-map__frame"), lat, lon);
+      } catch (err) {
+        console.error("mini map failed to load", err);
+        btn.disabled = false;
+        btn.textContent = "SHOW MINI MAP";
+      }
     });
     body.appendChild(alert);
   }
@@ -252,31 +263,73 @@ async function renderCard(file) {
   return card;
 }
 
-/* Mini map: one OpenStreetMap tile, loaded only when asked, with the
-   pin placed at the exact fraction of the tile the coordinates fall on. */
-function tileMath(lat, lon, zoom) {
-  const n = 2 ** zoom;
-  const xFloat = ((lon + 180) / 360) * n;
-  const latRad = (lat * Math.PI) / 180;
-  const yFloat = ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n;
-  const x = Math.floor(xFloat);
-  const y = Math.floor(yFloat);
-  return { x, y, px: (xFloat - x) * 256, py: (yFloat - y) * 256 };
+/* Mini map: a real interactive Leaflet map, loaded only when asked, so the
+   pin sits exactly at the true coordinates instead of wherever a single
+   static tile happens to put it. Leaflet and its CSS are lazily fetched
+   the first time a mini map is opened. */
+let leafletPromise = null;
+function ensureLeaflet() {
+  if (!leafletPromise) {
+    leafletPromise = new Promise((resolve, reject) => {
+      const css = document.createElement("link");
+      css.rel = "stylesheet";
+      css.href = "vendor/leaflet/leaflet.css";
+      document.head.appendChild(css);
+
+      const script = document.createElement("script");
+      script.src = "vendor/leaflet/leaflet.js";
+      script.onload = () => resolve(window.L);
+      script.onerror = () => reject(new Error("could not load the map library"));
+      document.head.appendChild(script);
+    });
+  }
+  return leafletPromise;
 }
 
-function buildMiniMap(lat, lon) {
-  const zoom = 14;
-  const { x, y, px, py } = tileMath(lat, lon, zoom);
-  const map = document.createElement("div");
-  map.className = "mini-map";
-  map.innerHTML = `
-    <div class="mini-map__frame">
-      <img src="https://tile.openstreetmap.org/${zoom}/${x}/${y}.png" width="256" height="256"
-           alt="Map around the location this photo leaks" loading="lazy" />
-      <span class="mini-map__pin" style="left:${px.toFixed(0)}px; top:${py.toFixed(0)}px">${icon("st-pin", "icon icon--pin")}</span>
-    </div>
-    <p class="mini-map__credit">Map tile from OpenStreetMap, fetched only because you asked.</p>
+function miniMapShell() {
+  const wrap = document.createElement("div");
+  wrap.className = "mini-map";
+  wrap.innerHTML = `
+    <div class="mini-map__frame"></div>
+    <p class="mini-map__credit">Map tiles from OpenStreetMap, fetched only because you asked. Drag or use the buttons to look around.</p>
   `;
+  return wrap;
+}
+
+/* Must run only after `frame` is attached to the document. Leaflet reads
+   the container's real layout size on init; on a detached node that size
+   is zero, which throws off centering until the map is visible. */
+function initMiniMap(L, frame, lat, lon) {
+  const map = L.map(frame, {
+    center: [lat, lon],
+    zoom: 15,
+    scrollWheelZoom: false,
+    attributionControl: true,
+  });
+
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
+  }).addTo(map);
+
+  const pinIcon = L.divIcon({
+    html: icon("st-pin", "icon icon--pin"),
+    className: "mini-map__marker",
+    iconSize: [34, 36],
+    iconAnchor: [17, 36],
+  });
+  L.marker([lat, lon], { icon: pinIcon, keyboard: false }).addTo(map);
+
+  // re-check size once layout has definitely settled, then recenter exactly
+  requestAnimationFrame(() => {
+    map.invalidateSize();
+    map.setView([lat, lon], 15);
+  });
+
+  // let two-finger touch scroll the page normally, but wheel-zoom once the
+  // visitor has actually clicked into the map, so it doesn't hijack scroll
+  frame.addEventListener("click", () => map.scrollWheelZoom.enable(), { once: true });
+
   return map;
 }
 
