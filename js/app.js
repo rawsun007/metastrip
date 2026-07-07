@@ -113,23 +113,88 @@ function updateStripAllBar() {
   if (count >= 2) stripAllLabel.textContent = `${count} photos loaded`;
 }
 
+const STRIP_ALL_LABEL = "STRIP ALL & DOWNLOAD ZIP";
+
 stripAllBtn.addEventListener("click", async () => {
-  const buttons = [...resultsEl.querySelectorAll(".result-card .pill--strip")];
-  if (!buttons.length) return;
+  const cards = [...resultsEl.querySelectorAll(".result-card")];
+  if (!cards.length) return;
   stripAllBtn.disabled = true;
-  for (let i = 0; i < buttons.length; i++) {
-    stripAllBtn.textContent = `STRIPPING ${i + 1} OF ${buttons.length}`;
-    buttons[i].click();
-    await new Promise((r) => setTimeout(r, 700));
+  try {
+    const JSZip = await ensureJSZip();
+    const zip = new JSZip();
+    const usedNames = new Set();
+    let failures = 0;
+
+    for (let i = 0; i < cards.length; i++) {
+      stripAllBtn.textContent = `CLEANING ${i + 1} OF ${cards.length}`;
+      const card = cards[i];
+      const { _msFile: file, _msMeta: meta } = card;
+      try {
+        const result = await computeCleanResult(file, meta, card);
+        const name = dedupeZipName(cleanFilename(file.name, !result.lossless), usedNames);
+        zip.file(name, result.bytes);
+      } catch (err) {
+        console.error("strip-all: one photo failed", file?.name, err);
+        failures++;
+      }
+    }
+
+    if (usedNames.size === 0) throw new Error("every photo failed to clean");
+
+    stripAllBtn.textContent = "BUILDING ZIP...";
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(zipBlob);
+    a.download = `metastrip-cleaned-${usedNames.size}-photo${usedNames.size === 1 ? "" : "s"}.zip`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
+
+    stripAllBtn.textContent = failures ? `ZIP READY, ${failures} FAILED` : "ZIP DOWNLOADED";
+  } catch (err) {
+    console.error(err);
+    stripAllBtn.textContent = "SOMETHING FAILED, TRY AGAIN";
+  } finally {
+    setTimeout(() => {
+      stripAllBtn.disabled = false;
+      stripAllBtn.textContent = STRIP_ALL_LABEL;
+    }, 3500);
   }
-  stripAllBtn.textContent = "ALL CLEANED";
-  setTimeout(() => {
-    stripAllBtn.disabled = false;
-    stripAllBtn.textContent = "STRIP ALL & DOWNLOAD";
-  }, 3000);
 });
 
 const icon = (id, cls = "icon") => `<svg class="${cls}" aria-hidden="true"><use href="#${id}"></use></svg>`;
+
+/* JSZip loads only the first time "strip all" bundles more than one photo */
+let jszipPromise = null;
+function ensureJSZip() {
+  if (!jszipPromise) {
+    jszipPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "vendor/jszip.min.js";
+      script.onload = () => resolve(window.JSZip);
+      script.onerror = () => reject(new Error("could not load the zip library"));
+      document.head.appendChild(script);
+    });
+  }
+  return jszipPromise;
+}
+
+function dedupeZipName(name, used) {
+  if (!used.has(name)) {
+    used.add(name);
+    return name;
+  }
+  const dot = name.lastIndexOf(".");
+  const stem = dot > 0 ? name.slice(0, dot) : name;
+  const ext = dot > 0 ? name.slice(dot) : "";
+  let i = 2;
+  let candidate = `${stem}-${i}${ext}`;
+  while (used.has(candidate)) {
+    i++;
+    candidate = `${stem}-${i}${ext}`;
+  }
+  used.add(candidate);
+  return candidate;
+}
 
 /* heic2any is 1.3MB, so it loads only the first time a HEIC shows up */
 let heicLibPromise = null;
@@ -285,6 +350,8 @@ async function renderCard(file) {
   media.append(preview, makeBadge(meta));
 
   card.append(media, body);
+  card._msFile = file; // read by the strip-all zip flow, no need to simulate clicks
+  card._msMeta = meta;
   return card;
 }
 
@@ -390,6 +457,34 @@ function initMiniMap(L, frame, lat, lon) {
   return map;
 }
 
+/* Shared by the per-card strip button and the strip-all zip flow, so both
+   respect the same selective-strip checkboxes and HEIC handling. */
+async function computeCleanResult(file, meta, card) {
+  const buffer = await file.arrayBuffer();
+  const boxes = card ? [...card.querySelectorAll(".meta-check input:not(:disabled)")] : [];
+  const keepingSome = boxes.length > 0 && boxes.some((b) => !b.checked);
+
+  let result;
+  if (keepingSome) {
+    // in-place redaction works for JPEG, PNG and HEIC alike
+    const remove = [];
+    for (const b of boxes) {
+      if (!b.checked) continue;
+      if (b.dataset.gps) remove.push(meta.gps);
+      else remove.push(meta.fields[Number(b.dataset.field)]);
+    }
+    result = selectiveStrip(buffer, remove);
+  } else if (meta.format === "heic") {
+    const jpeg = await heicToJpegBlob(file, 0.92);
+    result = { bytes: new Uint8Array(await jpeg.arrayBuffer()), lossless: false };
+  } else {
+    result = stripMetadata(buffer);
+    if (!result) result = await stripViaCanvas(file);
+  }
+  if (!result) throw new Error("unsupported format");
+  return result;
+}
+
 function buildActions(file, meta) {
   const actions = document.createElement("div");
   actions.className = "result-card__actions";
@@ -401,29 +496,8 @@ function buildActions(file, meta) {
     btn.disabled = true;
     btn.innerHTML = "STRIPPING…";
     try {
-      const buffer = await file.arrayBuffer();
       const card = actions.closest(".result-card");
-      const boxes = card ? [...card.querySelectorAll(".meta-check input:not(:disabled)")] : [];
-      const keepingSome = boxes.length > 0 && boxes.some((b) => !b.checked);
-
-      let result;
-      if (keepingSome) {
-        // in-place redaction works for JPEG, PNG and HEIC alike
-        const remove = [];
-        for (const b of boxes) {
-          if (!b.checked) continue;
-          if (b.dataset.gps) remove.push(meta.gps);
-          else remove.push(meta.fields[Number(b.dataset.field)]);
-        }
-        result = selectiveStrip(buffer, remove);
-      } else if (meta.format === "heic") {
-        const jpeg = await heicToJpegBlob(file, 0.92);
-        result = { bytes: new Uint8Array(await jpeg.arrayBuffer()), lossless: false };
-      } else {
-        result = stripMetadata(buffer);
-        if (!result) result = await stripViaCanvas(file);
-      }
-      if (!result) throw new Error("unsupported format");
+      const result = await computeCleanResult(file, meta, card);
 
       const blob = new Blob([result.bytes], { type: result.lossless ? file.type : "image/jpeg" });
       const a = document.createElement("a");
