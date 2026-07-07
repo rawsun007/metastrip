@@ -348,6 +348,7 @@ a { color: inherit; text-decoration: none; }
 
 /* ===== Strip actions ===== */
 .result-card__actions {
+  position: relative;
   margin-top: 20px;
   display: flex;
   align-items: center;
@@ -1018,12 +1019,11 @@ a { color: inherit; text-decoration: none; }
 /* ===== Confetti burst (badge flip to CLEAN) ===== */
 .confetti-burst {
   position: absolute;
-  top: -10px;
-  left: -12px;
+  /* top/left set inline per burst, to anchor exactly on whatever triggered it */
   width: 0;
   height: 0;
   pointer-events: none;
-  z-index: 6;
+  z-index: 20;
 }
 .confetti-piece {
   position: absolute;

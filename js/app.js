@@ -633,27 +633,40 @@ function showComparison(actionsEl, beforeMeta, cleanBuffer) {
     const fresh = makeBadge(afterMeta);
     badge.replaceWith(fresh);
     fresh.classList.add("score-badge--flip");
-    if (scoreMeta(afterMeta).label === "CLEAN" && fresh.parentElement) {
-      celebrateClean(fresh.parentElement);
-    }
+  }
+
+  // Celebrate at the button the person actually clicked, not the thumbnail
+  // badge in the corner — that's off-screen from their attention half the
+  // time, which is exactly why this got reported as "I don't see anything."
+  if (scoreMeta(afterMeta).label === "CLEAN") {
+    const stripBtn = actionsEl.querySelector(".pill--strip");
+    if (stripBtn) celebrateCleanAt(stripBtn, actionsEl);
   }
 }
 
-/* A one-shot confetti burst from the badge's spot, purely for the dopamine
-   hit of watching LEAKING flip to CLEAN. Respects reduced-motion. */
+/* A one-shot confetti burst anchored on a specific element's true rendered
+   position within a positioned ancestor, purely for the dopamine hit of
+   watching LEAKING flip to CLEAN. Respects reduced-motion. */
 const CONFETTI_COLORS = ["#fb4903", "#ffd731", "#4da2ff", "#55db9c", "#e9ccff", "#5c4ade"];
 
-function celebrateClean(anchorEl) {
+function celebrateCleanAt(targetEl, positionedParent) {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const parentRect = positionedParent.getBoundingClientRect();
+  const targetRect = targetEl.getBoundingClientRect();
+  const x = targetRect.left - parentRect.left + targetRect.width / 2;
+  const y = targetRect.top - parentRect.top + targetRect.height / 2;
+
   const burst = document.createElement("div");
   burst.className = "confetti-burst";
-  const count = 12;
+  burst.style.left = `${x}px`;
+  burst.style.top = `${y}px`;
+  const count = 16;
   for (let i = 0; i < count; i++) {
     const piece = document.createElement("span");
     piece.className = "confetti-piece";
     const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.6;
-    const distance = 40 + Math.random() * 34;
-    const size = 6 + Math.random() * 5;
+    const distance = 50 + Math.random() * 46;
+    const size = 7 + Math.random() * 6;
     piece.style.setProperty("--tx", `${Math.cos(angle) * distance}px`);
     piece.style.setProperty("--ty", `${Math.sin(angle) * distance}px`);
     piece.style.setProperty("--rot", `${(Math.random() - 0.5) * 360}deg`);
@@ -663,7 +676,7 @@ function celebrateClean(anchorEl) {
     piece.style.animationDelay = `${Math.random() * 60}ms`;
     burst.appendChild(piece);
   }
-  anchorEl.appendChild(burst);
+  positionedParent.appendChild(burst);
   setTimeout(() => burst.remove(), 900);
 }
 
