@@ -50,6 +50,45 @@
 
       <section class="changelog__entry">
         <div class="changelog__date">
+          <span class="changelog__date-text">2026-07-07</span>
+          <span class="changelog__badge changelog__badge--feat">FEATURES</span>
+        </div>
+        <h2>Drop anywhere, zip it all, and a proper celebration</h2>
+        <ul>
+          <li>Full-page drop zone: a photo can be dropped anywhere on the page now, not just inside the box, with a dimmed DROP IT ANYWHERE overlay while dragging.</li>
+          <li>Strip all now bundles every cleaned photo into a single zip download instead of one browser save dialog per photo.</li>
+          <li>A small dismiss button on each result card removes it from the list without needing to strip it first.</li>
+          <li>A quick confetti burst celebrates a badge flipping to CLEAN. The first version fired at the thumbnail badge, which turned out to be invisible in real use since nobody is looking there right after clicking the button. Moved it to burst exactly at the button instead.</li>
+        </ul>
+      </section>
+
+      <section class="changelog__entry">
+        <div class="changelog__date">
+          <span class="changelog__date-text">2026-07-07</span>
+          <span class="changelog__badge changelog__badge--fix">FIXES</span>
+        </div>
+        <h2>Metadata icons and the mini map, fixed properly</h2>
+        <ul>
+          <li>Camera settings (exposure time, f-number, ISO, focal length) and pixel dimensions were incorrectly showing the clock icon. Rebuilt the tag classification so every field declares its own risk category up front instead of inheriting a shared default that only got corrected for a couple of cases.</li>
+          <li>The mini map's pin could land anywhere within a single static map tile, not necessarily centered on the actual coordinates. Replaced it with a real interactive Leaflet map: properly centered, draggable, zoomable, with a button to snap back to the leaked location after panning around.</li>
+          <li>The map's zoom in/out buttons looked misaligned, caused by mismatched font metrics between the "+" and "−" characters. Replaced both with small matched SVG icons drawn on the same baseline.</li>
+        </ul>
+      </section>
+
+      <section class="changelog__entry">
+        <div class="changelog__date">
+          <span class="changelog__date-text">2026-07-06</span>
+          <span class="changelog__badge">POLISH</span>
+        </div>
+        <h2>One logo, everywhere</h2>
+        <ul>
+          <li>The on-page logo (white circle, black M) didn't match the favicon and app icons (orange circle, white M). Unified them into one consistent mark.</li>
+          <li>Caught a related bug while in there: the logo circle was getting squashed into an oval on tablet and small laptop widths (641 to 1023px), because the desktop nav didn't actually fit until 1024px but the mobile menu only took over below 640px, leaving a gap where the nav overflowed and squeezed the logo.</li>
+        </ul>
+      </section>
+
+      <section class="changelog__entry">
+        <div class="changelog__date">
           <span class="changelog__date-text">2026-07-06</span>
           <span class="changelog__badge changelog__badge--fix">MOBILE + SEO</span>
         </div>
