@@ -39,6 +39,15 @@
 </head>
 <body>
 
+  <!-- ===== FULL-PAGE DROP OVERLAY ===== -->
+  <div class="drop-overlay" id="dropOverlay" aria-hidden="true">
+    <div class="drop-overlay__card">
+      <svg class="drop-overlay__icon"><use href="#st-polaroid"/></svg>
+      <p class="drop-overlay__title">DROP IT ANYWHERE</p>
+      <p class="drop-overlay__hint">Let go to see what it leaks</p>
+    </div>
+  </div>
+
   <!-- ===== STICKER SPRITE (Slush-style hand-drawn icons) ===== -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
@@ -219,7 +228,7 @@
     <h2 class="section-title section-title--light reveal">DROP IT.<br>SEE THE LEAK.</h2>
     <div class="dropzone reveal" id="dropzone" tabindex="0" role="button" aria-label="Upload photos to inspect and clean">
       <span class="dropzone__emoji" aria-hidden="true"><svg><use href="#st-polaroid"/></svg></span>
-      <p class="dropzone__text">Drag a photo here, or click to choose one</p>
+      <p class="dropzone__text">Click to choose a photo, or drag one in from anywhere on the page</p>
       <p class="dropzone__hint">You can also paste one straight from your clipboard. Nothing leaves your device, it even works with Wi-Fi off.</p>
       <input type="file" id="fileInput" accept="image/*,.heic,.heif" multiple hidden />
     </div>

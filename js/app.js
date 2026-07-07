@@ -13,19 +13,44 @@ fileInput.addEventListener("change", () => {
   fileInput.value = "";
 });
 
-["dragenter", "dragover"].forEach((evt) =>
-  dropzone.addEventListener(evt, (e) => {
-    e.preventDefault();
-    dropzone.classList.add("is-dragover");
-  })
-);
-["dragleave", "drop"].forEach((evt) =>
-  dropzone.addEventListener(evt, (e) => {
-    e.preventDefault();
+/* Full-page drop zone: a photo can be dropped anywhere on the page, not
+   just inside the box below. A depth counter avoids the classic flicker
+   where dragenter/dragleave fire repeatedly as the drag crosses child
+   elements within the page. */
+const dropOverlay = document.getElementById("dropOverlay");
+let dragDepth = 0;
+
+function isFileDrag(e) {
+  return e.dataTransfer && [...e.dataTransfer.types].includes("Files");
+}
+
+window.addEventListener("dragenter", (e) => {
+  if (!isFileDrag(e)) return;
+  e.preventDefault();
+  dragDepth++;
+  dropOverlay.classList.add("is-active");
+  dropzone.classList.add("is-dragover");
+});
+window.addEventListener("dragover", (e) => {
+  if (!isFileDrag(e)) return;
+  e.preventDefault();
+});
+window.addEventListener("dragleave", (e) => {
+  if (!isFileDrag(e)) return;
+  dragDepth = Math.max(0, dragDepth - 1);
+  if (dragDepth === 0) {
+    dropOverlay.classList.remove("is-active");
     dropzone.classList.remove("is-dragover");
-  })
-);
-dropzone.addEventListener("drop", (e) => handleFiles(e.dataTransfer.files));
+  }
+});
+window.addEventListener("drop", (e) => {
+  if (!isFileDrag(e)) return;
+  e.preventDefault();
+  dragDepth = 0;
+  dropOverlay.classList.remove("is-active");
+  dropzone.classList.remove("is-dragover");
+  handleFiles(e.dataTransfer.files);
+});
 
 /* Paste a photo from the clipboard anywhere on the page */
 document.addEventListener("paste", (e) => {
