@@ -365,7 +365,24 @@ async function renderCard(file) {
     }
     const hint = document.createElement("p");
     hint.className = "meta-list__hint";
-    hint.textContent = "Everything ticked gets removed. Untick anything you want to keep.";
+    hint.innerHTML = `Everything ticked gets removed. Untick anything you want to keep. <button class="meta-list__copy-json" type="button">Copy as JSON</button>`;
+    hint.querySelector(".meta-list__copy-json").addEventListener("click", async (e) => {
+      const copyBtn = e.currentTarget;
+      const exportData = {
+        file: file.name,
+        gps: meta.gps ? { lat: meta.gps.lat, lon: meta.gps.lon, altitude: meta.gps.alt ?? null } : null,
+        fields: meta.fields.map((f) => ({ label: f.label, value: f.value })),
+      };
+      try {
+        await navigator.clipboard.writeText(JSON.stringify(exportData, null, 2));
+        copyBtn.textContent = "Copied";
+      } catch (err) {
+        console.error(err);
+        copyBtn.textContent = "Copy blocked by browser";
+      } finally {
+        setTimeout(() => (copyBtn.textContent = "Copy as JSON"), 2500);
+      }
+    });
     body.append(list, hint);
   } else {
     const clean = document.createElement("p");
