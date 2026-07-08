@@ -723,6 +723,8 @@ a { color: inherit; text-decoration: none; }
 .footer__cta .pill--dark:hover { background: var(--accent-orange); color: #ffffff; }
 .footer__tile:nth-child(1):hover { background: var(--accent-green); }
 .footer__tile:nth-child(2):hover { background: var(--accent-blue); }
+.footer__tile:nth-child(3):hover { background: var(--accent-violet); }
+.footer__tile:nth-child(4):hover { background: var(--accent-yellow); }
 
 .pill--strip:hover { background: var(--accent-yellow); color: #0a0a0a; }
 
