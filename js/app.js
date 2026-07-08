@@ -354,6 +354,7 @@ async function renderCard(file) {
         <dt>
           <label class="meta-check">
             <input type="checkbox" checked ${removable ? "" : "disabled"}
+              aria-label="Remove ${escapeHtml(f.label)}${removable ? "" : ", not removable in this format"}"
               ${f.isGps ? 'data-gps="1"' : `data-field="${f.fieldIndex}"`} />
             <span></span>
           </label>
