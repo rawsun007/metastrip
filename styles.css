@@ -931,6 +931,7 @@ a { color: inherit; text-decoration: none; }
 }
 .dropzone__sample-btn:hover { color: var(--accent-orange); }
 .dropzone__sample-btn:disabled { opacity: 0.6; cursor: wait; }
+.dropzone__sample-or { margin: 0 2px; }
 
 /* ===== Changelog ===== */
 .changelog { margin-top: 32px; display: flex; flex-direction: column; gap: 40px; }
