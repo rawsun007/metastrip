@@ -570,6 +570,44 @@ function buildActions(file, meta) {
     }
   });
 
+  const shareBtn = document.createElement("button");
+  shareBtn.className = "pill pill--copy";
+  shareBtn.textContent = "SHARE";
+  shareBtn.title = "Share the cleaned photo to another app";
+  shareBtn.style.display = "none"; // shown only if this browser can actually share files
+  shareBtn.addEventListener("click", async () => {
+    shareBtn.disabled = true;
+    shareBtn.textContent = "SHARING…";
+    try {
+      const card = actions.closest(".result-card");
+      const result = await computeCleanResult(file, meta, card);
+      const cleanBlob = new Blob([result.bytes], { type: result.lossless ? file.type : "image/jpeg" });
+      const shareFile = new File([cleanBlob], cleanFilename(file.name, !result.lossless), { type: cleanBlob.type });
+      await navigator.share({ files: [shareFile], title: "Cleaned with MetaStrip" });
+      shareBtn.textContent = "SHARED";
+    } catch (err) {
+      if (err.name === "AbortError") {
+        shareBtn.textContent = "SHARE"; // the visitor just closed the share sheet, not a real failure
+      } else {
+        console.error(err);
+        shareBtn.textContent = "SHARE FAILED";
+      }
+    } finally {
+      shareBtn.disabled = false;
+      setTimeout(() => (shareBtn.textContent = "SHARE"), 3000);
+    }
+  });
+  // File sharing is only reliable on Android Chrome and mobile Safari; feature-detect
+  // rather than showing a button that silently does nothing everywhere else.
+  if (navigator.canShare) {
+    try {
+      const probe = new File(["x"], "probe.jpg", { type: "image/jpeg" });
+      if (navigator.canShare({ files: [probe] })) shareBtn.style.display = "";
+    } catch {
+      // canShare threw on this browser, leave the button hidden
+    }
+  }
+
   const note = document.createElement("span");
   note.className = "result-card__note";
   note.textContent =
@@ -579,7 +617,7 @@ function buildActions(file, meta) {
         ? "This format will get a fresh JPEG re-encode."
         : "Lossless. Zero quality loss.";
 
-  actions.append(btn, copyBtn, note);
+  actions.append(btn, copyBtn, shareBtn, note);
   return actions;
 }
 
