@@ -36,6 +36,54 @@
     "author": { "@type": "Person", "name": "Roshan Ramani", "url": "https://roshan-ramani.vercel.app/" }
   }
   </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Does my photo get uploaded anywhere?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. All the reading and stripping happens right in your browser with plain JavaScript. There is no server, no account, and we never see your files. Turn off your Wi-Fi after the page loads and it still works."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does stripping reduce image quality?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. For JPEG and PNG, MetaStrip removes the metadata blocks byte by byte and never touches the compressed pixel data. The image itself stays bit for bit identical. Other formats fall back to a high quality re-encode."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Don't Instagram / WhatsApp already strip metadata?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Most big social feeds do. Email, cloud drives, marketplaces, forums, blogs and plenty of messaging apps do not. If you sell something on a classifieds site with photos taken at home, your address may be riding along."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What formats are supported?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "JPEG and PNG get full metadata inspection and lossless stripping. Other browser-readable images, such as WebP and AVIF, are cleaned via canvas re-encode."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is it open source?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. The whole thing is a few hundred lines of plain JavaScript with zero dependencies, readable on GitHub."
+        }
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
 
