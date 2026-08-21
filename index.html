@@ -67,10 +67,18 @@
       },
       {
         "@type": "Question",
+        "name": "Can I clean a video too?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. MP4, MOV, WebM and Matroska clips are read the same way photos are, including GPS coordinates, camera make and model, recording time and the Live Photo pairing id. Stripping is lossless and re-encodes nothing: the metadata boxes are blanked in place so every playback offset inside the file stays valid. Nothing is uploaded, and nothing is ever loaded whole, so a large clip costs almost no memory."
+        }
+      },
+      {
+        "@type": "Question",
         "name": "What formats are supported?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "JPEG and PNG get full metadata inspection and lossless stripping. Other browser-readable images, such as WebP and AVIF, are cleaned via canvas re-encode."
+          "text": "JPEG, PNG and HEIC get full metadata inspection and lossless stripping, and so do MP4, MOV, WebM and Matroska videos. Other browser-readable images, such as WebP and AVIF, are cleaned via canvas re-encode."
         }
       },
       {
@@ -428,8 +436,12 @@
         <div class="faq__answer"><p>Most big social feeds do. Email, cloud drives, marketplaces, forums, blogs and plenty of messaging apps do not. If you sell something on a classifieds site with photos taken at home, your address may be riding along.</p></div>
       </details>
       <details class="faq__item reveal" style="--d:0.24s">
+        <summary>Can I clean a video too?</summary>
+        <div class="faq__answer"><p>Yes. MP4, MOV, WebM and Matroska clips are read the same way photos are, including GPS coordinates, camera make and model, recording time and the Live Photo pairing id. Stripping is lossless and re-encodes nothing: the metadata boxes are blanked in place so every playback offset inside the file stays valid. Nothing is uploaded, and nothing is ever loaded whole, so a large clip costs almost no memory.</p></div>
+      </details>
+      <details class="faq__item reveal" style="--d:0.32s">
         <summary>What formats are supported?</summary>
-        <div class="faq__answer"><p>JPEG and PNG get full metadata inspection and lossless stripping. Other browser-readable images (WebP, AVIF, etc.) are cleaned via canvas re-encode.</p></div>
+        <div class="faq__answer"><p>JPEG, PNG and HEIC get full metadata inspection and lossless stripping, and so do MP4, MOV, WebM and Matroska videos. Other browser-readable images (WebP, AVIF, etc.) are cleaned via canvas re-encode.</p></div>
       </details>
       <details class="faq__item reveal" style="--d:0.32s">
         <summary>Is it open source?</summary>
