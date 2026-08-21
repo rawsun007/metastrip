@@ -12,9 +12,16 @@
      free   an ISO-BMFF "free" box of the same size, payload zeroed
      void   the EBML equivalent, for Matroska
      space  fill with 0x20 — text formats, where a blank must stay parseable
-     hexZero fill with ASCII "0" — a hex string that must stay a hex string */
+     hexZero fill with ASCII "0" — a hex string that must stay a hex string
+     literal write the bytes in edit.data — same length, chosen content
+     cut    leave the bytes out entirely, for formats with no stored offsets */
 
 function patchBytes(edit, length) {
+  if (edit.kind === "literal" && edit.data) {
+    const patch = new Uint8Array(length);
+    patch.set(edit.data.subarray(0, length));
+    return patch;
+  }
   const patch = new Uint8Array(length);
   if (edit.kind === "space") {
     patch.fill(0x20);
@@ -85,7 +92,8 @@ async function applyFileEdits(file, edits, type) {
     const end = Math.min(edit.end, file.size);
     if (end <= start) continue;
     if (start > pos) parts.push(file.slice(pos, start));
-    parts.push(patchBytes(edit, end - start));
+    // a cut leaves the bytes out; everything else replaces them in place
+    if (edit.kind !== "cut") parts.push(patchBytes(edit, end - start));
     cleared += end - start;
     pos = end;
   }

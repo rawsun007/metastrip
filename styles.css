@@ -338,6 +338,13 @@ a { color: inherit; text-decoration: none; }
   background: #000;
   max-height: 46vh;
 }
+/* an audio file has no picture, so the player is the whole preview */
+.result-card__preview--audio {
+  aspect-ratio: auto;
+  min-height: 54px;
+  background: transparent;
+}
+
 /* the browser's own PDF view, framed like any other preview */
 .result-card__preview--doc {
   border: 0;

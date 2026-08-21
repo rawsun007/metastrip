@@ -81,6 +81,7 @@ async function handleFiles(fileList) {
       f.type.startsWith("image/") ||
       isVideoFile(f) ||
       isPdfFile(f) ||
+      isAudioFile(f) ||
       /\.(heic|heif|dng|cr2|cr3|nef|nrw|arw|orf|raf|rw2|pef|srw)$/i.test(f.name)
   );
   if (!files.length) return;
@@ -392,6 +393,7 @@ function findFieldValue(meta, label) {
 async function readMetadata(file) {
   if (isVideoFile(file)) return parseVideoMetadata(file);
   if (isPdfFile(file)) return parsePdfMetadata(file);
+  if (isAudioFile(file)) return parseAudioMetadata(file);
   return parseMetadata(await file.arrayBuffer());
 }
 
@@ -421,13 +423,22 @@ async function renderCard(file) {
 
   const isVideo = isVideoFile(file);
   const isDocument = isPdfFile(file);
-  card.dataset.mediaKind = isVideo ? "video" : isDocument ? "document" : "photo";
-  const preview = document.createElement(isVideo ? "video" : isDocument ? "iframe" : "img");
+  const isAudio = !isVideo && !isDocument && isAudioFile(file);
+  card.dataset.mediaKind = isVideo ? "video" : isDocument ? "document" : isAudio ? "audio" : "photo";
+  const tag = isVideo ? "video" : isDocument ? "iframe" : isAudio ? "audio" : "img";
+  const preview = document.createElement(tag);
   preview.className = isVideo
     ? "result-card__preview result-card__preview--video"
     : isDocument
       ? "result-card__preview result-card__preview--doc"
-      : "result-card__preview";
+      : isAudio
+        ? "result-card__preview result-card__preview--audio"
+        : "result-card__preview";
+  if (isAudio) {
+    preview.controls = true;
+    preview.preload = "metadata";
+    preview.setAttribute("aria-label", `Play ${file.name}`);
+  }
   if (isDocument) {
     // every desktop browser renders a PDF itself, so the first page is the
     // preview; the blob stays local either way
@@ -462,8 +473,8 @@ async function renderCard(file) {
   // the shape the file says it is, so the card opens close to right, then
   // the decoded shape once the browser knows it for certain
   shapeFromMetadata(card, meta);
-  if (isDocument) {
-    // nothing to measure: a PDF page has no intrinsic pixel size
+  if (isDocument || isAudio) {
+    // nothing to measure: neither a page nor a waveform has a pixel size
   } else if (isVideo) {
     preview.addEventListener(
       "loadedmetadata",
@@ -478,7 +489,10 @@ async function renderCard(file) {
     );
   }
 
-  if (isDocument) {
+  if (isAudio) {
+    card._msObjectUrl = URL.createObjectURL(file);
+    preview.src = card._msObjectUrl;
+  } else if (isDocument) {
     card._msObjectUrl = URL.createObjectURL(file);
     preview.src = `${card._msObjectUrl}#toolbar=0&view=FitH`;
     applyMediaShape(card, 210, 297); // a page, until the file says otherwise
@@ -723,6 +737,7 @@ function initMiniMap(L, frame, lat, lon) {
 async function computeCleanResult(file, meta, card) {
   if (meta.kind === "video") return computeCleanVideo(file, meta, card);
   if (meta.format === "pdf") return computeCleanPdf(file, meta, card);
+  if (meta.kind === "audio") return computeCleanAudio(file, meta, card);
   const buffer = await file.arrayBuffer();
   const boxes = card ? [...card.querySelectorAll(".meta-check input:not(:disabled)")] : [];
   const keepingSome = boxes.length > 0 && boxes.some((b) => !b.checked);
@@ -762,6 +777,14 @@ async function computeCleanPdf(file, meta, card) {
   const edits = selectedEdits(meta, card, () => allPdfEdits(meta));
   if (!edits.length) throw new Error("nothing to strip");
   return stripPdfFile(file, edits);
+}
+
+/* An M4A is an MP4, so it takes the video route; everything else audio has
+   its own edit list. */
+async function computeCleanAudio(file, meta, card) {
+  const edits = selectedEdits(meta, card, () => (meta.format === "m4a" ? allVideoEdits(meta) : allAudioEdits(meta)));
+  if (!edits.length) throw new Error("nothing to strip");
+  return stripAudioFile(file, meta, edits);
 }
 
 /* Which byte edits the tick boxes are asking for. With nothing unticked the
@@ -823,7 +846,7 @@ function buildActions(file, meta) {
   copyBtn.title = "Copies the stripped image to your clipboard";
   // a browser cannot rasterise a raw file, so there is nothing to put on a
   // clipboard that came from these pixels
-  if (meta.format === "tiff" || meta.format === "pdf") copyBtn.style.display = "none";
+  if (meta.format === "tiff" || meta.format === "pdf" || meta.kind === "audio") copyBtn.style.display = "none";
   copyBtn.addEventListener("click", async () => {
     copyBtn.disabled = true;
     copyBtn.textContent = "COPYING…";
@@ -889,17 +912,21 @@ function buildActions(file, meta) {
   note.textContent =
     meta.kind === "video"
       ? "Lossless. Metadata boxes are blanked in place, so every frame and every playback offset stays exactly as it was."
-      : meta.format === "pdf"
-        ? meta.encrypted
-          ? "Encrypted, so nothing here can be read or removed without the password."
-          : "Lossless. Values are blanked in place, so every page renders exactly as before."
-        : meta.format === "tiff"
-        ? "Lossless. Values are blanked in place, so a converter still opens the raw exactly as before."
-          : meta.format === "heic"
-            ? "Converts to a clean JPEG, or untick fields to redact the HEIC in place."
-            : meta.format === "other"
-              ? "This format will get a fresh JPEG re-encode."
-              : "Lossless. Zero quality loss.";
+      : meta.kind === "audio"
+        ? meta.format === "mp3"
+          ? "Lossless. The tag blocks are cut out whole and the audio frames are untouched."
+          : "Lossless. Metadata blocks are blanked in place, so every sample stays exactly as it was."
+        : meta.format === "pdf"
+          ? meta.encrypted
+            ? "Encrypted, so nothing here can be read or removed without the password."
+            : "Lossless. Values are blanked in place, so every page renders exactly as before."
+          : meta.format === "tiff"
+            ? "Lossless. Values are blanked in place, so a converter still opens the raw exactly as before."
+            : meta.format === "heic"
+              ? "Converts to a clean JPEG, or untick fields to redact the HEIC in place."
+              : meta.format === "other"
+                ? "This format will get a fresh JPEG re-encode."
+                : "Lossless. Zero quality loss.";
 
   actions.append(btn, copyBtn, shareBtn, note);
   return actions;

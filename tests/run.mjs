@@ -11,7 +11,7 @@ import vm from "node:vm";
 import * as F from "./fixtures.mjs";
 
 const JS_DIR = path.join(import.meta.dirname, "..", "js");
-const SCRIPTS = ["c2pa.js", "edits.js", "exif.js", "stripper.js", "video.js", "pdf.js"];
+const SCRIPTS = ["c2pa.js", "edits.js", "exif.js", "stripper.js", "video.js", "pdf.js", "audio.js"];
 
 const ctx = vm.createContext({ console, File, Blob, DataView, Uint8Array, TextDecoder, TextEncoder });
 for (const name of SCRIPTS) {
@@ -67,6 +67,24 @@ function xrefOffsets(text) {
   if (at < 0) return [];
   const rows = text.slice(at).matchAll(/^(\d{10}) 00000 n/gm);
   return [...rows].map((r) => Number(r[1])).filter((n) => n > 0);
+}
+
+/* Splits an Ogg stream into its pages, so each checksum can be verified. */
+function oggPages(u8) {
+  const pages = [];
+  let offset = 0;
+  while (offset + 27 <= u8.length) {
+    if (latin1(u8.subarray(offset, offset + 4)) !== "OggS") break;
+    const segments = u8[offset + 26];
+    let payload = 0;
+    for (let i = 0; i < segments; i++) payload += u8[offset + 27 + i];
+    const end = offset + 27 + segments + payload;
+    const page = u8.subarray(offset, end);
+    page.sequence = pages.length;
+    pages.push(page);
+    offset = end;
+  }
+  return pages;
 }
 
 function sameBytes(a, b) {
@@ -473,6 +491,102 @@ async function parsePdf(u8, name = "doc.pdf") {
   const meta = await parsePdf(pdf);
   check("pdf: encryption reported", has(meta, "Encrypted"), labels(meta).join(","));
   eq("pdf: nothing offered for removal", meta.fields.filter((f) => f.edits).length, 0);
+}
+
+/* ---------------- audio ---------------- */
+
+async function parseAudio(u8, name, type) {
+  return call("parseAudioMetadata(__file)", { __file: asFile(u8, name, type) });
+}
+
+async function stripAudio(u8, name, type, meta) {
+  const result = await call("stripAudioFile(__file, __meta, __meta.format === 'm4a' ? allVideoEdits(__meta) : allAudioEdits(__meta))", {
+    __file: asFile(u8, name, type),
+    __meta: meta,
+  });
+  return new Uint8Array(await result.blob.arrayBuffer());
+}
+
+{
+  const mp3 = F.makeMp3({});
+  const meta = await parseAudio(mp3, "memo.mp3", "audio/mpeg");
+  eq("mp3: format", meta.format, "mp3");
+  eq("mp3: kind", meta.kind, "audio");
+  eq("mp3: title", valueOf(meta, "Title"), "Voice memo 12");
+  eq("mp3: artist", valueOf(meta, "Artist"), "Roshan Ramani");
+  check("mp3: id3v1 found", has(meta, "ID3v1 tag"), labels(meta).join(","));
+
+  const cleaned = await stripAudio(mp3, "memo.mp3", "audio/mpeg", meta);
+  check("mp3: file shrank", cleaned.length < mp3.length);
+  const after = await parseAudio(cleaned, "memo.mp3", "audio/mpeg");
+  eq("mp3: nothing left", after.fields.length, 0);
+  eq("mp3: starts on a frame header", cleaned[0], 0xff);
+  check("mp3: audio frames untouched", cleaned.length === 417, `got ${cleaned.length}`);
+  check("mp3: payload survives", cleaned[4] === 0x55 && cleaned[400] === 0x55);
+}
+
+{
+  const wav = F.makeWav({});
+  const meta = await parseAudio(wav, "memo.wav", "audio/wav");
+  eq("wav: format", meta.format, "wav");
+  eq("wav: title", valueOf(meta, "Title"), "Voice memo 12");
+  eq("wav: software", valueOf(meta, "Software"), "Zoom H6essential");
+  check("wav: broadcast chunk read", (valueOf(meta, "Broadcast metadata") || "").includes("Roshan Ramani"), valueOf(meta, "Broadcast metadata"));
+
+  const cleaned = await stripAudio(wav, "memo.wav", "audio/wav", meta);
+  eq("wav: size unchanged", cleaned.length, wav.length);
+  const after = await parseAudio(cleaned, "memo.wav", "audio/wav");
+  eq("wav: nothing left", after.fields.length, 0);
+  const text = latin1(cleaned);
+  check("wav: chunks renamed JUNK", text.includes("JUNK"), "no JUNK chunk");
+  check("wav: no name left", !text.includes("Roshan Ramani"));
+  check("wav: fmt chunk kept", text.includes("fmt "));
+  check("wav: data chunk kept", text.includes("data"));
+  // samples must come through byte for byte
+  const dataAt = text.indexOf("data") + 8;
+  check("wav: samples untouched", cleaned[dataAt] === 0 && cleaned[dataAt + 1] === 7 && cleaned[dataAt + 2] === 14);
+}
+
+{
+  const flac = F.makeFlac({});
+  const meta = await parseAudio(flac, "memo.flac", "audio/flac");
+  eq("flac: format", meta.format, "flac");
+  eq("flac: title", valueOf(meta, "Title"), "Voice memo 12");
+  eq("flac: location tag", valueOf(meta, "Location"), "21.1702, 72.8311");
+  check("flac: cover art found", has(meta, "Cover art"), labels(meta).join(","));
+
+  const cleaned = await stripAudio(flac, "memo.flac", "audio/flac", meta);
+  eq("flac: size unchanged", cleaned.length, flac.length);
+  const after = await parseAudio(cleaned, "memo.flac", "audio/flac");
+  eq("flac: nothing left", after.fields.length, 0);
+  // the comment block must now be a PADDING block, and STREAMINFO untouched
+  eq("flac: signature kept", latin1(cleaned.subarray(0, 4)), "fLaC");
+  eq("flac: streaminfo type kept", cleaned[4] & 0x7f, 0);
+  eq("flac: comment block became padding", cleaned[42] & 0x7f, 1);
+  check("flac: last-block flag preserved", (cleaned[42] & 0x80) === (flac[42] & 0x80));
+  check("flac: no name left", !latin1(cleaned).includes("Roshan Ramani"));
+}
+
+{
+  const opus = F.makeOpus();
+  const meta = await parseAudio(opus, "memo.opus", "audio/ogg");
+  eq("opus: format", meta.format, "ogg");
+  eq("opus: title", valueOf(meta, "Title"), "Voice memo 12");
+  eq("opus: artist", valueOf(meta, "Artist"), "Roshan Ramani");
+
+  const cleaned = await stripAudio(opus, "memo.opus", "audio/ogg", meta);
+  eq("opus: size unchanged", cleaned.length, opus.length);
+  const after = await parseAudio(cleaned, "memo.opus", "audio/ogg");
+  eq("opus: nothing left", after.fields.length, 0);
+  check("opus: no name left", !latin1(cleaned).includes("Roshan Ramani"));
+  check("opus: OpusHead page untouched", latin1(cleaned).includes("OpusHead"));
+
+  // every page checksum must still validate, checked against an independent
+  // implementation of the Ogg CRC rather than the app's own
+  for (const page of oggPages(cleaned)) {
+    const stored = new DataView(page.buffer, page.byteOffset, page.length).getUint32(22, true);
+    eq(`opus: page ${page.sequence} checksum valid`, stored, F.oggCrcReference(page));
+  }
 }
 
 /* ---------------- report ---------------- */

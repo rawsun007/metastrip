@@ -337,6 +337,139 @@ export const XMP_UUID = [
   0x9c, 0x71, 0x99, 0x94, 0x91, 0xe3, 0xaf, 0xac,
 ];
 
+/* ---------- audio ---------- */
+
+function syncsafe(n) {
+  return [(n >> 21) & 0x7f, (n >> 14) & 0x7f, (n >> 7) & 0x7f, n & 0x7f];
+}
+
+/** An MP3 with an ID3v2.4 tag in front and an ID3v1 tag at the back. */
+export function makeMp3({ frames = [["TIT2", "Voice memo 12"], ["TPE1", "Roshan Ramani"]], id3v1 = true } = {}) {
+  const frameBytes = frames.map(([id, text]) => {
+    const payload = bytes(0x03, text); // encoding 3 = UTF-8
+    return bytes(id, syncsafe(payload.length), be16(0), payload);
+  });
+  const body = bytes(...frameBytes);
+  const tag = bytes("ID3", 4, 0, 0, syncsafe(body.length), body);
+  // a plausible MPEG frame header plus payload, which must survive untouched
+  const audio = bytes(0xff, 0xfb, 0x90, 0x00, new Uint8Array(413).fill(0x55));
+  const v1 = id3v1
+    ? bytes("TAG", pad("Voice memo 12", 30), pad("Roshan Ramani", 30), pad("", 30), pad("2026", 4), pad("", 30), 0)
+    : bytes();
+  return bytes(tag, audio, v1);
+}
+
+function pad(text, length) {
+  const out = new Uint8Array(length);
+  for (let i = 0; i < Math.min(text.length, length); i++) out[i] = text.charCodeAt(i);
+  return out;
+}
+
+function riffChunk(type, data) {
+  const body = bytes(data);
+  return bytes(type, le32(body.length), body, body.length % 2 ? [0] : []);
+}
+
+/** A WAV with an INFO list, a Broadcast Wave chunk and real sample data. */
+export function makeWav({ info = true, bext = true } = {}) {
+  const fmt = riffChunk("fmt ", bytes(le16(1), le16(1), le32(48000), le32(96000), le16(2), le16(16)));
+  const samples = new Uint8Array(512);
+  for (let i = 0; i < samples.length; i++) samples[i] = (i * 7) & 0xff;
+  const data = riffChunk("data", samples);
+  const chunks = [fmt];
+  if (info) {
+    chunks.push(riffChunk("LIST", bytes(
+      "INFO",
+      riffChunk("INAM", bytes("Voice memo 12", 0)),
+      riffChunk("IART", bytes("Roshan Ramani", 0)),
+      riffChunk("ISFT", bytes("Zoom H6essential", 0))
+    )));
+  }
+  if (bext) {
+    const description = pad("Interview, kitchen table", 256);
+    const originator = pad("Roshan Ramani", 32);
+    const reference = pad("REF-00421", 32);
+    chunks.push(riffChunk("bext", bytes(description, originator, reference, pad("2026-08-20", 10), pad("07:31:09", 8), new Uint8Array(60))));
+  }
+  chunks.push(data);
+  const body = bytes(...chunks);
+  return bytes("RIFF", le32(body.length + 4), "WAVE", body);
+}
+
+function flacBlock(type, data, last = false) {
+  const body = bytes(data);
+  return bytes((last ? 0x80 : 0) | type, [(body.length >> 16) & 0xff, (body.length >> 8) & 0xff, body.length & 0xff], body);
+}
+
+function vorbisComments(vendor, comments) {
+  const encode = (text) => new TextEncoder().encode(text);
+  const vendorBytes = encode(vendor);
+  const parts = [le32(vendorBytes.length), vendorBytes, le32(comments.length)];
+  for (const comment of comments) {
+    const encoded = encode(comment);
+    parts.push(le32(encoded.length), encoded);
+  }
+  return bytes(...parts.map((p) => bytes(p)));
+}
+
+/** A FLAC with a STREAMINFO block, comments and a picture block. */
+export function makeFlac({ picture = true } = {}) {
+  const streaminfo = flacBlock(0, new Uint8Array(34));
+  const comments = flacBlock(4, vorbisComments("reference libFLAC 1.4.3", [
+    "TITLE=Voice memo 12",
+    "ARTIST=Roshan Ramani",
+    "LOCATION=21.1702, 72.8311",
+  ]), !picture);
+  const parts = [bytes("fLaC"), streaminfo, comments];
+  if (picture) parts.push(flacBlock(6, new Uint8Array(64).fill(0x99), true));
+  parts.push(bytes(0xff, 0xf8, 0x69, 0x18, new Uint8Array(64).fill(0x33))); // frame
+  return bytes(...parts);
+}
+
+/** An Ogg page carrying an OpusTags comment header, with a valid CRC. */
+export function makeOpus() {
+  const idHeader = bytes("OpusHead", 1, 1, le16(312), le32(48000), le16(0), 0);
+  const tags = bytes("OpusTags", vorbisComments("libopus 1.4", [
+    "TITLE=Voice memo 12",
+    "ARTIST=Roshan Ramani",
+  ]));
+  return bytes(oggPage(idHeader, 0, 2), oggPage(tags, 1, 0));
+}
+
+export function oggPage(payload, sequence, headerType) {
+  const body = bytes(payload);
+  const segments = [];
+  let left = body.length;
+  while (left >= 255) {
+    segments.push(255);
+    left -= 255;
+  }
+  segments.push(left);
+  const page = bytes(
+    "OggS", 0, headerType,
+    new Uint8Array(8), // granule position
+    le32(0x1234), le32(sequence), le32(0), // serial, sequence, crc placeholder
+    segments.length, segments, body
+  );
+  const view = new DataView(page.buffer, page.byteOffset, page.length);
+  view.setUint32(22, oggCrcReference(page), true);
+  return page;
+}
+
+/* An independent implementation of the Ogg page checksum, so the test is
+   checking the app's version against something rather than itself. */
+export function oggCrcReference(page) {
+  let crc = 0;
+  for (let i = 0; i < page.length; i++) {
+    const byte = i >= 22 && i < 26 ? 0 : page[i]; // the CRC field reads as zero
+    crc = crc ^ (byte << 24);
+    for (let k = 0; k < 8; k++) {
+      crc = crc & 0x80000000 ? ((crc << 1) ^ 0x04c11db7) >>> 0 : (crc << 1) >>> 0;
+    }
+  }
+  return crc >>> 0;
+}
+
 /* ---------- PDF ----------
    A real, minimal PDF: one page, an information dictionary, an XMP packet and
    a cross-reference table whose offsets are computed from the assembled body,
