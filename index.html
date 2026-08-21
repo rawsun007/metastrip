@@ -284,9 +284,9 @@
     <h2 class="section-title section-title--light reveal">DROP IT.<br>SEE THE LEAK.</h2>
     <div class="dropzone reveal" id="dropzone" tabindex="0" role="button" aria-label="Upload photos to inspect and clean">
       <span class="dropzone__emoji" aria-hidden="true"><svg><use href="#st-polaroid"/></svg></span>
-      <p class="dropzone__text">Click to choose a photo, or drag one in from anywhere on the page</p>
+      <p class="dropzone__text">Click to choose a photo or a video, or drag one in from anywhere on the page</p>
       <p class="dropzone__hint">You can also paste one straight from your clipboard. Nothing leaves your device, it even works with Wi-Fi off.</p>
-      <input type="file" id="fileInput" accept="image/*,.heic,.heif" multiple hidden />
+      <input type="file" id="fileInput" accept="image/*,video/*,.heic,.heif,.mov,.mp4,.m4v,.webm,.mkv" multiple hidden />
     </div>
     <p class="dropzone__sample">
       Do not have a photo handy? Try one of ours:
@@ -467,6 +467,7 @@
   </script>
   <script src="js/motion.js"></script>
   <script src="js/exif.js"></script>
+  <script src="js/video.js"></script>
   <script src="js/stripper.js"></script>
   <script src="js/app.js"></script>
 </body>

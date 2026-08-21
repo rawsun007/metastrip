@@ -58,7 +58,7 @@ document.addEventListener("paste", (e) => {
   if (!items) return;
   const files = [];
   for (const item of items) {
-    if (item.kind === "file" && item.type.startsWith("image/")) {
+    if (item.kind === "file" && (item.type.startsWith("image/") || item.type.startsWith("video/"))) {
       const f = item.getAsFile();
       if (f) files.push(f);
     }
@@ -75,7 +75,9 @@ function formatBytes(n) {
 }
 
 async function handleFiles(fileList) {
-  const files = [...fileList].filter((f) => f.type.startsWith("image/") || /\.(heic|heif)$/i.test(f.name));
+  const files = [...fileList].filter(
+    (f) => f.type.startsWith("image/") || isVideoFile(f) || /\.(heic|heif)$/i.test(f.name)
+  );
   if (!files.length) return;
   for (const file of files) {
     const card = await renderCard(file);
@@ -242,9 +244,16 @@ const RISK_META = {
   dimensions: { icon: icon("st-resize") },
 };
 
+/* Duration, frame size and codec are read out of boxes every player needs,
+   so they are shown but never counted as a leak and never offered for
+   removal. Only a field that can actually be removed scores. */
+function isRemovableField(f) {
+  return Boolean(f.ranges || f.chunkRange || (f.edits && f.edits.length));
+}
+
 function scoreMeta(meta) {
   if (meta.gps) return { label: "LEAKING", cls: "score-badge--leak" };
-  if (meta.fields.length) return { label: "RISKY", cls: "score-badge--risky" };
+  if (meta.fields.some(isRemovableField)) return { label: "RISKY", cls: "score-badge--risky" };
   return { label: "CLEAN", cls: "score-badge--clean" };
 }
 
@@ -277,6 +286,7 @@ async function renderCard(file) {
     card.addEventListener(
       "animationend",
       () => {
+        if (card._msObjectUrl) URL.revokeObjectURL(card._msObjectUrl);
         card.remove();
         updateStripAllBar();
       },
@@ -285,9 +295,20 @@ async function renderCard(file) {
   });
   card.appendChild(dismissBtn);
 
-  const preview = document.createElement("img");
-  preview.className = "result-card__preview";
-  preview.alt = `Preview of ${file.name}`;
+  const isVideo = isVideoFile(file);
+  const preview = document.createElement(isVideo ? "video" : "img");
+  preview.className = isVideo ? "result-card__preview result-card__preview--video" : "result-card__preview";
+  if (isVideo) {
+    // metadata only: the browser reads the header for the poster frame and
+    // leaves the rest of the file on disk until playback is asked for
+    preview.preload = "metadata";
+    preview.controls = true;
+    preview.muted = true;
+    preview.playsInline = true;
+    preview.setAttribute("aria-label", `Preview of ${file.name}`);
+  } else {
+    preview.alt = `Preview of ${file.name}`;
+  }
 
   const body = document.createElement("div");
   body.className = "result-card__body";
@@ -308,6 +329,11 @@ async function renderCard(file) {
     heicToJpegBlob(file, 0.5)
       .then((blob) => { preview.src = URL.createObjectURL(blob); })
       .catch(() => { preview.alt = "HEIC preview unavailable"; });
+  } else if (isVideo) {
+    // a video needs its URL for as long as the card lives, so it is released
+    // when the card goes away instead of on first load
+    card._msObjectUrl = URL.createObjectURL(file);
+    preview.src = card._msObjectUrl;
   } else {
     preview.src = URL.createObjectURL(file);
     preview.addEventListener("load", () => URL.revokeObjectURL(preview.src), { once: true });
@@ -356,7 +382,7 @@ async function renderCard(file) {
       const riskIcon = (RISK_META[f.risk] || RISK_META.device).icon;
       const row = document.createElement("div");
       row.className = "meta-list__row";
-      const removable = f.isGps || (f.ranges || f.chunkRange);
+      const removable = f.isGps || isRemovableField(f);
       row.innerHTML = `
         <dt>
           <label class="meta-check">
@@ -521,6 +547,7 @@ function initMiniMap(L, frame, lat, lon) {
    Returns a Blob rather than raw bytes: a video is assembled from slices of
    the original File, so nothing here ever holds a whole clip in memory. */
 async function computeCleanResult(file, meta, card) {
+  if (meta.kind === "video") return computeCleanVideo(file, meta, card);
   const buffer = await file.arrayBuffer();
   const boxes = card ? [...card.querySelectorAll(".meta-check input:not(:disabled)")] : [];
   const keepingSome = boxes.length > 0 && boxes.some((b) => !b.checked);
@@ -544,6 +571,27 @@ async function computeCleanResult(file, meta, card) {
   }
   if (!result) throw new Error("unsupported format");
   return { blob: new Blob([result.bytes], { type: result.lossless ? file.type : "image/jpeg" }), lossless: result.lossless };
+}
+
+/* Videos never round-trip through an ArrayBuffer: the edit list is byte
+   ranges, and the result is slices of the file on disk. */
+async function computeCleanVideo(file, meta, card) {
+  const boxes = card ? [...card.querySelectorAll(".meta-check input:not(:disabled)")] : [];
+  const keepingSome = boxes.length > 0 && boxes.some((b) => !b.checked);
+
+  let edits;
+  if (keepingSome) {
+    edits = [];
+    for (const b of boxes) {
+      if (!b.checked) continue;
+      const field = b.dataset.gps ? meta.gps : meta.fields[Number(b.dataset.field)];
+      if (field && field.edits) edits.push(...field.edits);
+    }
+  } else {
+    edits = allVideoEdits(meta);
+  }
+  if (!edits.length) throw new Error("nothing to strip");
+  return stripVideoFile(file, edits);
 }
 
 function buildActions(file, meta) {
@@ -585,6 +633,8 @@ function buildActions(file, meta) {
   const copyBtn = document.createElement("button");
   copyBtn.className = "pill pill--copy";
   copyBtn.textContent = "COPY CLEAN";
+  // clipboards take images, not clips
+  if (meta.kind === "video") copyBtn.style.display = "none";
   copyBtn.title = "Copies the stripped image to your clipboard";
   copyBtn.addEventListener("click", async () => {
     copyBtn.disabled = true;
@@ -649,11 +699,13 @@ function buildActions(file, meta) {
   const note = document.createElement("span");
   note.className = "result-card__note";
   note.textContent =
-    meta.format === "heic"
-      ? "Converts to a clean JPEG, or untick fields to redact the HEIC in place."
-      : meta.format === "other"
-        ? "This format will get a fresh JPEG re-encode."
-        : "Lossless. Zero quality loss.";
+    meta.kind === "video"
+      ? "Lossless. Metadata boxes are blanked in place, so every frame and every playback offset stays exactly as it was."
+      : meta.format === "heic"
+        ? "Converts to a clean JPEG, or untick fields to redact the HEIC in place."
+        : meta.format === "other"
+          ? "This format will get a fresh JPEG re-encode."
+          : "Lossless. Zero quality loss.";
 
   actions.append(btn, copyBtn, shareBtn, note);
   return actions;
@@ -686,7 +738,8 @@ async function showComparison(actionsEl, beforeMeta, cleanBlob, originalFile) {
   const describe = (m) => {
     const parts = [];
     if (m.gps) parts.push("location");
-    if (m.fields.length) parts.push(`${m.fields.length} ${m.fields.length === 1 ? "field" : "fields"}`);
+    const count = m.fields.filter(isRemovableField).length;
+    if (count) parts.push(`${count} ${count === 1 ? "field" : "fields"}`);
     return parts.length ? parts.join(" and ") : "nothing";
   };
 
