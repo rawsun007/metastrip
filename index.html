@@ -443,12 +443,12 @@
       <button class="pill pill--light" id="folderBtn" type="button">CLEAN A WHOLE FOLDER</button>
       <span class="dropzone__folder-note">Cleaned copies go into a new <code>metastrip-clean</code> folder. Your originals are never touched, and nothing is uploaded.</span>
     </p>
-    <div class="folder-panel" id="folderPanel" hidden>
+    <div class="folder-panel" id="folderPanel" role="region" aria-label="Folder cleaning progress" hidden>
       <p class="folder-panel__status" id="folderStatus" role="status"></p>
       <button class="pill pill--dark" id="folderStopBtn" type="button" hidden>STOP</button>
     </div>
     <p class="storage-notice" id="storageNotice" role="status" hidden></p>
-    <div class="storage-meter" id="storageMeter" hidden>
+    <div class="storage-meter" id="storageMeter" role="region" aria-label="How much this tab is holding" hidden>
       <div class="storage-meter__track"><span class="storage-meter__fill" id="storageMeterFill"></span></div>
       <p class="storage-meter__text" id="storageMeterText"></p>
     </div>
@@ -456,8 +456,8 @@
       <p id="stripAllLabel"></p>
       <button class="pill pill--strip" id="stripAllBtn">STRIP ALL &amp; DOWNLOAD ZIP</button>
     </div>
-    <div class="link-panel" id="linkPanel" hidden></div>
-    <div class="receipt" id="receiptPanel" hidden></div>
+    <div class="link-panel" id="linkPanel" role="region" aria-label="What these files have in common" hidden></div>
+    <div class="receipt" id="receiptPanel" role="region" aria-label="Receipt for cleaned files" hidden></div>
     <div class="results" id="results"></div>
   </section>
 

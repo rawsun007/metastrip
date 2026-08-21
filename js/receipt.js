@@ -135,7 +135,7 @@ function renderReceipt() {
       <button class="pill pill--dark" id="receiptCopyBtn" type="button">COPY RECEIPT</button>
       <button class="pill pill--dark" id="receiptSaveBtn" type="button">SAVE AS TXT</button>
     </div>
-    <pre class="receipt__body" id="receiptBody">${escapeHtml(formatReceipt(receiptEntries, {}))}</pre>
+    <pre class="receipt__body" id="receiptBody" tabindex="0" role="group" aria-label="Receipt text">${escapeHtml(formatReceipt(receiptEntries, {}))}</pre>
   `;
   receiptPanel.querySelector("#receiptCopyBtn").addEventListener("click", copyReceipt);
   receiptPanel.querySelector("#receiptSaveBtn").addEventListener("click", saveReceipt);

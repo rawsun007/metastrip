@@ -146,11 +146,14 @@ function screenshotWarningField() {
 /** Opens the redaction editor for one file. Resolves when it closes. */
 async function openRedactor(file, card) {
   const bitmap = await createImageBitmap(file);
-  const overlay = buildRedactorShell(file.name);
+  const filename = file.name;
+  const overlay = buildRedactorShell(filename);
   document.body.appendChild(overlay);
   document.body.classList.add("is-locked");
 
   const canvas = overlay.querySelector(".redactor__canvas");
+  canvas.setAttribute("role", "img");
+  canvas.setAttribute("aria-label", `${filename}, drag across it to redact an area`);
   const context = canvas.getContext("2d", { willReadFrequently: true });
   canvas.width = bitmap.width;
   canvas.height = bitmap.height;
@@ -252,10 +255,31 @@ async function openRedactor(file, card) {
     autoBtn.hidden = true;
   }
 
+  const previouslyFocused = document.activeElement;
+  const focusable = () => [...overlay.querySelectorAll("button:not([hidden]):not([disabled])")];
+  focusable()[0]?.focus();
+
+  // a modal that lets Tab wander behind it is a trap of a different kind
+  overlay.addEventListener("keydown", (event) => {
+    if (event.key !== "Tab") return;
+    const stops = focusable();
+    if (!stops.length) return;
+    const first = stops[0];
+    const last = stops[stops.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
+
   const close = () => {
     overlay.remove();
     document.body.classList.remove("is-locked");
     bitmap.close();
+    if (previouslyFocused && previouslyFocused.focus) previouslyFocused.focus();
   };
 
   overlay.querySelector(".redactor__cancel").addEventListener("click", close);
@@ -298,6 +322,7 @@ function buildRedactorShell(filename) {
   const overlay = document.createElement("div");
   overlay.className = "redactor";
   overlay.setAttribute("role", "dialog");
+  overlay.setAttribute("aria-modal", "true");
   overlay.setAttribute("aria-label", `Redact areas of ${filename}`);
   overlay.innerHTML = `
     <div class="redactor__panel">
@@ -312,7 +337,7 @@ function buildRedactorShell(filename) {
       </div>
       <div class="redactor__stage"><canvas class="redactor__canvas"></canvas></div>
       <p class="redactor__status"></p>
-      <p class="redactor__note">Saving re-encodes the picture, so this is the one thing here that is not lossless. Your original file is untouched, and the copy carries no metadata at all.</p>
+      <p class="redactor__note">Saving re-encodes the picture, so this is the one thing here that is not lossless. Your original file is untouched, and the copy carries no metadata at all. Drawing an area needs a mouse, pen or finger; if you cannot use one, stripping the file normally still removes everything written about it, and press Escape to close this.</p>
     </div>
   `;
   return overlay;
