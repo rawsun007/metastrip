@@ -38,6 +38,17 @@ python3 -m http.server 4173
 
 Then open http://localhost:4173
 
+## Tests
+
+```bash
+node tests/run.mjs
+```
+
+No binary fixtures and no dependencies: every test file is assembled byte by byte
+in `tests/fixtures.mjs`, so a test can carry exactly the structure it is about — a
+JUMBF box, a video bolted onto a JPEG, an anamorphic track — and you can read what
+it depends on.
+
 ## Built by
 
 [Roshan Ramani](https://github.com/rawsun007)
