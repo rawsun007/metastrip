@@ -11,7 +11,7 @@ import vm from "node:vm";
 import * as F from "./fixtures.mjs";
 
 const JS_DIR = path.join(import.meta.dirname, "..", "js");
-const SCRIPTS = ["c2pa.js", "edits.js", "exif.js", "stripper.js", "video.js", "pdf.js", "audio.js"];
+const SCRIPTS = ["aitags.js", "c2pa.js", "edits.js", "exif.js", "stripper.js", "video.js", "pdf.js", "audio.js"];
 const DOM_SCRIPTS = ["folder.js"];
 
 const ctx = vm.createContext({ console, File, Blob, DataView, Uint8Array, TextDecoder, TextEncoder });
@@ -678,6 +678,80 @@ async function stripAudio(u8, name, type, meta) {
   eq("folder: stop reported", summary.stopped, true);
   eq("folder: stopped after one file", summary.seen, 1);
   eq("folder: only one file written", F.writtenFiles(tree).size, 1);
+}
+
+/* ---------------- AI generator tags ---------------- */
+
+{
+  const a1111 = [
+    "a photorealistic golden retriever wearing sunglasses, 85mm, bokeh",
+    "Negative prompt: blurry, extra limbs, watermark",
+    "Steps: 28, Sampler: DPM++ 2M Karras, CFG scale: 7, Seed: 3820114457, Size: 1024x1024, Model hash: 31e35c80fc, Model: sd_xl_base_1.0",
+  ].join("\n");
+  const png = F.makePng([F.pngText("parameters", a1111)], { crc32 });
+  const meta = parse(png);
+  check("ai: tool named", has(meta, "AI prompt (Automatic1111 or Forge)"), labels(meta).join(","));
+  check("ai: prompt read", (valueOf(meta, "AI prompt (Automatic1111 or Forge)") || "").startsWith("a photorealistic golden retriever"));
+  check("ai: negative prompt read", (valueOf(meta, "AI negative prompt") || "").includes("extra limbs"));
+  const settings = valueOf(meta, "AI settings") || "";
+  check("ai: seed read", settings.includes("seed 3820114457"), settings);
+  check("ai: model read", settings.includes("sd_xl_base_1.0"), settings);
+  check("ai: steps read", settings.includes("28 steps"), settings);
+
+  const after = parse(strip(png).bytes);
+  eq("ai: removed by strip", after.fields.length, 0);
+}
+
+{
+  const workflow = JSON.stringify({
+    "3": { class_type: "KSampler", inputs: { seed: 987654321, steps: 30 } },
+    "4": { class_type: "CheckpointLoaderSimple", inputs: { ckpt_name: "flux1-dev.safetensors" } },
+    "6": { class_type: "CLIPTextEncode", inputs: { text: "a lighthouse in a storm, oil painting" } },
+    "7": { class_type: "CLIPTextEncode", inputs: { text: "low quality, jpeg artifacts" } },
+  });
+  const png = F.makePng([F.pngText("prompt", workflow)], { crc32 });
+  const meta = parse(png);
+  check("ai comfy: tool named", has(meta, "AI prompt (ComfyUI)"), labels(meta).join(","));
+  check("ai comfy: prompt read", (valueOf(meta, "AI prompt (ComfyUI)") || "").includes("lighthouse in a storm"));
+  const settings = valueOf(meta, "AI settings") || "";
+  check("ai comfy: seed read", settings.includes("987654321"), settings);
+  check("ai comfy: checkpoint read", settings.includes("flux1-dev"), settings);
+}
+
+{
+  // a plain text chunk must not be dressed up as an AI tag
+  const png = F.makePng([F.pngText("prompt", "please water the plants")], { crc32 });
+  const meta = parse(png);
+  check("ai: plain text not mislabelled", has(meta, "PNG prompt"), labels(meta).join(","));
+  const software = F.makePng([F.pngText("Software", "NovelAI")], { crc32 });
+  check("ai: software name recognised", has(parse(software), "AI prompt (NovelAI)"), labels(parse(software)).join(","));
+  const other = F.makePng([F.pngText("Software", "GIMP 2.10")], { crc32 });
+  check("ai: unrelated software left alone", has(parse(other), "PNG Software"), labels(parse(other)).join(","));
+}
+
+/* ---------------- one global scope ----------------
+   These are plain scripts, not modules, so every top-level declaration lands
+   in one shared scope and the last file loaded silently wins. That is how
+   exif.js spent a while using video.js's text helper, which truncated at 160
+   characters and quietly cut every AI prompt in half. */
+
+{
+  const declarations = new Map();
+  const collisions = [];
+  for (const name of [...SCRIPTS, ...DOM_SCRIPTS, "app.js", "storage.js", "motion.js"]) {
+    const source = fs.readFileSync(path.join(JS_DIR, name), "utf8");
+    for (const match of source.matchAll(/^(?:async\s+)?function\*?\s+([A-Za-z0-9_$]+)\s*\(/gm)) {
+      const symbol = match[1];
+      if (declarations.has(symbol)) collisions.push(`${symbol} in both ${declarations.get(symbol)} and ${name}`);
+      else declarations.set(symbol, name);
+    }
+    for (const match of source.matchAll(/^const\s+([A-Z][A-Z0-9_]{2,})\s*=/gm)) {
+      const symbol = match[1];
+      if (declarations.has(symbol)) collisions.push(`${symbol} in both ${declarations.get(symbol)} and ${name}`);
+      else declarations.set(symbol, name);
+    }
+  }
+  check("scripts: no duplicate top-level names", collisions.length === 0, collisions.join("; "));
 }
 
 /* ---------------- report ---------------- */

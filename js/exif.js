@@ -551,9 +551,18 @@ function parsePng(bytes) {
     } else if (PNG_TEXT_CHUNKS.has(type)) {
       const keyword = asciiSlice(bytes, dataStart, Math.min(dataStart + 80, dataStart + length));
       const valueStart = dataStart + keyword.length + 1;
-      let value = type === "tEXt" ? asciiSlice(bytes, valueStart, dataStart + length) : "(embedded text)";
-      if (value.length > 120) value = value.slice(0, 120) + "…";
-      result.fields.push({ label: `PNG ${keyword || type}`, value, risk: "device", mode: "cut", chunkRange: [offset, chunkEnd] });
+      const full = type === "tEXt" ? decodeTextChunk(bytes, valueStart, dataStart + length) : "";
+      const removal = { mode: "cut", chunkRange: [offset, chunkEnd] };
+
+      // a generator tag says far more than "some text is present"
+      const aiFields = full ? describeAiTag(keyword, full) : null;
+      if (aiFields) {
+        for (const field of aiFields) result.fields.push({ ...field, ...removal });
+      } else {
+        let value = full || "(embedded text)";
+        if (value.length > 120) value = value.slice(0, 120) + "…";
+        result.fields.push({ label: `PNG ${keyword || type}`, value, risk: "device", ...removal });
+      }
     } else if (type === "caBX") {
       const analysis = analyzeC2paManifest(bytes, dataStart, dataStart + length);
       for (const field of c2paFields(analysis, { mode: "cut", chunkRange: [offset, chunkEnd] })) {
@@ -578,4 +587,15 @@ function parsePng(bytes) {
 
 function pad(n) {
   return String(n).padStart(2, "0");
+}
+
+/* PNG text chunks are Latin-1 by spec and UTF-8 in practice, and a prompt is
+   full of characters that matter. Unlike the video reader's text helper this
+   keeps the whole value: a generation recipe is useless truncated. */
+function decodeTextChunk(bytes, start, end) {
+  if (end <= start) return "";
+  return new TextDecoder("utf-8", { fatal: false })
+    .decode(bytes.subarray(start, end))
+    .replace(/\u0000/g, " ")
+    .trim();
 }
