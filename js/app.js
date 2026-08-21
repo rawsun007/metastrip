@@ -101,17 +101,17 @@ const stripAllBar = document.getElementById("stripAllBar");
 const stripAllBtn = document.getElementById("stripAllBtn");
 const stripAllLabel = document.getElementById("stripAllLabel");
 
-function wireSampleButton(btn, path, filename, loadingText, idleText) {
+function wireSampleButton(btn, path, filename, type, loadingText, idleText) {
   btn.addEventListener("click", async () => {
     btn.disabled = true;
     btn.textContent = loadingText;
     try {
       const res = await fetch(path);
       const blob = await res.blob();
-      const file = new File([blob], filename, { type: "image/jpeg" });
+      const file = new File([blob], filename, { type });
       await handleFiles([file]);
     } catch (err) {
-      console.error("sample photo load failed", path, err);
+      console.error("sample load failed", path, err);
     } finally {
       btn.disabled = false;
       btn.textContent = idleText;
@@ -123,13 +123,23 @@ wireSampleButton(
   document.getElementById("sampleLeakBtn"),
   "assets/sample-photo.jpg",
   "sample-photo.jpg",
+  "image/jpeg",
   "Loading...",
-  "a leaking one"
+  "a leaking photo"
+);
+wireSampleButton(
+  document.getElementById("sampleVideoBtn"),
+  "assets/sample-video.mp4",
+  "sample-video.mp4",
+  "video/mp4",
+  "Loading...",
+  "a leaking video"
 );
 wireSampleButton(
   document.getElementById("sampleCleanBtn"),
   "assets/sample-clean.jpg",
   "sample-clean.jpg",
+  "image/jpeg",
   "Loading...",
   "an already-clean one"
 );
