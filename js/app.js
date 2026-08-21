@@ -148,7 +148,7 @@ stripAllBtn.addEventListener("click", async () => {
       try {
         const result = await computeCleanResult(file, meta, card);
         const name = dedupeZipName(cleanFilename(file.name, !result.lossless), usedNames);
-        zip.file(name, result.bytes);
+        zip.file(name, result.blob);
       } catch (err) {
         console.error("strip-all: one photo failed", file?.name, err);
         failures++;
@@ -256,6 +256,13 @@ function makeBadge(meta) {
   return badge;
 }
 
+/* One door for both worlds. A photo is small enough to read whole; a video
+   is read by slicing, so it stays async either way. */
+async function readMetadata(file) {
+  if (isVideoFile(file)) return parseVideoMetadata(file);
+  return parseMetadata(await file.arrayBuffer());
+}
+
 async function renderCard(file) {
   const card = document.createElement("article");
   card.className = "result-card";
@@ -291,7 +298,7 @@ async function renderCard(file) {
 
   let meta = { fields: [], gps: null, format: "other" };
   try {
-    meta = parseMetadata(await file.arrayBuffer());
+    meta = await readMetadata(file);
   } catch (err) {
     console.error("metadata parse failed", err);
   }
@@ -510,7 +517,9 @@ function initMiniMap(L, frame, lat, lon) {
 }
 
 /* Shared by the per-card strip button and the strip-all zip flow, so both
-   respect the same selective-strip checkboxes and HEIC handling. */
+   respect the same selective-strip checkboxes and HEIC handling.
+   Returns a Blob rather than raw bytes: a video is assembled from slices of
+   the original File, so nothing here ever holds a whole clip in memory. */
 async function computeCleanResult(file, meta, card) {
   const buffer = await file.arrayBuffer();
   const boxes = card ? [...card.querySelectorAll(".meta-check input:not(:disabled)")] : [];
@@ -534,7 +543,7 @@ async function computeCleanResult(file, meta, card) {
     if (!result) result = await stripViaCanvas(file);
   }
   if (!result) throw new Error("unsupported format");
-  return result;
+  return { blob: new Blob([result.bytes], { type: result.lossless ? file.type : "image/jpeg" }), lossless: result.lossless };
 }
 
 function buildActions(file, meta) {
@@ -551,7 +560,7 @@ function buildActions(file, meta) {
       const card = actions.closest(".result-card");
       const result = await computeCleanResult(file, meta, card);
 
-      const blob = new Blob([result.bytes], { type: result.lossless ? file.type : "image/jpeg" });
+      const blob = result.blob;
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = cleanFilename(file.name, !result.lossless);
@@ -563,7 +572,7 @@ function buildActions(file, meta) {
       note.textContent = result.lossless
         ? `Done. Pixels untouched${saved > 0 ? ", " + formatBytes(saved) + " of metadata gone" : ""}.`
         : "Done. This format needed a fresh re-encode, and the metadata is gone.";
-      showComparison(actions, meta, await blob.arrayBuffer());
+      await showComparison(actions, meta, blob, file);
     } catch (err) {
       console.error(err);
       btn.innerHTML = `${icon("st-warn")} THAT ONE FAILED, TRY ANOTHER`;
@@ -582,15 +591,11 @@ function buildActions(file, meta) {
     copyBtn.textContent = "COPYING…";
     try {
       if (!navigator.clipboard || !window.ClipboardItem) throw new Error("clipboard unsupported");
-      const buffer = await file.arrayBuffer();
-      let result = stripMetadata(buffer);
-      if (!result) result = await stripViaCanvas(file);
-      if (!result) throw new Error("unsupported format");
+      const result = await computeCleanResult(file, meta, actions.closest(".result-card"));
 
       // Clipboards only reliably accept PNG, so redraw the clean bytes as PNG.
       // Pixels come from the stripped file, so nothing sensitive rides along.
-      const cleanBlob = new Blob([result.bytes], { type: result.lossless ? file.type : "image/jpeg" });
-      const pngBlob = await toPngBlob(cleanBlob);
+      const pngBlob = await toPngBlob(result.blob);
       await navigator.clipboard.write([new ClipboardItem({ "image/png": pngBlob })]);
       copyBtn.textContent = "COPIED, PASTE AWAY";
     } catch (err) {
@@ -615,8 +620,7 @@ function buildActions(file, meta) {
     try {
       const card = actions.closest(".result-card");
       const result = await computeCleanResult(file, meta, card);
-      const cleanBlob = new Blob([result.bytes], { type: result.lossless ? file.type : "image/jpeg" });
-      const shareFile = new File([cleanBlob], cleanFilename(file.name, !result.lossless), { type: cleanBlob.type });
+      const shareFile = new File([result.blob], cleanFilename(file.name, !result.lossless), { type: result.blob.type });
       await navigator.share({ files: [shareFile], title: "Cleaned with MetaStrip" });
       shareBtn.textContent = "SHARED";
     } catch (err) {
@@ -668,13 +672,13 @@ async function toPngBlob(blob) {
   return png;
 }
 
-function showComparison(actionsEl, beforeMeta, cleanBuffer) {
+async function showComparison(actionsEl, beforeMeta, cleanBlob, originalFile) {
   const card = actionsEl.closest(".result-card");
   if (!card || card.querySelector(".strip-compare")) return;
 
   let afterMeta = { fields: [], gps: null };
   try {
-    afterMeta = parseMetadata(cleanBuffer);
+    afterMeta = await readMetadata(new File([cleanBlob], originalFile.name, { type: cleanBlob.type }));
   } catch (err) {
     console.error("post-strip parse failed", err);
   }
