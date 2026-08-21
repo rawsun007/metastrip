@@ -107,6 +107,7 @@ async function parseMp4(file) {
     // safe to pull in whole and walk in memory
     const moovBytes = await readSlice(file, moov.start, moov.end - moov.start);
     walkMoov(moovBytes, moov.start, result);
+    pushFrameSizeField(result);
   }
   return result;
 }
@@ -192,14 +193,15 @@ function readMovieHeader(bytes, box, result) {
   }
 }
 
+/* tkhd carries the display size, which is what a player actually shows. It
+   is not always the stored size: anamorphic footage stores narrow pixels
+   and stretches them on playback, so the two must be kept apart. */
 function readTrackHeader(bytes, box, result) {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.length);
-  const width = view.getUint32(box.end - 8) / 65536;
-  const height = view.getUint32(box.end - 4) / 65536;
-  if (width >= 1 && height >= 1 && !result.fields.some((f) => f.label === "Frame size")) {
-    result.fields.push({
-      label: "Frame size", value: `${Math.round(width)} x ${Math.round(height)}`, risk: "dimensions",
-    });
+  const width = Math.round(view.getUint32(box.end - 8) / 65536);
+  const height = Math.round(view.getUint32(box.end - 4) / 65536);
+  if (width >= 1 && height >= 1 && !result.displaySize) {
+    result.displaySize = { width, height };
   }
 }
 
@@ -210,13 +212,37 @@ function readSampleDescription(bytes, box, result) {
   for (let i = 0; i < count && offset + 8 <= box.end; i++) {
     const size = view.getUint32(offset);
     const format = fourcc(bytes, offset + 4);
-    const name = CODEC_NAMES[format] || format;
-    if (!result.fields.some((f) => f.label === "Codec" && f.value === name)) {
-      result.fields.push({ label: "Codec", value: name, risk: "device" });
+    pushVideoField(result, { label: "Codec", value: CODEC_NAMES[format] || format, risk: "device" });
+
+    // a visual sample entry puts the stored pixel size 32 bytes in
+    if (offset + 36 <= box.end && !result.storedSize) {
+      const width = view.getUint16(offset + 32);
+      const height = view.getUint16(offset + 34);
+      if (width >= 1 && height >= 1) result.storedSize = { width, height };
     }
     if (size < 8) break;
     offset += size;
   }
+}
+
+/* One honest line for the shape of the picture. When the stored pixels do
+   not match what gets displayed, both numbers are shown rather than
+   quietly picking one. */
+function pushFrameSizeField(result) {
+  const display = result.displaySize;
+  const stored = result.storedSize;
+  if (!display && !stored) return;
+  const shown = display || stored;
+  let value = `${shown.width} x ${shown.height}`;
+  if (display && stored && !sameShape(display, stored)) {
+    value += ` (stored ${stored.width} x ${stored.height}, anamorphic)`;
+  }
+  pushVideoField(result, { label: "Frame size", value, risk: "dimensions" });
+}
+
+function sameShape(a, b) {
+  if (a.width === b.width && a.height === b.height) return true;
+  return Math.abs(a.width / a.height - b.width / b.height) < 0.01;
 }
 
 /* ---------- user data: where phones actually hide the personal bits ----------
@@ -482,6 +508,8 @@ const EBML = {
   video: 0xe0,
   pixelWidth: 0xb0,
   pixelHeight: 0xba,
+  displayWidth: 0x54b0,
+  displayHeight: 0x54ba,
   tags: 0x1254c367,
   tag: 0x7373,
   simpleTag: 0x67c8,
@@ -593,6 +621,8 @@ async function readWebmTracks(file, tracks, result) {
     if (entry.id !== EBML.trackEntry) continue;
     let width = 0;
     let height = 0;
+    let displayWidth = 0;
+    let displayHeight = 0;
     for await (const el of ebmlChildren(file, entry.dataStart, entry.dataEnd)) {
       if (el.id === EBML.codecId) {
         const codec = await ebmlString(file, el);
@@ -610,10 +640,16 @@ async function readWebmTracks(file, tracks, result) {
         for await (const v of ebmlChildren(file, el.dataStart, el.dataEnd)) {
           if (v.id === EBML.pixelWidth) width = await ebmlUint(file, v);
           else if (v.id === EBML.pixelHeight) height = await ebmlUint(file, v);
+          else if (v.id === EBML.displayWidth) displayWidth = await ebmlUint(file, v);
+          else if (v.id === EBML.displayHeight) displayHeight = await ebmlUint(file, v);
         }
       }
     }
-    if (width && height) pushVideoField(result, { label: "Frame size", value: `${width} x ${height}`, risk: "dimensions" });
+    if (width && height) result.storedSize = result.storedSize || { width, height };
+    if (displayWidth && displayHeight) {
+      result.displaySize = result.displaySize || { width: displayWidth, height: displayHeight };
+    }
+    pushFrameSizeField(result);
   }
 }
 

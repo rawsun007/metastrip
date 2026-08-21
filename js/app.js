@@ -369,10 +369,10 @@ function applyMediaShape(card, width, height) {
 /* A first guess from the metadata that was just parsed, so the card opens at
    roughly the right shape instead of visibly reflowing a moment later. */
 function shapeFromMetadata(card, meta) {
-  const frame = findFieldValue(meta, "Frame size");
+  // the value can carry a note after the numbers, so match rather than split
+  const frame = /(\d+)\s*x\s*(\d+)/.exec(findFieldValue(meta, "Frame size"));
   if (frame) {
-    const [w, h] = frame.split(" x ").map(Number);
-    applyMediaShape(card, w, h);
+    applyMediaShape(card, Number(frame[1]), Number(frame[2]));
     return;
   }
   const w = Number(findFieldValue(meta, "Pixel width"));
