@@ -329,6 +329,52 @@ function makeBadge(meta) {
 
 /* One door for both worlds. A photo is small enough to read whole; a video
    is read by slicing, so it stays async either way. */
+/* ----- media shape -----
+   Every card carries the real ratio of what it holds, and a shape class the
+   layout reads. Widths are picked per shape rather than one column for
+   everything: a vertical reel needs a narrow tall box, a scope frame is
+   unreadable in anything but a wide one. */
+const CINEMA_RATIO = 1.95; // 2:1 and wider: anamorphic, scope, ultrawide
+const LANDSCAPE_RATIO = 1.15;
+const PORTRAIT_RATIO = 0.9;
+
+const SHAPE_CLASSES = [
+  "result-card--portrait",
+  "result-card--square",
+  "result-card--landscape",
+  "result-card--cinema",
+];
+
+function applyMediaShape(card, width, height) {
+  if (!card || !(width > 0) || !(height > 0)) return;
+  const ratio = width / height;
+  card.style.setProperty("--media-ratio", `${width} / ${height}`);
+  card.classList.remove(...SHAPE_CLASSES);
+  card.classList.add(
+    ratio >= CINEMA_RATIO
+      ? "result-card--cinema"
+      : ratio >= LANDSCAPE_RATIO
+        ? "result-card--landscape"
+        : ratio <= PORTRAIT_RATIO
+          ? "result-card--portrait"
+          : "result-card--square"
+  );
+}
+
+/* A first guess from the metadata that was just parsed, so the card opens at
+   roughly the right shape instead of visibly reflowing a moment later. */
+function shapeFromMetadata(card, meta) {
+  const frame = findFieldValue(meta, "Frame size");
+  if (frame) {
+    const [w, h] = frame.split(" x ").map(Number);
+    applyMediaShape(card, w, h);
+    return;
+  }
+  const w = Number(findFieldValue(meta, "Pixel width"));
+  const h = Number(findFieldValue(meta, "Pixel height"));
+  if (w && h) applyMediaShape(card, w, h);
+}
+
 function findFieldValue(meta, label) {
   const field = meta.fields.find((f) => f.label === label);
   return field ? field.value : "";
@@ -390,6 +436,23 @@ async function renderCard(file) {
     meta = await readMetadata(file);
   } catch (err) {
     console.error("metadata parse failed", err);
+  }
+
+  // the shape the file says it is, so the card opens close to right, then
+  // the decoded shape once the browser knows it for certain
+  shapeFromMetadata(card, meta);
+  if (isVideo) {
+    preview.addEventListener(
+      "loadedmetadata",
+      () => applyMediaShape(card, preview.videoWidth, preview.videoHeight),
+      { once: true }
+    );
+  } else {
+    preview.addEventListener(
+      "load",
+      () => applyMediaShape(card, preview.naturalWidth, preview.naturalHeight),
+      { once: true }
+    );
   }
 
   if (meta.format === "heic") {
