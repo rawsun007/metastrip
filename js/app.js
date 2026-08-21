@@ -205,6 +205,9 @@ stripAllBtn.addEventListener("click", async () => {
         try {
           const result = await computeCleanResult(file, meta, card);
           zip.file(dedupeZipName(cleanFilename(file.name, !result.lossless), usedNames), result.blob);
+          if (typeof recordCleaned === "function") {
+            await recordCleaned(file, meta, await readMetadata(new File([result.blob], file.name, { type: result.blob.type })), result.blob);
+          }
         } catch (err) {
           console.error("strip-all: one photo failed", file?.name, err);
           failures++;
@@ -225,6 +228,9 @@ stripAllBtn.addEventListener("click", async () => {
       try {
         const result = await computeCleanResult(file, meta, card);
         downloadBlob(result.blob, cleanFilename(file.name, false));
+        if (typeof recordCleaned === "function") {
+          await recordCleaned(file, meta, await readMetadata(new File([result.blob], file.name, { type: result.blob.type })), result.blob);
+        }
         cleaned++;
         // browsers drop back-to-back downloads, so let each one land
         await new Promise((resolve) => setTimeout(resolve, 900));
@@ -829,7 +835,8 @@ function buildActions(file, meta) {
       note.textContent = result.lossless
         ? `Done. Pixels untouched${saved > 0 ? ", " + formatBytes(saved) + " of metadata gone" : ""}.`
         : "Done. This format needed a fresh re-encode, and the metadata is gone.";
-      await showComparison(actions, meta, blob, file);
+      const afterMeta = await showComparison(actions, meta, blob, file);
+      if (typeof recordCleaned === "function") await recordCleaned(file, meta, afterMeta, blob);
     } catch (err) {
       console.error(err);
       btn.innerHTML = `${icon("st-warn")} THAT ONE FAILED, TRY ANOTHER`;
@@ -965,6 +972,7 @@ async function showComparison(actionsEl, beforeMeta, cleanBlob, originalFile) {
     return parts.length ? parts.join(" and ") : "nothing";
   };
 
+  if (!afterMeta.fields) afterMeta.fields = [];
   const compare = document.createElement("div");
   compare.className = "strip-compare";
   compare.innerHTML = `
@@ -993,6 +1001,7 @@ async function showComparison(actionsEl, beforeMeta, cleanBlob, originalFile) {
     const stripBtn = actionsEl.querySelector(".pill--strip");
     if (stripBtn) celebrateCleanAt(stripBtn, actionsEl);
   }
+  return afterMeta;
 }
 
 /* A one-shot confetti burst anchored on a specific element's true rendered

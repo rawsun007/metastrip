@@ -150,7 +150,7 @@ async function runFolderMode() {
     });
     setFolderStatus(describeFolderSummary(summary));
     lastFolderSummary = summary;
-    if (typeof renderReceipt === "function") renderReceipt();
+    if (typeof recordFolderRun === "function") recordFolderRun(summary);
   } catch (err) {
     console.error(err);
     setFolderStatus("That folder could not be read. Nothing was changed.");

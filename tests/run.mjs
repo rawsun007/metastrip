@@ -12,7 +12,7 @@ import * as F from "./fixtures.mjs";
 
 const JS_DIR = path.join(import.meta.dirname, "..", "js");
 const SCRIPTS = ["aitags.js", "c2pa.js", "edits.js", "exif.js", "stripper.js", "video.js", "pdf.js", "audio.js"];
-const DOM_SCRIPTS = ["linkage.js", "folder.js"];
+const DOM_SCRIPTS = ["linkage.js", "receipt.js", "folder.js"];
 
 const ctx = vm.createContext({ console, File, Blob, DataView, Uint8Array, TextDecoder, TextEncoder });
 for (const name of SCRIPTS) {
@@ -796,6 +796,51 @@ async function stripAudio(u8, name, type, meta) {
   });
   // different labels, so no single-field group: this must not report a match
   eq("linkage: different labels do not merge", findings.length, 0);
+}
+
+/* ---------------- receipt ---------------- */
+
+{
+  const entries = [
+    {
+      name: "holiday.jpg",
+      bytesBefore: 4_200_000,
+      bytesAfter: 4_180_000,
+      removed: ["GPS location 21.1702, 72.8311", "Camera make", "Camera model"],
+      remaining: [],
+      hashBefore: "a".repeat(64),
+      hashAfter: "b".repeat(64),
+    },
+    {
+      name: "clip.mp4",
+      bytesBefore: 900_000_000,
+      bytesAfter: 900_000_000,
+      removed: ["Content Credentials"],
+      remaining: ["Duration"],
+      hashNote: "not hashed, over 256 MB",
+    },
+  ];
+  const text = call("formatReceipt(__entries, { generatedAt: __at })", {
+    __entries: entries,
+    __at: new Date(Date.UTC(2026, 7, 21, 10, 30, 0)),
+  });
+
+  check("receipt: names the tool", text.startsWith("MetaStrip"));
+  check("receipt: fixed timestamp", text.includes("2026-08-21 10:30:00 UTC"), text.split("\n")[1]);
+  check("receipt: says nothing was uploaded", text.includes("Nothing was uploaded"));
+  check("receipt: lists both files", text.includes("1. holiday.jpg") && text.includes("2. clip.mp4"));
+  check("receipt: reports removed fields", text.includes("removed: GPS location 21.1702, 72.8311, Camera make, Camera model"));
+  check("receipt: reports what is left", text.includes("remaining: Duration"));
+  check("receipt: reports nothing left", text.includes("remaining: nothing readable"));
+  check("receipt: shows byte delta", text.includes("(20000 removed)"), text);
+  check("receipt: notes in-place blanking", text.includes("(blanked in place)"));
+  check("receipt: includes both hashes", text.includes(`sha256 before: ${"a".repeat(64)}`) && text.includes(`sha256 after:  ${"b".repeat(64)}`));
+  check("receipt: explains the skip", text.includes("not hashed, over 256 MB"));
+  check("receipt: gives a verification command", text.includes("shasum -a 256"));
+  check("receipt: totals", text.includes("2 files cleaned in this session."));
+
+  const empty = call("formatReceipt([], {})", {});
+  check("receipt: empty case", empty.includes("No files cleaned yet."));
 }
 
 /* ---------------- one global scope ----------------
