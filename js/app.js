@@ -334,7 +334,11 @@ function makeBadge(meta) {
    layout reads. Widths are picked per shape rather than one column for
    everything: a vertical reel needs a narrow tall box, a scope frame is
    unreadable in anything but a wide one. */
-const CINEMA_RATIO = 1.95; // 2:1 and wider: anamorphic, scope, ultrawide
+/* A clip is something you watch, so it earns the full row as soon as it is
+   properly widescreen. A photo is something you glance at while reading the
+   table beside it, so it only takes the full row once it is genuinely
+   panoramic. Same layout, different thresholds. */
+const CINEMA_RATIO = { video: 1.5, photo: 1.95 };
 const LANDSCAPE_RATIO = 1.15;
 const PORTRAIT_RATIO = 0.9;
 
@@ -348,10 +352,11 @@ const SHAPE_CLASSES = [
 function applyMediaShape(card, width, height) {
   if (!card || !(width > 0) || !(height > 0)) return;
   const ratio = width / height;
+  const cinemaFrom = CINEMA_RATIO[card.dataset.mediaKind] || CINEMA_RATIO.photo;
   card.style.setProperty("--media-ratio", `${width} / ${height}`);
   card.classList.remove(...SHAPE_CLASSES);
   card.classList.add(
-    ratio >= CINEMA_RATIO
+    ratio >= cinemaFrom
       ? "result-card--cinema"
       : ratio >= LANDSCAPE_RATIO
         ? "result-card--landscape"
@@ -410,6 +415,7 @@ async function renderCard(file) {
   card.appendChild(dismissBtn);
 
   const isVideo = isVideoFile(file);
+  card.dataset.mediaKind = isVideo ? "video" : "photo";
   const preview = document.createElement(isVideo ? "video" : "img");
   preview.className = isVideo ? "result-card__preview result-card__preview--video" : "result-card__preview";
   if (isVideo) {
