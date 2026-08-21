@@ -270,7 +270,7 @@ a { color: inherit; text-decoration: none; }
   border-radius: var(--radius-card);
   padding: 28px;
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: var(--media-col, minmax(200px, 26%)) 1fr;
   gap: 28px;
   animation: card-in 0.5s var(--ease-smooth);
 }
@@ -306,6 +306,21 @@ a { color: inherit; text-decoration: none; }
   from { opacity: 0; translate: 0 24px; }
   to { opacity: 1; translate: 0 0; }
 }
+/* One column width per shape. A vertical reel wants a narrow tall box, a
+   landscape frame needs real width to be watchable, and anything 2:1 or
+   wider is unreadable beside a column of text at all — so scope, anamorphic
+   and IMAX-wide media take the full card width on their own row, with the
+   metadata table underneath. */
+.result-card--portrait { --media-col: minmax(180px, 22%); }
+.result-card--square { --media-col: minmax(200px, 26%); }
+.result-card--landscape { --media-col: minmax(300px, 42%); }
+.result-card--cinema {
+  grid-template-columns: 1fr;
+}
+.result-card--cinema .result-card__preview {
+  max-height: 62vh;
+}
+
 /* Media keeps the shape it was shot in. --media-ratio is set per card from
    the real decoded dimensions, so a 4:3 photo, a vertical reel and a 2.39:1
    scope frame each get their own box instead of being squeezed into the
@@ -317,13 +332,19 @@ a { color: inherit; text-decoration: none; }
   object-fit: contain;
   border-radius: 20px;
   background: #000;
+  max-height: 46vh;
 }
 .result-card__name { font-weight: 800; font-size: 18px; word-break: break-all; }
 .result-card__sub { color: var(--color-muted); font-size: 13px; margin-top: 4px; }
 
-@media (max-width: 640px) {
-  .result-card { grid-template-columns: 1fr; }
-  .result-card__preview { max-width: 220px; }
+@media (max-width: 900px) {
+  /* stacked, so the media gets the whole width whatever its shape */
+  .result-card,
+  .result-card--portrait,
+  .result-card--square,
+  .result-card--landscape { grid-template-columns: 1fr; }
+  .result-card__preview { max-height: 52vh; }
+  .result-card--portrait .result-card__preview { max-width: 260px; }
 }
 
 /* ===== GPS alert ===== */
