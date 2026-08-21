@@ -52,6 +52,43 @@
         <div class="changelog__date">
           <span class="changelog__date-text">2026-08-21</span>
           <span class="changelog__badge changelog__badge--release">RELEASE</span>
+          <span class="changelog__version">v1.1.0</span>
+        </div>
+        <h2>Ten things, and four holes closed</h2>
+        <p>MetaStrip could tell you a photo leaked your location. It could not tell you the photo had a video hidden inside it, that the raw file carried a full-size JPEG of the same picture, or that the "clean" file still held a signed record of who made it. This release is about the things a metadata tool quietly misses.</p>
+        <h3>Four things that survived a clean, and no longer do</h3>
+        <ul>
+          <li><strong>Content Credentials (C2PA)</strong> ride in a JUMBF container that every format carries its own way: JPEG APP11 segments, the PNG caBX chunk, a top-level uuid box in MP4 and HEIF. None of those were being touched, so the badge said CLEAN while a signed provenance record with the signer's identity sat in the file. The card now shows what the record says — the tool that made it, whether the origin claim is a camera or a trained model, the certificate's common name, the named author, the edit history, how many earlier files are recorded as ingredients — and removes it on request. Removing it also removes the file's authenticity claim, which the page says out loud.</li>
+          <li><strong>The video inside a motion photo.</strong> Pixel and Galaxy bolt an entire MP4 onto a JPEG after the end-of-image marker, with its own GPS and camera model. Nothing in the JPEG spec says to look past the image, so the stripper was copying it straight through. The real end of the image is now found exactly rather than guessed, the tail is handed to the video parser, and if the photo is clean while the buried clip is not, the location alert still fires.</li>
+          <li><strong>Top-level XMP in MP4</strong>, which lives outside moov and so was never walked.</li>
+          <li><strong>Everything after the end of a JPEG</strong>, whatever it is, now goes.</li>
+        </ul>
+        <h3>Four new kinds of file</h3>
+        <ul>
+          <li><strong>Raw</strong> — DNG, CR2, CR3, NEF, ARW, ORF, RAF, PEF. A raw file is a TIFF, so the EXIF parser already read them; what needed building was a safe clean. Entries must stay sorted and the structural tags point at the image strips, so values are blanked in place and every entry header stays standing. Out comes the camera and lens serial, the photographer's name, the original file name off the card, the maker note block, and the fully rendered JPEG a raw file hides so viewers have something to show.</li>
+          <li><strong>PDF</strong> — Title, Author, Creator, Producer, both timestamps, the XMP packet, and the file identifier that follows a document through every save. The cross-reference table holds absolute offsets, so strings are overwritten with spaces inside their own delimiters and hex strings with zeros. Verified against a PDF printed by Chrome: same length, not one byte inside a content stream changed, every xref offset still landing on an object, and macOS's own PDF engine rendering it to identical pixels.</li>
+          <li><strong>Audio</strong> — MP3, M4A, WAV, FLAC, Ogg, Opus, AIFF. Three strategies, each picked by what the format allows: ID3 blocks are cut out, a WAV chunk is renamed JUNK, a FLAC block becomes PADDING. Ogg needed more, since every page carries a checksum of itself, so the page is rebuilt and its CRC recomputed. Includes the Broadcast Wave chunk, which names whoever recorded the file. Decoded samples come out bit-identical.</li>
+          <li><strong>AI generation data</strong> is named for what it is. A Stable Diffusion PNG carries the prompt, negative prompt, seed, sampler and model in a text chunk, and ComfyUI embeds the whole node graph; both were listed as "PNG parameters".</li>
+        </ul>
+        <h3>Beyond one file at a time</h3>
+        <ul>
+          <li><strong>Folder mode.</strong> Pick a folder and every supported file in it is cleaned, one at a time, so memory stays flat at ten files or a thousand. Cleaned copies go into a new metastrip-clean folder mirroring the original structure; your originals are never overwritten, and the walk skips its own output.</li>
+          <li><strong>Cross-file linkage.</strong> One photo leaking a camera serial is a fact about that photo. Five photos leaking the same serial ties them to one device. With two or more files open, a panel says what they share: the same serial, owner, pairing id, signing certificate, or coordinates within 100 m of each other.</li>
+          <li><strong>Receipts.</strong> A plain-text record of each file cleaned, with a SHA-256 before and after, for handing a file to somebody who has to trust it.</li>
+          <li><strong>Pixel redaction</strong> for the leak metadata cannot touch. Drag over a face, a plate, an address; blackout or pixelate, and the pixels underneath are destroyed rather than covered. No detection model is bundled, because a missed face reads as "no faces here" — where a browser has its own detector it places the first boxes. Screenshots get a warning, since they usually carry no metadata at all while the sensitive part sits in the pixels.</li>
+        </ul>
+        <h3>Underneath</h3>
+        <ul>
+          <li>A test suite: <code>node tests/run.mjs</code>, 251 checks, no dependencies and no binary fixtures — every test file is assembled byte by byte in JS, so a test can carry exactly the structure it is about.</li>
+          <li>It immediately earned its keep. These are plain scripts sharing one global scope, and two files had declared the same helper; the later one won, so PNG text values were being silently truncated at 160 characters by a function written for something else. The suite now fails on any duplicate top-level name.</li>
+          <li>The storage meter stopped calling voice memos and documents photos.</li>
+        </ul>
+      </section>
+
+      <section class="changelog__entry">
+        <div class="changelog__date">
+          <span class="changelog__date-text">2026-08-21</span>
+          <span class="changelog__badge changelog__badge--release">RELEASE</span>
           <span class="changelog__version">v1.0.0</span>
         </div>
         <h2>Video support, a storage budget, and everything shown in its own shape</h2>
