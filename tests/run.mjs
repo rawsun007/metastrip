@@ -290,6 +290,52 @@ async function parseVideo(u8, name = "clip.mp4", type = "video/mp4") {
   check("mp4: top-level XMP found", meta.fields.some((f) => f.label === "XMP metadata"), labels(meta).join(","));
 }
 
+/* ---------------- motion photo: a video bolted onto a JPEG ---------------- */
+
+{
+  const hidden = F.makeMp4({
+    udta: [F.textAtom("©xyz", "+21.1702+072.8311/"), F.textAtom("©mod", "Pixel 8 Pro")],
+  });
+  const jpeg = F.makeJpeg({ exif: exifBlob, trailer: hidden });
+  const meta = parse(jpeg);
+  check("motion photo: trailer found", has(meta, "Hidden video"), labels(meta).join(","));
+  eq("motion photo: trailer kind", meta.trailer.kind, "video");
+  eq("motion photo: trailer start is after EOI", meta.trailer.end - meta.trailer.start, hidden.length);
+
+  // the hidden clip really is a parseable video
+  const inner = await parseVideo(jpeg.subarray(meta.trailer.start));
+  eq("motion photo: inner model", valueOf(inner, "Camera model"), "Pixel 8 Pro");
+  check("motion photo: inner gps", inner.gps && Math.abs(inner.gps.lat - 21.1702) < 0.001);
+
+  const cleaned = strip(jpeg);
+  check("motion photo: file got smaller", cleaned.bytes.length < jpeg.length);
+  check("motion photo: still lossless", cleaned.lossless === true);
+  const after = parse(cleaned.bytes);
+  check("motion photo: trailer gone", !has(after, "Hidden video"), labels(after).join(","));
+  eq("motion photo: no trailer record", after.trailer, undefined);
+  const tail = cleaned.bytes.subarray(cleaned.bytes.length - 2);
+  check("motion photo: ends on EOI", tail[0] === 0xff && tail[1] === 0xd9, [...tail].join(","));
+  check("motion photo: pixels survive", [...cleaned.bytes].join(",").includes("18,52,86,120"));
+}
+
+{
+  // a plain JPEG must not grow a phantom trailer, and padding is not a payload
+  const plain = F.makeJpeg({ exif: exifBlob });
+  eq("plain jpeg: no trailer", parse(plain).trailer, undefined);
+  const padded = F.makeJpeg({ exif: exifBlob, trailer: new Uint8Array(4) });
+  eq("padded jpeg: padding ignored", parse(padded).trailer, undefined);
+  const stripped = strip(padded);
+  eq("padded jpeg: padding dropped", stripped.bytes.length, strip(plain).bytes.length);
+}
+
+{
+  // Samsung closes its appended block with a SEF footer
+  const sef = F.bytes("SEFH", new Uint8Array(24), "SEFT");
+  const jpeg = F.makeJpeg({ exif: exifBlob, trailer: sef });
+  const meta = parse(jpeg);
+  check("samsung trailer: found", has(meta, "Samsung extra data"), labels(meta).join(","));
+}
+
 /* ---------------- report ---------------- */
 
 console.log(`\n${passed} passed, ${failures.length} failed`);

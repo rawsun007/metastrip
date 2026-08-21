@@ -26,7 +26,10 @@ function stripJpeg(bytes) {
     if (bytes[offset] !== 0xff) break;
     const marker = bytes[offset + 1];
     if (marker === 0xda) {
-      out.push(bytes.subarray(offset)); // SOS: scan data + EOI, copy verbatim
+      // scan data and EOI copy verbatim, but anything appended after the EOI
+      // does not: that tail is where motion photos hide a whole MP4
+      const eoi = findEoiFrom(bytes, offset);
+      out.push(eoi >= 0 ? bytes.subarray(offset, eoi + 2) : bytes.subarray(offset));
       return concat(out);
     }
     const length = (bytes[offset + 2] << 8) | bytes[offset + 3];
@@ -57,6 +60,16 @@ function stripPng(bytes) {
     offset = chunkEnd;
   }
   return concat(out);
+}
+
+/* Inside entropy-coded data every 0xFF is stuffed as FF 00 and restart
+   markers only run FFD0-FFD7, so the first FFD9 after the scan is the real
+   end of the image and everything past it is an addition. */
+function findEoiFrom(bytes, from) {
+  for (let i = from; i + 1 < bytes.length; i++) {
+    if (bytes[i] === 0xff && bytes[i + 1] === 0xd9) return i;
+  }
+  return -1;
 }
 
 function concat(parts) {

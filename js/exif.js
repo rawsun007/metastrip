@@ -111,10 +111,14 @@ function parseJpeg(bytes) {
   // are collected and read as one
   const app11 = { ranges: [], payload: [] };
   let offset = 2;
+  let scanStart = -1;
   while (offset + 4 <= bytes.length) {
     if (bytes[offset] !== 0xff) break;
     const marker = bytes[offset + 1];
-    if (marker === 0xda || marker === 0xd9) break; // SOS / EOI — no more headers
+    if (marker === 0xda || marker === 0xd9) {
+      scanStart = offset; // SOS / EOI — no more headers, but a tail may follow
+      break;
+    }
     const length = (bytes[offset + 2] << 8) | bytes[offset + 3];
     const segStart = offset + 4;
     if (marker === 0xe1 && hasPrefix(bytes, segStart, "Exif\0\0")) {
@@ -140,7 +144,59 @@ function parseJpeg(bytes) {
     offset = segStart + length - 2;
   }
   if (app11.payload.length) readEmbeddedC2pa(app11, result);
+  if (scanStart >= 0) readJpegTrailer(bytes, scanStart, result);
   return result;
+}
+
+/* ---------- what comes after the picture ----------
+   A Pixel or Galaxy "motion photo" is a JPEG with an entire MP4 bolted on
+   after the end-of-image marker, carrying its own GPS, camera model and
+   timestamps. Nothing in the JPEG spec says to look there, so most cleaners
+   copy it straight through and call the file clean.
+
+   Finding the real end of the image is exact rather than a guess: inside
+   entropy-coded data every 0xFF byte is stuffed as FF 00 and restart markers
+   only run FFD0-FFD7, so the first FFD9 after the scan is the true EOI. */
+function readJpegTrailer(bytes, scanStart, result) {
+  const eoi = findJpegEoi(bytes, scanStart);
+  if (eoi < 0) return;
+  const start = eoi + 2;
+  const size = bytes.length - start;
+  if (size < 16) return; // padding, not a payload
+
+  const kind = classifyTrailer(bytes, start);
+  result.trailer = { start, end: bytes.length, kind, size };
+  result.fields.push({
+    label: kind === "video" ? "Hidden video" : kind === "samsung" ? "Samsung extra data" : "Appended data",
+    value:
+      kind === "video"
+        ? `a whole MP4 bolted on after the image, ${formatTrailerSize(size)}`
+        : `${formatTrailerSize(size)} of extra data after the image`,
+    risk: "device",
+    mode: "cut",
+    chunkRange: [start, bytes.length],
+  });
+}
+
+function findJpegEoi(bytes, from) {
+  for (let i = from; i + 1 < bytes.length; i++) {
+    if (bytes[i] === 0xff && bytes[i + 1] === 0xd9) return i;
+  }
+  return -1;
+}
+
+function classifyTrailer(bytes, start) {
+  if (asciiSlice(bytes, start + 4, start + 8) === "ftyp") return "video";
+  // Samsung closes its appended block with a SEFT footer
+  const tailStart = Math.max(start, bytes.length - 64);
+  if (asciiSlice(bytes, tailStart, bytes.length).includes("SEF")) return "samsung";
+  return "data";
+}
+
+function formatTrailerSize(n) {
+  if (n < 1024) return `${n} bytes`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(2)} MB`;
 }
 
 /* JPEG can drop whole APP11 segments: marker segments are self-delimiting and
