@@ -952,6 +952,35 @@ const pixelAt = (image, x, y) => {
   eq("storage: normal file accepted", fine.ok, true);
 }
 
+/* ---------------- the hidden attribute ----------------
+   A UA stylesheet gives [hidden] display:none, but that rule has almost no
+   specificity, so any class setting display silently overrides it. That is
+   how a STOP button for a folder run nobody had started ended up on screen.
+   One global rule fixes the whole class of bug; this checks it is still
+   there, and that nothing is quietly relying on a per-element patch. */
+
+{
+  const css = fs.readFileSync(path.join(JS_DIR, "..", "styles.css"), "utf8");
+  const html = fs.readFileSync(path.join(JS_DIR, "..", "index.html"), "utf8");
+
+  check(
+    "hidden: one global rule wins over any display",
+    /\[hidden\]\s*\{[^}]*display:\s*none\s*!important/.test(css),
+    "styles.css must force [hidden] to display:none"
+  );
+
+  // every element that starts hidden, and the class whose rules could fight it
+  const startsHidden = [...html.matchAll(/<[a-z]+[^>]*\bid="(\w+)"[^>]*\bhidden\b[^>]*>/g)].map((m) => m[1]);
+  check("hidden: page still hides its panels by default", startsHidden.length >= 6, startsHidden.join(","));
+  for (const id of ["folderPanel", "folderStopBtn", "stripAllBar", "linkPanel", "receiptPanel", "storageMeter"]) {
+    check(`hidden: ${id} starts hidden`, startsHidden.includes(id), startsHidden.join(","));
+  }
+
+  // a per-element patch means someone hit this again and treated the symptom
+  const patches = [...css.matchAll(/\.([\w-]+)\[hidden\]/g)].map((m) => m[1]);
+  check("hidden: no per-element patches left", patches.length === 0, patches.join(","));
+}
+
 /* ---------------- one global scope ----------------
    These are plain scripts, not modules, so every top-level declaration lands
    in one shared scope and the last file loaded silently wins. That is how
