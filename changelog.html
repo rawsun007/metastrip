@@ -51,33 +51,30 @@
       <section class="changelog__entry">
         <div class="changelog__date">
           <span class="changelog__date-text">2026-08-21</span>
-          <span class="changelog__badge changelog__badge--fix">FIXES</span>
+          <span class="changelog__badge changelog__badge--release">RELEASE</span>
+          <span class="changelog__version">v1.0.0</span>
         </div>
-        <h2>Everything is shown in the shape it was shot in</h2>
+        <h2>Video support, a storage budget, and everything shown in its own shape</h2>
+        <p>The first tagged release. MetaStrip started as a photo tool; this is the version where it handles what people actually share.</p>
+        <h3>Video</h3>
         <ul>
-          <li>Previews are no longer forced into a square and cropped to fill it. Every card now carries the real ratio of what it holds, taken first from the metadata and then from the decoded media, which accounts for anamorphic pixels and EXIF rotation.</li>
-          <li>Each shape gets a column width that suits it: narrow and tall for a vertical reel, wider for landscape, and the full card width for anything properly widescreen, with the metadata table underneath. A 1920x960 clip used to render at 220x110, far too small to watch. It now renders at 994x497.</li>
-          <li>A clip takes the full row from 1.5:1 up, a photo only from 1.95:1, because one is watched and the other is glanced at while you read the table beside it.</li>
-          <li>Display size and stored size are told apart, so anamorphic footage reads honestly as "1920 x 1080 (stored 1440 x 1080, anamorphic)" instead of picking whichever number came first.</li>
-          <li>On a phone everything stacks, where a vertical clip fills the screen and a vertical photo stays modest.</li>
-        </ul>
-      </section>
-
-      <section class="changelog__entry">
-        <div class="changelog__date">
-          <span class="changelog__date-text">2026-08-21</span>
-          <span class="changelog__badge changelog__badge--feat">FEATURES</span>
-        </div>
-        <h2>Videos, and a storage budget so nothing falls over</h2>
-        <ul>
-          <li>MP4, MOV, WebM and Matroska clips are now read the same way photos are: GPS coordinates, camera make and model, recording time, software, the Live Photo pairing id, Google Photos upload ids, embedded XMP and any free-form tag a muxer left behind.</li>
-          <li>Stripping a clip is lossless and moves nothing. Chunk offset tables inside a video point at absolute file positions, so instead of cutting bytes out, each doomed box keeps its size and becomes a "free" box with a blank payload. WebM gets the same treatment with Void elements. Frames are never re-encoded, and playback offsets stay exactly where they were.</li>
+          <li>MP4, MOV, WebM and Matroska clips are read the same way photos are: GPS coordinates, camera make and model, recording time, software, the Live Photo pairing id, Google Photos upload ids, embedded XMP and any free-form tag a muxer left behind.</li>
+          <li>Stripping a clip is lossless and moves nothing. Chunk offset tables inside a video point at absolute file positions, so instead of cutting bytes out, each doomed box keeps its size and becomes a "free" box with a blank payload. WebM gets the same treatment with Void elements. Frames are never re-encoded, and playback offsets stay exactly where they were. Verified on a tagged clip: decoded frames hash identical to the original.</li>
           <li>Nothing is ever loaded whole. Only header boxes are read, and a cleaned clip is assembled from slices of the file still sitting on disk, so a multi-gigabyte video costs almost no memory.</li>
           <li>The tick boxes work per field on video too, so you can drop the location and keep the recording date, or the other way round.</li>
+          <li>Duration, frame size and codec show on the card but never count as a leak, since every player needs them. Display size and stored size are told apart, so anamorphic footage reads honestly as "1920 x 1080 (stored 1440 x 1080, anamorphic)".</li>
+          <li>A sample leaking video sits next to the sample photos, and the installed app now accepts videos shared from the system share sheet.</li>
+        </ul>
+        <h3>Storage</h3>
+        <ul>
           <li>A storage budget with a live meter: 2 GB per file, 6 GB across everything open, 20 cards. Going over is refused with the real numbers in the message rather than crashing the tab, and only the clip you are watching ever plays.</li>
           <li>Strip all no longer tries to zip video. Photos are still bundled; clips are cleaned and saved one at a time, straight from disk.</li>
-          <li>Duration, frame size and codec show on the card but never count as a leak, since every player needs them.</li>
-          <li>A sample leaking video sits next to the sample photos, and the installed app now accepts videos shared from the system share sheet.</li>
+        </ul>
+        <h3>Shape</h3>
+        <ul>
+          <li>Previews are no longer forced into a square and cropped to fill it, which had been quietly mangling every photo that was not 1:1. Each card carries the real ratio of what it holds, taken first from the metadata and then from the decoded media, which accounts for anamorphic pixels and EXIF rotation.</li>
+          <li>Each shape gets a column width that suits it, and anything properly widescreen takes the full card width with the metadata table underneath. A 1920x960 clip used to render at 220x110, far too small to watch. It now renders at 994x497.</li>
+          <li>A clip takes the full row from 1.5:1 up, a photo only from 1.95:1, because one is watched and the other is glanced at while you read the table beside it. On a phone everything stacks, where a vertical clip fills the screen and a vertical photo stays modest.</li>
         </ul>
       </section>
 
