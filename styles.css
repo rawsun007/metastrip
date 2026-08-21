@@ -314,6 +314,10 @@ a { color: inherit; text-decoration: none; }
 .result-card--portrait { --media-col: minmax(180px, 22%); }
 .result-card--square { --media-col: minmax(200px, 26%); }
 .result-card--landscape { --media-col: minmax(300px, 42%); }
+/* a vertical clip is still something you watch, so it gets a wider column
+   than a vertical photo does */
+.result-card[data-media-kind="video"].result-card--portrait { --media-col: minmax(240px, 30%); }
+.result-card[data-media-kind="video"].result-card--square { --media-col: minmax(260px, 34%); }
 .result-card--cinema {
   grid-template-columns: 1fr;
 }
