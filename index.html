@@ -13,6 +13,11 @@
   <meta property="og:image" content="https://metastrip.vercel.app/assets/og.jpg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="680" />
+  <meta property="og:site_name" content="MetaStrip" />
+  <meta name="twitter:title" content="MetaStrip | Your files. Untracked." />
+  <meta name="twitter:description" content="Photos, videos, raw files, documents and audio quietly carry your location, your device details, its serial number and the exact time. See it, then strip it, right in your browser. No upload, no server, no account." />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+  <meta name="author" content="Roshan Ramani" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://metastrip.vercel.app/assets/og.jpg" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23fb4903'/><text x='50' y='68' font-size='52' font-family='Arial Black' font-weight='900' text-anchor='middle' fill='white'>M</text></svg>" />
@@ -25,15 +30,128 @@
   <script defer src="/_vercel/insights/script.js"></script>
   <script type="application/ld+json">
   {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "MetaStrip",
-    "url": "https://metastrip.vercel.app/",
-    "description": "See what your photos, videos, documents and audio secretly carry, then strip it right in your browser. No upload, no server, no account.",
-    "applicationCategory": "SecurityApplication",
-    "operatingSystem": "Any",
-    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-    "author": { "@type": "Person", "name": "Roshan Ramani", "url": "https://roshan-ramani.vercel.app/" }
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "MetaStrip",
+      "url": "https://metastrip.vercel.app/",
+      "description": "See what your photos, videos, raw files, documents and audio secretly carry, then strip it right in your browser. No upload, no server, no account.",
+      "applicationCategory": "SecurityApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Any modern browser. Works offline once loaded.",
+      "softwareVersion": "1.1.0",
+      "datePublished": "2026-07-03",
+      "dateModified": "2026-08-21",
+      "isAccessibleForFree": true,
+      "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+      },
+      "permissions": "None. Files are read in the browser and never uploaded.",
+      "storageRequirements": "None. Nothing is saved or persisted.",
+      "featureList": [
+          "Read EXIF, GPS, XMP, IPTC and text metadata from JPEG, PNG and HEIC",
+          "Read and remove C2PA Content Credentials from JPEG, PNG, MP4 and HEIF",
+          "Clean raw files including DNG, CR2, CR3, NEF, ARW, ORF, RAF and PEF",
+          "Clean MP4, MOV, WebM and Matroska video losslessly, without re-encoding",
+          "Clean MP3, M4A, WAV, FLAC, Ogg, Opus and AIFF audio",
+          "Clean PDF document metadata and XMP packets",
+          "Find the video hidden inside a Pixel or Galaxy motion photo",
+          "Selective removal: keep any field you tick",
+          "Clean an entire folder without uploading anything",
+          "Cross-file linkage report across several files at once",
+          "SHA-256 receipt of every file before and after cleaning",
+          "Pixel redaction for faces, plates and screenshots"
+      ],
+      "encodingFormat": [
+          "image/jpeg",
+          "image/png",
+          "image/heic",
+          "image/tiff",
+          "video/mp4",
+          "video/quicktime",
+          "video/webm",
+          "video/x-matroska",
+          "audio/mpeg",
+          "audio/mp4",
+          "audio/wav",
+          "audio/flac",
+          "audio/ogg",
+          "application/pdf"
+      ],
+      "author": {
+          "@type": "Person",
+          "name": "Roshan Ramani",
+          "url": "https://roshan-ramani.vercel.app/"
+      },
+      "sameAs": "https://github.com/rawsun007/metastrip",
+      "license": "https://github.com/rawsun007/metastrip"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+      "@context": "https://schema.org",
+      "@type": "Blog",
+      "name": "MetaStrip Blog",
+      "url": "https://metastrip.vercel.app/#blog",
+      "description": "How metadata leaks, what each format hides, and how it gets removed without re-encoding anything.",
+      "author": {
+          "@type": "Person",
+          "name": "Roshan Ramani",
+          "url": "https://roshan-ramani.vercel.app/"
+      },
+      "blogPost": [
+          {
+              "@type": "BlogPosting",
+              "headline": "What Content Credentials say about you, and how to remove them",
+              "url": "https://metastrip.vercel.app/blog/remove-content-credentials.html"
+          },
+          {
+              "@type": "BlogPosting",
+              "headline": "Your photo has a video inside it",
+              "url": "https://metastrip.vercel.app/blog/your-photo-has-a-video-inside-it.html"
+          },
+          {
+              "@type": "BlogPosting",
+              "headline": "Your PDF knows who made it, twice",
+              "url": "https://metastrip.vercel.app/blog/pdf-metadata.html"
+          },
+          {
+              "@type": "BlogPosting",
+              "headline": "Your raw file is hiding a full-size JPEG of your photo",
+              "url": "https://metastrip.vercel.app/blog/raw-files-hide-a-jpeg.html"
+          },
+          {
+              "@type": "BlogPosting",
+              "headline": "Your photos know where you live",
+              "url": "https://metastrip.vercel.app/blog/photos-know-where-you-live.html"
+          },
+          {
+              "@type": "BlogPosting",
+              "headline": "Instagram strips your metadata. Your email does not.",
+              "url": "https://metastrip.vercel.app/blog/who-strips-your-metadata.html"
+          },
+          {
+              "@type": "BlogPosting",
+              "headline": "How MetaStrip cleans a photo without touching a single pixel",
+              "url": "https://metastrip.vercel.app/blog/lossless-explained.html"
+          },
+          {
+              "@type": "BlogPosting",
+              "headline": "What is EXIF, in plain words",
+              "url": "https://metastrip.vercel.app/blog/what-is-exif.html"
+          },
+          {
+              "@type": "BlogPosting",
+              "headline": "How to stop your phone from geotagging every photo",
+              "url": "https://metastrip.vercel.app/blog/stop-geotagging.html"
+          },
+          {
+              "@type": "BlogPosting",
+              "headline": "Keep the date, lose the location",
+              "url": "https://metastrip.vercel.app/blog/keep-the-date-lose-the-location.html"
+          }
+      ]
   }
   </script>
   <script type="application/ld+json">
@@ -388,37 +506,61 @@
   <section class="blog" id="blog">
     <h2 class="section-title section-title--light reveal">READ UP.</h2>
     <div class="blog__grid">
-      <a class="blog-card blog-card--orange reveal" href="blog/photos-know-where-you-live.html">
+      <a class="blog-card blog-card--orange reveal" href="blog/remove-content-credentials.html">
+        <span class="blog-card__tag">NEW</span>
+        <h3>WHAT CONTENT CREDENTIALS SAY ABOUT YOU</h3>
+        <p>C2PA manifests name the tool, the signer and whether a trained model made the file. What is inside one, and what you give up removing it.</p>
+        <span class="blog-card__read">READ THE POST</span>
+      </a>
+      <a class="blog-card blog-card--yellow reveal" href="blog/your-photo-has-a-video-inside-it.html" style="--d:.12s">
+        <span class="blog-card__tag">NEW</span>
+        <h3>YOUR PHOTO HAS A VIDEO INSIDE IT</h3>
+        <p>Pixel and Galaxy motion photos bolt a whole MP4 onto the end of a JPEG, with its own GPS. Most cleaners copy it straight through.</p>
+        <span class="blog-card__read">READ THE POST</span>
+      </a>
+      <a class="blog-card blog-card--green reveal" href="blog/pdf-metadata.html" style="--d:.24s">
+        <span class="blog-card__tag">NEW</span>
+        <h3>YOUR PDF KNOWS WHO MADE IT, TWICE</h3>
+        <p>The information dictionary, the XMP packet saying it again, and the identifier that follows a document through every save.</p>
+        <span class="blog-card__read">READ THE POST</span>
+      </a>
+      <a class="blog-card blog-card--blue reveal" href="blog/raw-files-hide-a-jpeg.html">
+        <span class="blog-card__tag">NEW</span>
+        <h3>YOUR RAW FILE IS HIDING A JPEG</h3>
+        <p>Camera and lens serials, your name from the camera menu, and a fully rendered JPEG of the shot you thought you had cropped.</p>
+        <span class="blog-card__read">READ THE POST</span>
+      </a>
+      <a class="blog-card blog-card--violet reveal" href="blog/photos-know-where-you-live.html" style="--d:.12s">
         <span class="blog-card__tag">PRIVACY</span>
         <h3>YOUR PHOTOS KNOW WHERE YOU LIVE</h3>
         <p>Pick any photo you took at home and there is a good chance your exact coordinates are inside it. Here is how that bites people.</p>
         <span class="blog-card__read">READ THE POST</span>
       </a>
-      <a class="blog-card blog-card--yellow reveal" href="blog/who-strips-your-metadata.html" style="--d:.12s">
+      <a class="blog-card blog-card--purple reveal" href="blog/who-strips-your-metadata.html" style="--d:.24s">
         <span class="blog-card__tag">GUIDE</span>
         <h3>INSTAGRAM STRIPS METADATA. YOUR EMAIL DOES NOT.</h3>
         <p>A practical map of where your photo metadata survives and where it dies, including the sneaky high quality send trap.</p>
         <span class="blog-card__read">READ THE POST</span>
       </a>
-      <a class="blog-card blog-card--green reveal" href="blog/lossless-explained.html" style="--d:.24s">
+      <a class="blog-card blog-card--orange reveal" href="blog/lossless-explained.html">
         <span class="blog-card__tag">HOW IT WORKS</span>
         <h3>CLEANING A PHOTO WITHOUT TOUCHING A PIXEL</h3>
         <p>Most removers quietly re-compress your image. Here is how lossless stripping works and why your photo stays identical.</p>
         <span class="blog-card__read">READ THE POST</span>
       </a>
-      <a class="blog-card blog-card--blue reveal" href="blog/what-is-exif.html">
+      <a class="blog-card blog-card--yellow reveal" href="blog/what-is-exif.html" style="--d:.12s">
         <span class="blog-card__tag">EXPLAINER</span>
         <h3>WHAT IS EXIF, IN PLAIN WORDS</h3>
         <p>Every photo carries a hidden notebook the camera fills in for you. A five minute explainer with zero jargon.</p>
         <span class="blog-card__read">READ THE POST</span>
       </a>
-      <a class="blog-card blog-card--violet reveal" href="blog/stop-geotagging.html" style="--d:.12s">
+      <a class="blog-card blog-card--green reveal" href="blog/stop-geotagging.html" style="--d:.24s">
         <span class="blog-card__tag">GUIDE</span>
         <h3>STOP YOUR PHONE FROM GEOTAGGING</h3>
         <p>Two minutes of settings on iPhone or Android and your camera stops writing your location into every shot.</p>
         <span class="blog-card__read">READ THE POST</span>
       </a>
-      <a class="blog-card blog-card--purple reveal" href="blog/keep-the-date-lose-the-location.html" style="--d:.24s">
+      <a class="blog-card blog-card--blue reveal" href="blog/keep-the-date-lose-the-location.html">
         <span class="blog-card__tag">HOW IT WORKS</span>
         <h3>KEEP THE DATE, LOSE THE LOCATION</h3>
         <p>Selective stripping redacts exactly the fields you tick, byte by byte, and recomputes checksums so files stay valid.</p>

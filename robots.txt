@@ -1,4 +1,14 @@
+# MetaStrip — a metadata remover that runs entirely in your browser.
+# Nothing here needs crawling restrictions: there are no accounts, no uploads,
+# and no user content on the server to protect. Everything is public and static.
+
 User-agent: *
 Allow: /
+
+# Nothing to gain from crawling these, and they are not pages.
+Disallow: /js/
+Disallow: /vendor/
+Disallow: /tests/
+Disallow: /share-target
 
 Sitemap: https://metastrip.vercel.app/sitemap.xml
