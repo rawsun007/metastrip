@@ -12,7 +12,7 @@ import * as F from "./fixtures.mjs";
 
 const JS_DIR = path.join(import.meta.dirname, "..", "js");
 const SCRIPTS = ["aitags.js", "c2pa.js", "edits.js", "exif.js", "stripper.js", "video.js", "pdf.js", "audio.js"];
-const DOM_SCRIPTS = ["linkage.js", "receipt.js", "folder.js"];
+const DOM_SCRIPTS = ["linkage.js", "receipt.js", "redact.js", "storage.js", "folder.js"];
 
 const ctx = vm.createContext({ console, File, Blob, DataView, Uint8Array, TextDecoder, TextEncoder });
 for (const name of SCRIPTS) {
@@ -27,9 +27,18 @@ const call = (expr, args = {}) => {
    the pieces it needs are stubbed and the rest of the page is absent. */
 Object.assign(ctx, {
   window: {},
-  document: { getElementById: () => null },
+  document: { getElementById: () => null, addEventListener: () => {}, querySelectorAll: () => [] },
+  HTMLVideoElement: class {},
   isRemovableField: (f) => Boolean(f.ranges || f.chunkRange || f.chunkRanges || (f.edits && f.edits.length)),
-  formatBytes: (n) => `${n} B`,
+  // mirrors app.js, which owns the real one
+  formatBytes: (n) =>
+    n < 1024
+      ? `${n} B`
+      : n < 1024 * 1024
+        ? `${(n / 1024).toFixed(1)} KB`
+        : n < 1024 * 1024 * 1024
+          ? `${(n / (1024 * 1024)).toFixed(2)} MB`
+          : `${(n / (1024 * 1024 * 1024)).toFixed(2)} GB`,
   async readMetadata(file) {
     if (ctx.isVideoFile(file)) return ctx.parseVideoMetadata(file);
     if (ctx.isPdfFile(file)) return ctx.parsePdfMetadata(file);
@@ -843,6 +852,106 @@ async function stripAudio(u8, name, type, meta) {
   check("receipt: empty case", empty.includes("No files cleaned yet."));
 }
 
+/* ---------------- pixel redaction ---------------- */
+
+/* A stand-in for ImageData, since this runs outside a browser. */
+function fakeImageData(width, height, fill = (x, y) => [x * 2, y * 3, 40, 255]) {
+  const data = new Uint8ClampedArray(width * height * 4);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const [r, g, b, a] = fill(x, y);
+      const at = (y * width + x) * 4;
+      data[at] = r;
+      data[at + 1] = g;
+      data[at + 2] = b;
+      data[at + 3] = a;
+    }
+  }
+  return { data, width, height };
+}
+
+const pixelAt = (image, x, y) => {
+  const at = (y * image.width + x) * 4;
+  return [image.data[at], image.data[at + 1], image.data[at + 2], image.data[at + 3]];
+};
+
+{
+  const image = fakeImageData(32, 32);
+  const changed = call("blackoutRegion(__image, { x: 4, y: 4, width: 8, height: 8 })", { __image: image });
+  eq("redact: pixels changed", changed, 64);
+  eq("redact: inside the box is black", pixelAt(image, 5, 5).join(","), "0,0,0,255");
+  check("redact: outside the box untouched", pixelAt(image, 20, 20).join(",") !== "0,0,0,255");
+  check("redact: edge just outside untouched", pixelAt(image, 12, 4).join(",") !== "0,0,0,255");
+}
+
+{
+  // pixelate must destroy detail, not merely soften it: every pixel in a
+  // block has to end up identical, so there is nothing to recover
+  const image = fakeImageData(32, 32);
+  call("pixelateRegion(__image, { x: 0, y: 0, width: 16, height: 16 }, 8)", { __image: image });
+  const first = pixelAt(image, 0, 0).join(",");
+  let uniform = true;
+  for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) if (pixelAt(image, x, y).join(",") !== first) uniform = false;
+  check("redact: block is flat after pixelating", uniform);
+  check("redact: next block differs", pixelAt(image, 9, 0).join(",") !== first);
+  check("redact: outside the region untouched", pixelAt(image, 20, 20).join(",") === [40, 60, 40, 255].join(","));
+}
+
+{
+  // a box drawn upwards and to the left, running off the edge, must still be
+  // a sane box
+  const box = call("normaliseBox({ x: 30, y: 40 }, { x: 10, y: 12 })", {});
+  eq("redact: box normalised", JSON.stringify(box), JSON.stringify({ x: 10, y: 12, width: 20, height: 28 }));
+  const clamped = call("clampBox({ x: -5, y: -5, width: 100, height: 100 }, 20, 20)", {});
+  eq("redact: box clamped to the image", JSON.stringify(clamped), JSON.stringify({ x: 0, y: 0, width: 20, height: 20 }));
+  eq("redact: stray click ignored", call("isUsefulBox({ x: 1, y: 1, width: 2, height: 2 })", {}), false);
+  eq("redact: real drag kept", call("isUsefulBox({ x: 1, y: 1, width: 40, height: 9 })", {}), true);
+}
+
+{
+  const cameraMeta = { fields: [{ label: "Camera model", value: "iPhone 15" }], gps: null };
+  const plainMeta = { fields: [], gps: null };
+  eq(
+    "screenshot: phone screen size flagged",
+    call("looksLikeScreenshot({ name: 'IMG_0421.png', meta: __m, width: 1179, height: 2556 })", { __m: plainMeta }),
+    true
+  );
+  eq(
+    "screenshot: camera metadata rules it out",
+    call("looksLikeScreenshot({ name: 'IMG_0421.png', meta: __m, width: 1179, height: 2556 })", { __m: cameraMeta }),
+    false
+  );
+  eq(
+    "screenshot: name alone is enough",
+    call("looksLikeScreenshot({ name: 'Screenshot 2026-08-21 at 10.02.11.png', meta: __m, width: 640, height: 480 })", { __m: plainMeta }),
+    true
+  );
+  eq(
+    "screenshot: ordinary photo not flagged",
+    call("looksLikeScreenshot({ name: 'beach.jpg', meta: __m, width: 4032, height: 3024 })", { __m: plainMeta }),
+    false
+  );
+}
+
+/* ---------------- storage budget ---------------- */
+
+{
+  eq("storage: one kind", call("describeLoad({ photo: 3 })", {}), "3 photos");
+  eq("storage: singular", call("describeLoad({ video: 1 })", {}), "1 video");
+  eq(
+    "storage: every kind reads naturally",
+    call("describeLoad({ photo: 2, video: 1, audio: 1, document: 3 })", {}),
+    "2 photos, 1 video, 1 audio file and 3 documents"
+  );
+  eq("storage: nothing open", call("describeLoad({})", {}), "nothing");
+
+  const huge = call("checkStorageRoom({ name: 'big.mov', size: 3 * 1024 * 1024 * 1024, type: 'video/quicktime' })", {});
+  eq("storage: oversized file refused", huge.ok, false);
+  check("storage: refusal names the real number", huge.reason.includes("3.00 GB"), huge.reason);
+  const fine = call("checkStorageRoom({ name: 'ok.jpg', size: 2000, type: 'image/jpeg' })", {});
+  eq("storage: normal file accepted", fine.ok, true);
+}
+
 /* ---------------- one global scope ----------------
    These are plain scripts, not modules, so every top-level declaration lands
    in one shared scope and the last file loaded silently wins. That is how
@@ -852,7 +961,8 @@ async function stripAudio(u8, name, type, meta) {
 {
   const declarations = new Map();
   const collisions = [];
-  for (const name of [...SCRIPTS, ...DOM_SCRIPTS, "app.js", "storage.js", "motion.js"]) {
+  const everyScript = [...new Set([...SCRIPTS, ...DOM_SCRIPTS, "app.js", "motion.js"])];
+  for (const name of everyScript) {
     const source = fs.readFileSync(path.join(JS_DIR, name), "utf8");
     for (const match of source.matchAll(/^(?:async\s+)?function\*?\s+([A-Za-z0-9_$]+)\s*\(/gm)) {
       const symbol = match[1];

@@ -491,7 +491,10 @@ async function renderCard(file) {
   } else {
     preview.addEventListener(
       "load",
-      () => applyMediaShape(card, preview.naturalWidth, preview.naturalHeight),
+      () => {
+        applyMediaShape(card, preview.naturalWidth, preview.naturalHeight);
+        noteIfScreenshot(card, file, meta, preview.naturalWidth, preview.naturalHeight);
+      },
       { once: true }
     );
   }
@@ -633,6 +636,23 @@ async function renderCard(file) {
   card._msFile = file; // read by the strip-all zip flow, no need to simulate clicks
   card._msMeta = meta;
   return card;
+}
+
+/* A screenshot has nothing for a metadata stripper to remove, which is
+   exactly why it needs saying: the leak is in the pixels. */
+function noteIfScreenshot(card, file, meta, width, height) {
+  if (typeof looksLikeScreenshot !== "function") return;
+  if (!looksLikeScreenshot({ name: file.name, meta, width, height })) return;
+  const list = card.querySelector(".meta-list");
+  const warning = screenshotWarningField();
+  const row = document.createElement("div");
+  row.className = "meta-list__row meta-list__row--note";
+  row.innerHTML = `
+    <dt>${icon("st-warn")} ${escapeHtml(warning.label)}</dt>
+    <dd>${escapeHtml(warning.value)}</dd>
+  `;
+  if (list) list.appendChild(row);
+  else card.querySelector(".result-card__body").insertBefore(row, card.querySelector(".result-card__actions"));
 }
 
 /* Mini map: a real interactive Leaflet map, loaded only when asked, so the
@@ -878,6 +898,24 @@ function buildActions(file, meta) {
     }
   });
 
+  const redactBtn = document.createElement("button");
+  redactBtn.className = "pill pill--copy";
+  redactBtn.textContent = "REDACT PIXELS";
+  redactBtn.title = "Black out or pixelate part of the picture itself";
+  if (!canRedact(meta, file)) redactBtn.style.display = "none";
+  redactBtn.addEventListener("click", async () => {
+    redactBtn.disabled = true;
+    try {
+      await openRedactor(file, actions.closest(".result-card"));
+    } catch (err) {
+      console.error("redactor failed", err);
+      redactBtn.textContent = "COULD NOT OPEN THAT PICTURE";
+      setTimeout(() => (redactBtn.textContent = "REDACT PIXELS"), 3000);
+    } finally {
+      redactBtn.disabled = false;
+    }
+  });
+
   const shareBtn = document.createElement("button");
   shareBtn.className = "pill pill--copy";
   shareBtn.textContent = "SHARE";
@@ -936,7 +974,7 @@ function buildActions(file, meta) {
                 ? "This format will get a fresh JPEG re-encode."
                 : "Lossless. Zero quality loss.";
 
-  actions.append(btn, copyBtn, shareBtn, note);
+  actions.append(btn, copyBtn, redactBtn, shareBtn, note);
   return actions;
 }
 
