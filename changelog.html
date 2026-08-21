@@ -51,6 +51,21 @@
       <section class="changelog__entry">
         <div class="changelog__date">
           <span class="changelog__date-text">2026-08-21</span>
+          <span class="changelog__badge changelog__badge--fix">FIXES</span>
+        </div>
+        <h2>Everything is shown in the shape it was shot in</h2>
+        <ul>
+          <li>Previews are no longer forced into a square and cropped to fill it. Every card now carries the real ratio of what it holds, taken first from the metadata and then from the decoded media, which accounts for anamorphic pixels and EXIF rotation.</li>
+          <li>Each shape gets a column width that suits it: narrow and tall for a vertical reel, wider for landscape, and the full card width for anything properly widescreen, with the metadata table underneath. A 1920x960 clip used to render at 220x110, far too small to watch. It now renders at 994x497.</li>
+          <li>A clip takes the full row from 1.5:1 up, a photo only from 1.95:1, because one is watched and the other is glanced at while you read the table beside it.</li>
+          <li>Display size and stored size are told apart, so anamorphic footage reads honestly as "1920 x 1080 (stored 1440 x 1080, anamorphic)" instead of picking whichever number came first.</li>
+          <li>On a phone everything stacks, where a vertical clip fills the screen and a vertical photo stays modest.</li>
+        </ul>
+      </section>
+
+      <section class="changelog__entry">
+        <div class="changelog__date">
+          <span class="changelog__date-text">2026-08-21</span>
           <span class="changelog__badge changelog__badge--feat">FEATURES</span>
         </div>
         <h2>Videos, and a storage budget so nothing falls over</h2>

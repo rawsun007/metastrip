@@ -13,6 +13,7 @@ Your photos and videos quietly carry hidden metadata: your exact GPS location, y
 - 📍 **Location alert**: pinpoints embedded GPS coordinates on a map link, or a real mini map
 - ✂️ **Lossless stripping**: removes metadata segments byte by byte, zero re-compression, zero quality loss
 - 🧠 **Never loads a whole video**: only header boxes are read, and the cleaned file is assembled from slices of the original, so a multi-gigabyte clip costs almost no memory
+- 🖼 **Shown in the right shape**: previews keep their true aspect ratio, and the card layout adapts per shape — vertical reels, 4:3, 16:9 and 2.39:1 scope each get a box that fits, with anamorphic footage corrected to its display size
 - 📊 **Storage budget**: a live meter and honest limits, so a huge file is refused with a real explanation instead of killing the tab
 - 🔒 **Zero trust needed**: everything runs client-side and works offline once loaded
 
