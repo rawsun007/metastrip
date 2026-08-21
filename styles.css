@@ -260,6 +260,13 @@ a { color: inherit; text-decoration: none; }
 .dropzone:hover .dropzone__emoji svg, .dropzone.is-dragover .dropzone__emoji svg { transform: rotate(4deg) scale(1.08); }
 .dropzone__text { font-size: 22px; font-weight: 700; margin-top: 18px; }
 .dropzone__hint { color: var(--color-muted); margin-top: 8px; font-size: 14px; }
+.dropzone__formats {
+  margin-top: 10px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6f6f6f;
+}
 
 /* ===== Result cards ===== */
 .results { display: flex; flex-direction: column; gap: 28px; margin-top: 40px; }

@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MetaStrip | Your photos and videos. Untracked.</title>
-  <meta name="description" content="Your photos and videos quietly carry your location, your device details and the exact time you recorded them. See it, then strip it, right in your browser. No upload, no server, no account." />
+  <title>MetaStrip | Your files. Untracked.</title>
+  <meta name="description" content="Photos, videos, raw files, documents and audio quietly carry your location, your device details, its serial number and the exact time. See it, then strip it, right in your browser. No upload, no server, no account." />
   <link rel="canonical" href="https://metastrip.vercel.app/" />
   <meta property="og:url" content="https://metastrip.vercel.app/" />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="MetaStrip | Your photos and videos. Untracked." />
-  <meta property="og:description" content="See what your photos and videos secretly carry, then strip it right in your browser. No upload, no server, no account." />
+  <meta property="og:title" content="MetaStrip | Your files. Untracked." />
+  <meta property="og:description" content="See what your photos, videos, documents and audio secretly carry, then strip it right in your browser. No upload, no server, no account." />
   <meta property="og:image" content="https://metastrip.vercel.app/assets/og.jpg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="680" />
@@ -29,7 +29,7 @@
     "@type": "WebApplication",
     "name": "MetaStrip",
     "url": "https://metastrip.vercel.app/",
-    "description": "See what your photos and videos secretly carry, then strip it right in your browser. No upload, no server, no account.",
+    "description": "See what your photos, videos, documents and audio secretly carry, then strip it right in your browser. No upload, no server, no account.",
     "applicationCategory": "SecurityApplication",
     "operatingSystem": "Any",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
@@ -78,7 +78,23 @@
         "name": "What formats are supported?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "JPEG, PNG and HEIC get full metadata inspection and lossless stripping, and so do MP4, MOV, WebM and Matroska videos. Other browser-readable images, such as WebP and AVIF, are cleaned via canvas re-encode."
+          "text": "Photos (JPEG, PNG, HEIC), raw files (DNG, CR2, CR3, NEF, ARW, ORF, RAF, PEF), video (MP4, MOV, WebM, MKV), audio (MP3, M4A, WAV, FLAC, Ogg, Opus, AIFF) and PDFs all get full inspection and lossless removal. Other browser-readable images, such as WebP and AVIF, are cleaned via a canvas re-encode."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can you remove Content Credentials and AI labels?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Content Credentials (C2PA) are a signed record of who made a file and what tool made it. MetaStrip reads what the record says, including whether the origin claim is a camera or a trained model, then removes it if you ask. Removing it also removes the file's proof of authenticity, so the page shows you the claim and lets you decide."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "My screenshot has no metadata. Am I safe?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Not necessarily. A screenshot usually carries no camera data, while the sensitive part sits in the pixels: a name, an address, a balance, an email thread. MetaStrip flags files that look like screenshots and can black out or pixelate any area you drag over, destroying those pixels rather than covering them."
         }
       },
       {
@@ -223,7 +239,7 @@
   <header class="nav">
     <a class="nav__logo" href="#top" aria-label="MetaStrip home">M</a>
     <nav class="nav__links" aria-label="Main">
-      <a class="pill pill--nav" href="#app">CLEAN A PHOTO</a>
+      <a class="pill pill--nav" href="#app">CLEAN A FILE</a>
       <a class="pill pill--nav" href="#leaks">WHAT LEAKS</a>
       <a class="pill pill--nav" href="#blog">BLOG</a>
       <a class="pill pill--nav" href="#faq">FAQ</a>
@@ -236,7 +252,7 @@
   </header>
 
   <div class="nav__sheet" id="navSheet">
-    <a class="pill pill--nav" href="#app">CLEAN A PHOTO</a>
+    <a class="pill pill--nav" href="#app">CLEAN A FILE</a>
     <a class="pill pill--nav" href="#leaks">WHAT LEAKS</a>
     <a class="pill pill--nav" href="#blog">BLOG</a>
     <a class="pill pill--nav" href="#faq">FAQ</a>
@@ -280,7 +296,7 @@
     <span class="sticker sticker--spark2" aria-hidden="true"><svg><use href="#st-spark"/></svg></span>
     <span class="sticker sticker--spark3" aria-hidden="true"><svg><use href="#st-spark"/></svg></span>
     <h1 class="hero__title">METASTRIP</h1>
-    <p class="hero__tagline">Your photos and videos. Untracked.</p>
+    <p class="hero__tagline">Your files. Untracked.</p>
     <div class="hero__ctas">
       <a class="pill pill--light pill--big" href="#app">STRIP A PHOTO</a>
       <span class="pill pill--accent pill--big">100% ON-DEVICE. NOTHING UPLOADS.</span>
@@ -290,9 +306,10 @@
   <!-- ===== APP ===== -->
   <section class="app" id="app">
     <h2 class="section-title section-title--light reveal">DROP IT.<br>SEE THE LEAK.</h2>
-    <div class="dropzone reveal" id="dropzone" tabindex="0" role="button" aria-label="Upload photos or videos to inspect and clean">
+    <div class="dropzone reveal" id="dropzone" tabindex="0" role="button" aria-label="Upload files to inspect and clean">
       <span class="dropzone__emoji" aria-hidden="true"><svg><use href="#st-polaroid"/></svg></span>
-      <p class="dropzone__text">Click to choose a photo or a video, or drag one in from anywhere on the page</p>
+      <p class="dropzone__text">Click to choose a file, or drag one in from anywhere on the page</p>
+      <p class="dropzone__formats">Photos, raw files, video, audio, PDFs</p>
       <p class="dropzone__hint">You can also paste one straight from your clipboard. Nothing leaves your device, it even works with Wi-Fi off.</p>
       <input type="file" id="fileInput" accept="image/*,video/*,.heic,.heif,.mov,.mp4,.m4v,.webm,.mkv,.dng,.cr2,.cr3,.nef,.nrw,.arw,.orf,.raf,.rw2,.pef,.srw,.tif,.tiff,.pdf,audio/*,.mp3,.m4a,.wav,.flac,.ogg,.opus,.aiff" multiple hidden />
     </div>
@@ -451,9 +468,17 @@
       </details>
       <details class="faq__item reveal" style="--d:0.32s">
         <summary>What formats are supported?</summary>
-        <div class="faq__answer"><p>JPEG, PNG and HEIC get full metadata inspection and lossless stripping, and so do MP4, MOV, WebM and Matroska videos. Other browser-readable images (WebP, AVIF, etc.) are cleaned via canvas re-encode.</p></div>
+        <div class="faq__answer"><p>Photos (JPEG, PNG, HEIC), raw files (DNG, CR2, CR3, NEF, ARW, ORF, RAF, PEF), video (MP4, MOV, WebM, MKV), audio (MP3, M4A, WAV, FLAC, Ogg, Opus, AIFF) and PDFs all get full inspection and lossless removal. Other browser-readable images (WebP, AVIF and so on) are cleaned via a canvas re-encode.</p></div>
       </details>
       <details class="faq__item reveal" style="--d:0.32s">
+        <summary>Can you remove Content Credentials and AI labels?</summary>
+        <div class="faq__answer"><p>Yes. Content Credentials (C2PA) are a signed record of who made a file and what tool made it, and MetaStrip reads what the record actually says — the tool, whether the origin claim is a camera or a trained model, the signing certificate, the edit history — then removes it if you ask. Worth knowing what you are giving up: removing it also removes the file's proof of authenticity. Both of those are legitimate choices, so the page shows you the claim and lets you decide.</p></div>
+      </details>
+      <details class="faq__item reveal" style="--d:0.40s">
+        <summary>My screenshot has no metadata. Am I safe?</summary>
+        <div class="faq__answer"><p>Not necessarily, and this is the one thing metadata removal cannot help with. A screenshot usually carries no camera data at all, while the sensitive part sits in the pixels: a name, an address, a balance, an email thread. MetaStrip points that out when a file looks like a screenshot, and the REDACT PIXELS button blacks out or pixelates whatever you drag over, destroying those pixels rather than covering them.</p></div>
+      </details>
+      <details class="faq__item reveal" style="--d:0.48s">
         <summary>Is it open source?</summary>
         <div class="faq__answer"><p>Yes. The whole thing is a few hundred lines of plain JavaScript with zero dependencies. <a href="https://github.com/rawsun007/metastrip">Read every byte on GitHub</a>.</p></div>
       </details>
