@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>What your raw files, PDFs and voice memos hide | MetaStrip Blog</title>
+  <meta name="description" content="Photos are the famous case. A raw file carries serials and a hidden JPEG, a PDF stores your name twice, and a voice memo is an MP4 that can carry GPS." />
+  <link rel="canonical" href="https://metastrip.vercel.app/blog/what-your-other-files-hide.html" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="What your raw files, PDFs and voice memos hide | MetaStrip Blog" />
+  <meta property="og:description" content="Photos are the famous case. A raw file carries serials and a hidden JPEG, a PDF stores your name twice, and a voice memo is an MP4 that can carry GPS." />
+  <meta property="og:image" content="https://metastrip.vercel.app/assets/og.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://metastrip.vercel.app/assets/og.jpg" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23fb4903'/><text x='50' y='68' font-size='52' font-family='Arial Black' font-weight='900' text-anchor='middle' fill='white'>M</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:ital,wght@0,400;0,500;0,700;0,800;1,800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
+  <script defer src="/_vercel/insights/script.js"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "What your raw files, PDFs and voice memos hide",
+    "description": "Photos are the famous case. A raw file carries serials and a hidden JPEG, a PDF stores your name twice, and a voice memo is an MP4 that can carry GPS.",
+    "url": "https://metastrip.vercel.app/blog/what-your-other-files-hide.html",
+    "image": "https://metastrip.vercel.app/assets/og.jpg",
+    "datePublished": "2026-08-21",
+    "dateModified": "2026-08-21",
+    "author": {
+        "@type": "Person",
+        "name": "Roshan Ramani",
+        "url": "https://roshan-ramani.vercel.app/"
+    },
+    "publisher": {
+        "@type": "Organization",
+        "name": "MetaStrip"
+    }
+}
+  </script>
+</head>
+<body class="blog-body">
+
+  <header class="nav">
+    <a class="nav__logo" href="../index.html" aria-label="MetaStrip home">M</a>
+    <nav class="nav__links" aria-label="Main">
+      <a class="pill pill--nav" href="../index.html#app">CLEAN A FILE</a>
+      <a class="pill pill--nav" href="../index.html#blog">ALL POSTS</a>
+      <a class="pill pill--nav" href="../changelog.html">CHANGELOG</a>
+    </nav>
+    <a class="pill pill--dark nav__github" href="https://github.com/rawsun007/metastrip" target="_blank" rel="noopener">GITHUB</a>
+    <button class="nav__burger" id="navBurger" aria-label="Open menu" aria-expanded="false" aria-controls="navSheet">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <div class="nav__sheet" id="navSheet">
+    <a class="pill pill--nav" href="../index.html#app">CLEAN A FILE</a>
+    <a class="pill pill--nav" href="../index.html#blog">ALL POSTS</a>
+    <a class="pill pill--nav" href="../changelog.html">CHANGELOG</a>
+    <a class="pill pill--dark" href="https://github.com/rawsun007/metastrip" target="_blank" rel="noopener">GITHUB</a>
+  </div>
+
+  <article class="post">
+    <p class="post__meta">By Roshan Ramani, August 2026</p>
+    <h1 class="post__title">RAW FILES, PDFS AND VOICE MEMOS</h1>
+
+    <p>Everyone has heard that photos carry hidden data. The files people treat as boring carry more, and get checked far less often. Three worth knowing about.</p>
+
+    <h2>A raw file is the most talkative image you own</h2>
+
+    <p>Photographers assume raw is closer to the sensor and therefore closer to anonymous. It is the opposite. DNG, CR2, NEF, ARW, ORF, RAF and PEF all open with a TIFF header and store metadata in ordinary image file directories, which is the same structure a JPEG hides inside its EXIF block.</p>
+
+    <p>What comes out is longer than a JPEG's list: the camera body's serial number and often the lens serial too, which ties every photo you have published to one physical object you own. Your name, if you ever set the copyright or artist field in the camera menu, which most people do once and forget. The original file name off the memory card, such as DSC_4821.NEF, which renaming your export does not remove. And maker notes, kilobytes of undocumented vendor internals that usually include a serial again.</p>
+
+    <p>Then the part that surprises people. Every raw file carries at least one fully rendered JPEG of the picture, so your operating system and your catalogue software have something to display without demosaicing anything. That preview survives everything you do to the raw data. Crop the raw and export for a client, and the raw you archived still contains the uncropped view. Send that raw to somebody and you have sent them the version you meant to crop out.</p>
+
+    <h2>A PDF stores your name twice</h2>
+
+    <p>Send a CV, a quote, a rental application. It feels finished and inert, like paper. It is a database.</p>
+
+    <p>Every PDF has a document information dictionary: Title, Author, Subject, Keywords, Creator, Producer, and both timestamps. Author is often your operating system account name, which is often your full name. Creator names the application you actually wrote it in, which quietly tells the recipient whether that professionally prepared report came out of Word, Canva or a phone scanner. Then there is usually an XMP packet carrying the same information again in XML, and often more of it.</p>
+
+    <p>PDFs also carry a file identifier in the trailer, a pair of hashes meant to stay stable across saves so a viewer can tell two files are versions of one document. Which means it also links two files you did not want linked: send a quote to one client and a near-identical quote to another, and the shared identifier says they came from the same original.</p>
+
+    <h2>A voice memo is an MP4 wearing a different extension</h2>
+
+    <p>Recordings from a phone are usually M4A files, which are MP4 containers underneath. That means they can carry the same atoms a video does, including the location atom. A recording app with location permission can geotag a memo exactly the way the camera geotags a photo, and nobody thinks to check.</p>
+
+    <p>Field recorders are worse, and more precise about it. A professional WAV usually carries a Broadcast Wave chunk: who recorded it, on what device, at what date and time, with a reference number and a description. It is designed to be useful in a production pipeline, and it is remarkably identifying outside one. Music files carry the whole tagging apparatus on top of that, plus whatever the ripping software left behind.</p>
+
+    <h2>None of it can simply be deleted</h2>
+
+    <p>Here is why so many tools re-encode instead, and why re-encoding is the wrong answer.</p>
+
+    <p>Most of these formats store absolute byte offsets somewhere. A PDF has a cross-reference table listing the exact position of every object. A raw file's directories point at where the sensor data lives. Delete one byte earlier in the file and everything after it is wrong.</p>
+
+    <p>So nothing moves. In a PDF, a string value is overwritten with spaces inside its own parentheses and a hex string becomes zeros, so it stays valid hex. In a raw file, values are blanked while every directory entry header stays standing, which keeps the entries sorted and the structural tags pointing where they always did — that is the difference between a cleaned raw your converter opens and one it refuses. A WAV chunk is renamed <code>JUNK</code>, which the format defines as "skip this". A FLAC block becomes <code>PADDING</code>, which is what the format has for exactly this purpose. An Ogg page is rebuilt and its checksum recomputed, because every page carries a checksum of itself. An MP3 is the only easy one: nothing stores an offset, so the tag blocks are cut out and the file gets smaller.</p>
+
+    <p>The result in every case is a file the same size, byte-identical where it counts, and quiet about you. Checked rather than claimed: a cleaned PDF renders to pixels identical to the original in macOS's own PDF engine, and cleaned audio decodes to bit-identical samples.</p>
+
+    <h2>One case that gets declined</h2>
+
+    <p>If a PDF is encrypted, its strings are ciphertext. Blanking them would corrupt the file without being able to tell you what was in there, so MetaStrip says so and stops rather than looking busy. Remove the password first, then clean it.</p>
+
+    <div class="post__cta">
+      <a class="pill pill--strip pill--big" href="../index.html#app">CHECK ONE OF YOURS</a>
+    </div>
+  </article>
+
+  <footer class="post__footer">
+    <p>MetaStrip runs fully on your device. Your files never upload. No cookies, just anonymous page counts.</p>
+  </footer>
+
+  <script>
+    (function () {
+      const burger = document.getElementById("navBurger");
+      const sheet = document.getElementById("navSheet");
+      function closeSheet() {
+        sheet.classList.remove("is-open");
+        burger.setAttribute("aria-expanded", "false");
+      }
+      burger.addEventListener("click", () => {
+        const open = sheet.classList.toggle("is-open");
+        burger.setAttribute("aria-expanded", String(open));
+      });
+      sheet.querySelectorAll("a").forEach((a) => a.addEventListener("click", closeSheet));
+    })();
+  </script>
+</body>
+</html>

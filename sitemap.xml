@@ -13,6 +13,12 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://metastrip.vercel.app/blog/photos-know-where-you-live.html</loc>
+    <lastmod>2026-08-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://metastrip.vercel.app/blog/remove-content-credentials.html</loc>
     <lastmod>2026-08-21</lastmod>
     <changefreq>monthly</changefreq>
@@ -25,22 +31,10 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://metastrip.vercel.app/blog/pdf-metadata.html</loc>
+    <loc>https://metastrip.vercel.app/blog/what-your-other-files-hide.html</loc>
     <lastmod>2026-08-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://metastrip.vercel.app/blog/raw-files-hide-a-jpeg.html</loc>
-    <lastmod>2026-08-21</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://metastrip.vercel.app/blog/photos-know-where-you-live.html</loc>
-    <lastmod>2026-08-21</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://metastrip.vercel.app/blog/who-strips-your-metadata.html</loc>
@@ -50,24 +44,6 @@
   </url>
   <url>
     <loc>https://metastrip.vercel.app/blog/lossless-explained.html</loc>
-    <lastmod>2026-08-21</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://metastrip.vercel.app/blog/what-is-exif.html</loc>
-    <lastmod>2026-08-21</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://metastrip.vercel.app/blog/stop-geotagging.html</loc>
-    <lastmod>2026-08-21</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://metastrip.vercel.app/blog/keep-the-date-lose-the-location.html</loc>
     <lastmod>2026-08-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

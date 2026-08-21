@@ -103,6 +103,11 @@
       "blogPost": [
           {
               "@type": "BlogPosting",
+              "headline": "Your photos know where you live",
+              "url": "https://metastrip.vercel.app/blog/photos-know-where-you-live.html"
+          },
+          {
+              "@type": "BlogPosting",
               "headline": "What Content Credentials say about you, and how to remove them",
               "url": "https://metastrip.vercel.app/blog/remove-content-credentials.html"
           },
@@ -113,18 +118,8 @@
           },
           {
               "@type": "BlogPosting",
-              "headline": "Your PDF knows who made it, twice",
-              "url": "https://metastrip.vercel.app/blog/pdf-metadata.html"
-          },
-          {
-              "@type": "BlogPosting",
-              "headline": "Your raw file is hiding a full-size JPEG of your photo",
-              "url": "https://metastrip.vercel.app/blog/raw-files-hide-a-jpeg.html"
-          },
-          {
-              "@type": "BlogPosting",
-              "headline": "Your photos know where you live",
-              "url": "https://metastrip.vercel.app/blog/photos-know-where-you-live.html"
+              "headline": "What your raw files, PDFs and voice memos hide",
+              "url": "https://metastrip.vercel.app/blog/what-your-other-files-hide.html"
           },
           {
               "@type": "BlogPosting",
@@ -135,103 +130,64 @@
               "@type": "BlogPosting",
               "headline": "How MetaStrip cleans a photo without touching a single pixel",
               "url": "https://metastrip.vercel.app/blog/lossless-explained.html"
-          },
-          {
-              "@type": "BlogPosting",
-              "headline": "What is EXIF, in plain words",
-              "url": "https://metastrip.vercel.app/blog/what-is-exif.html"
-          },
-          {
-              "@type": "BlogPosting",
-              "headline": "How to stop your phone from geotagging every photo",
-              "url": "https://metastrip.vercel.app/blog/stop-geotagging.html"
-          },
-          {
-              "@type": "BlogPosting",
-              "headline": "Keep the date, lose the location",
-              "url": "https://metastrip.vercel.app/blog/keep-the-date-lose-the-location.html"
           }
       ]
   }
   </script>
   <script type="application/ld+json">
   {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "Does my photo get uploaded anywhere?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "No. All the reading and stripping happens right in your browser with plain JavaScript. There is no server, no account, and we never see your files. Turn off your Wi-Fi after the page loads and it still works."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Does stripping reduce image quality?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "No. For JPEG and PNG, MetaStrip removes the metadata blocks byte by byte and never touches the compressed pixel data. The image itself stays bit for bit identical. Other formats fall back to a high quality re-encode."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Don't Instagram / WhatsApp already strip metadata?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Most big social feeds do. Email, cloud drives, marketplaces, forums, blogs and plenty of messaging apps do not. If you sell something on a classifieds site with photos taken at home, your address may be riding along."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Can I clean a video too?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Yes. MP4, MOV, WebM and Matroska clips are read the same way photos are, including GPS coordinates, camera make and model, recording time and the Live Photo pairing id. Stripping is lossless and re-encodes nothing: the metadata boxes are blanked in place so every playback offset inside the file stays valid. Nothing is uploaded, and nothing is ever loaded whole, so a large clip costs almost no memory."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "What formats are supported?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Photos (JPEG, PNG, HEIC), raw files (DNG, CR2, CR3, NEF, ARW, ORF, RAF, PEF), video (MP4, MOV, WebM, MKV), audio (MP3, M4A, WAV, FLAC, Ogg, Opus, AIFF) and PDFs all get full inspection and lossless removal. Other browser-readable images, such as WebP and AVIF, are cleaned via a canvas re-encode."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Can you remove Content Credentials and AI labels?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Yes. Content Credentials (C2PA) are a signed record of who made a file and what tool made it. MetaStrip reads what the record says, including whether the origin claim is a camera or a trained model, then removes it if you ask. Removing it also removes the file's proof of authenticity, so the page shows you the claim and lets you decide."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "My screenshot has no metadata. Am I safe?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Not necessarily. A screenshot usually carries no camera data, while the sensitive part sits in the pixels: a name, an address, a balance, an email thread. MetaStrip flags files that look like screenshots and can black out or pixelate any area you drag over, destroying those pixels rather than covering them."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Is it open source?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Yes. The whole thing is a few hundred lines of plain JavaScript with zero dependencies, readable on GitHub."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Found a bug, or have feedback?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Message Roshan directly on X or LinkedIn. Real bugs and rough edges are exactly what shipping in the open is for."
-        }
-      }
-    ]
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+          {
+              "@type": "Question",
+              "name": "Does my file get uploaded anywhere?",
+              "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. All the reading and stripping happens right in your browser with plain JavaScript. There is no server, no account, and we never see your files. Turn off your Wi-Fi after the page loads and it still works."
+              }
+          },
+          {
+              "@type": "Question",
+              "name": "What formats are supported?",
+              "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Photos (JPEG, PNG, HEIC), raw files (DNG, CR2, CR3, NEF, ARW, ORF, RAF, PEF), video (MP4, MOV, WebM, MKV), audio (MP3, M4A, WAV, FLAC, Ogg, Opus, AIFF) and PDFs all get full inspection and lossless removal. Other browser-readable images, such as WebP and AVIF, are cleaned via a canvas re-encode."
+              }
+          },
+          {
+              "@type": "Question",
+              "name": "Does stripping reduce quality?",
+              "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. Metadata is removed or blanked byte by byte and the picture, the frames and the samples are never re-encoded, so a cleaned file decodes identically to the original. The one exception is redacting pixels, which has to re-encode by definition, and the page says so when you do it."
+              }
+          },
+          {
+              "@type": "Question",
+              "name": "Can you remove Content Credentials and AI labels?",
+              "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. Content Credentials (C2PA) are a signed record of who made a file and what tool made it, and MetaStrip reads what the record actually says \u2014 the tool, whether the origin claim is a camera or a trained model, the signing certificate, the edit history \u2014 then removes it if you ask. Worth knowing what you are giving up: removing it also removes the file's proof of authenticity. Both are legitimate choices, so the page shows you the claim and lets you decide."
+              }
+          },
+          {
+              "@type": "Question",
+              "name": "My screenshot has no metadata. Am I safe?",
+              "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Not necessarily, and this is the one thing metadata removal cannot help with. A screenshot usually carries no camera data at all, while the sensitive part sits in the pixels: a name, an address, a balance, an email thread. MetaStrip points that out when a file looks like a screenshot, and the REDACT PIXELS button blacks out or pixelates whatever you drag over, destroying those pixels rather than covering them."
+              }
+          },
+          {
+              "@type": "Question",
+              "name": "Is it open source, and where do I report a bug?",
+              "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes, all of it, with zero dependencies \u2014 read every byte on GitHub or open an issue there. You can also message Roshan on X or LinkedIn. Real bugs and rough edges are exactly what shipping in the open is for."
+              }
+          }
+      ]
   }
   </script>
 </head>
@@ -506,64 +462,40 @@
   <section class="blog" id="blog">
     <h2 class="section-title section-title--light reveal">READ UP.</h2>
     <div class="blog__grid">
-      <a class="blog-card blog-card--orange reveal" href="blog/remove-content-credentials.html">
-        <span class="blog-card__tag">NEW</span>
-        <h3>WHAT CONTENT CREDENTIALS SAY ABOUT YOU</h3>
-        <p>C2PA manifests name the tool, the signer and whether a trained model made the file. What is inside one, and what you give up removing it.</p>
-        <span class="blog-card__read">READ THE POST</span>
-      </a>
-      <a class="blog-card blog-card--yellow reveal" href="blog/your-photo-has-a-video-inside-it.html" style="--d:.12s">
-        <span class="blog-card__tag">NEW</span>
-        <h3>YOUR PHOTO HAS A VIDEO INSIDE IT</h3>
-        <p>Pixel and Galaxy motion photos bolt a whole MP4 onto the end of a JPEG, with its own GPS. Most cleaners copy it straight through.</p>
-        <span class="blog-card__read">READ THE POST</span>
-      </a>
-      <a class="blog-card blog-card--green reveal" href="blog/pdf-metadata.html" style="--d:.24s">
-        <span class="blog-card__tag">NEW</span>
-        <h3>YOUR PDF KNOWS WHO MADE IT, TWICE</h3>
-        <p>The information dictionary, the XMP packet saying it again, and the identifier that follows a document through every save.</p>
-        <span class="blog-card__read">READ THE POST</span>
-      </a>
-      <a class="blog-card blog-card--blue reveal" href="blog/raw-files-hide-a-jpeg.html">
-        <span class="blog-card__tag">NEW</span>
-        <h3>YOUR RAW FILE IS HIDING A JPEG</h3>
-        <p>Camera and lens serials, your name from the camera menu, and a fully rendered JPEG of the shot you thought you had cropped.</p>
-        <span class="blog-card__read">READ THE POST</span>
-      </a>
-      <a class="blog-card blog-card--violet reveal" href="blog/photos-know-where-you-live.html" style="--d:.12s">
-        <span class="blog-card__tag">PRIVACY</span>
+      <a class="blog-card blog-card--orange reveal" href="blog/photos-know-where-you-live.html">
+        <span class="blog-card__tag">START HERE</span>
         <h3>YOUR PHOTOS KNOW WHERE YOU LIVE</h3>
-        <p>Pick any photo you took at home and there is a good chance your exact coordinates are inside it. Here is how that bites people.</p>
+        <p>What EXIF is, why your coordinates are in there, how that bites people, and the two minutes of settings that stop the next one.</p>
         <span class="blog-card__read">READ THE POST</span>
       </a>
-      <a class="blog-card blog-card--purple reveal" href="blog/who-strips-your-metadata.html" style="--d:.24s">
+      <a class="blog-card blog-card--yellow reveal" href="blog/remove-content-credentials.html" style="--d:.12s">
+        <span class="blog-card__tag">C2PA</span>
+        <h3>WHAT CONTENT CREDENTIALS SAY ABOUT YOU</h3>
+        <p>A signed record of the tool, the signer and whether a trained model made the file. What is inside one, and the honest trade in removing it.</p>
+        <span class="blog-card__read">READ THE POST</span>
+      </a>
+      <a class="blog-card blog-card--green reveal" href="blog/your-photo-has-a-video-inside-it.html" style="--d:.24s">
+        <span class="blog-card__tag">HIDDEN</span>
+        <h3>YOUR PHOTO HAS A VIDEO INSIDE IT</h3>
+        <p>Motion photos bolt a whole MP4 onto the end of a JPEG, with its own GPS. Most cleaners copy it straight through and call the file clean.</p>
+        <span class="blog-card__read">READ THE POST</span>
+      </a>
+      <a class="blog-card blog-card--violet reveal" href="blog/what-your-other-files-hide.html">
+        <span class="blog-card__tag">FORMATS</span>
+        <h3>RAW FILES, PDFS AND VOICE MEMOS</h3>
+        <p>Serials and a hidden JPEG in every raw file, your name stored twice in a PDF, and a voice memo that is an MP4 underneath.</p>
+        <span class="blog-card__read">READ THE POST</span>
+      </a>
+      <a class="blog-card blog-card--purple reveal" href="blog/who-strips-your-metadata.html" style="--d:.12s">
         <span class="blog-card__tag">GUIDE</span>
         <h3>INSTAGRAM STRIPS METADATA. YOUR EMAIL DOES NOT.</h3>
-        <p>A practical map of where your photo metadata survives and where it dies, including the sneaky high quality send trap.</p>
+        <p>A practical map of where your metadata survives and where it dies, including the sneaky high quality send trap.</p>
         <span class="blog-card__read">READ THE POST</span>
       </a>
-      <a class="blog-card blog-card--orange reveal" href="blog/lossless-explained.html">
+      <a class="blog-card blog-card--blue reveal" href="blog/lossless-explained.html" style="--d:.24s">
         <span class="blog-card__tag">HOW IT WORKS</span>
-        <h3>CLEANING A PHOTO WITHOUT TOUCHING A PIXEL</h3>
-        <p>Most removers quietly re-compress your image. Here is how lossless stripping works and why your photo stays identical.</p>
-        <span class="blog-card__read">READ THE POST</span>
-      </a>
-      <a class="blog-card blog-card--yellow reveal" href="blog/what-is-exif.html" style="--d:.12s">
-        <span class="blog-card__tag">EXPLAINER</span>
-        <h3>WHAT IS EXIF, IN PLAIN WORDS</h3>
-        <p>Every photo carries a hidden notebook the camera fills in for you. A five minute explainer with zero jargon.</p>
-        <span class="blog-card__read">READ THE POST</span>
-      </a>
-      <a class="blog-card blog-card--green reveal" href="blog/stop-geotagging.html" style="--d:.24s">
-        <span class="blog-card__tag">GUIDE</span>
-        <h3>STOP YOUR PHONE FROM GEOTAGGING</h3>
-        <p>Two minutes of settings on iPhone or Android and your camera stops writing your location into every shot.</p>
-        <span class="blog-card__read">READ THE POST</span>
-      </a>
-      <a class="blog-card blog-card--blue reveal" href="blog/keep-the-date-lose-the-location.html">
-        <span class="blog-card__tag">HOW IT WORKS</span>
-        <h3>KEEP THE DATE, LOSE THE LOCATION</h3>
-        <p>Selective stripping redacts exactly the fields you tick, byte by byte, and recomputes checksums so files stay valid.</p>
+        <h3>CLEANING A FILE WITHOUT TOUCHING A PIXEL</h3>
+        <p>Most removers quietly re-compress. Here is how byte-level removal works, per format, and how to keep the date while losing the location.</p>
         <span class="blog-card__read">READ THE POST</span>
       </a>
     </div>
@@ -593,40 +525,28 @@
     <h2 class="section-title section-title--dark reveal">QUESTIONS?</h2>
     <div class="faq__list">
       <details class="faq__item reveal" style="--d:0.00s">
-        <summary>Does my photo get uploaded anywhere?</summary>
+        <summary>Does my file get uploaded anywhere?</summary>
         <div class="faq__answer"><p>No. All the reading and stripping happens right in your browser with plain JavaScript. There is no server, no account, and we never see your files. Turn off your Wi-Fi after the page loads and it still works.</p></div>
       </details>
       <details class="faq__item reveal" style="--d:0.08s">
-        <summary>Does stripping reduce image quality?</summary>
-        <div class="faq__answer"><p>No. For JPEG and PNG, MetaStrip removes the metadata blocks byte by byte and never touches the compressed pixel data. The image itself stays bit for bit identical. Other formats fall back to a high quality re-encode.</p></div>
+        <summary>What formats are supported?</summary>
+        <div class="faq__answer"><p>Photos (JPEG, PNG, HEIC), raw files (DNG, CR2, CR3, NEF, ARW, ORF, RAF, PEF), video (MP4, MOV, WebM, MKV), audio (MP3, M4A, WAV, FLAC, Ogg, Opus, AIFF) and PDFs all get full inspection and lossless removal. Other browser-readable images, such as WebP and AVIF, are cleaned via a canvas re-encode.</p></div>
       </details>
       <details class="faq__item reveal" style="--d:0.16s">
-        <summary>Don't Instagram / WhatsApp already strip metadata?</summary>
-        <div class="faq__answer"><p>Most big social feeds do. Email, cloud drives, marketplaces, forums, blogs and plenty of messaging apps do not. If you sell something on a classifieds site with photos taken at home, your address may be riding along.</p></div>
+        <summary>Does stripping reduce quality?</summary>
+        <div class="faq__answer"><p>No. Metadata is removed or blanked byte by byte and the picture, the frames and the samples are never re-encoded, so a cleaned file decodes identically to the original. The one exception is redacting pixels, which has to re-encode by definition, and the page says so when you do it.</p></div>
       </details>
       <details class="faq__item reveal" style="--d:0.24s">
-        <summary>Can I clean a video too?</summary>
-        <div class="faq__answer"><p>Yes. MP4, MOV, WebM and Matroska clips are read the same way photos are, including GPS coordinates, camera make and model, recording time and the Live Photo pairing id. Stripping is lossless and re-encodes nothing: the metadata boxes are blanked in place so every playback offset inside the file stays valid. Nothing is uploaded, and nothing is ever loaded whole, so a large clip costs almost no memory.</p></div>
-      </details>
-      <details class="faq__item reveal" style="--d:0.32s">
-        <summary>What formats are supported?</summary>
-        <div class="faq__answer"><p>Photos (JPEG, PNG, HEIC), raw files (DNG, CR2, CR3, NEF, ARW, ORF, RAF, PEF), video (MP4, MOV, WebM, MKV), audio (MP3, M4A, WAV, FLAC, Ogg, Opus, AIFF) and PDFs all get full inspection and lossless removal. Other browser-readable images (WebP, AVIF and so on) are cleaned via a canvas re-encode.</p></div>
-      </details>
-      <details class="faq__item reveal" style="--d:0.32s">
         <summary>Can you remove Content Credentials and AI labels?</summary>
-        <div class="faq__answer"><p>Yes. Content Credentials (C2PA) are a signed record of who made a file and what tool made it, and MetaStrip reads what the record actually says — the tool, whether the origin claim is a camera or a trained model, the signing certificate, the edit history — then removes it if you ask. Worth knowing what you are giving up: removing it also removes the file's proof of authenticity. Both of those are legitimate choices, so the page shows you the claim and lets you decide.</p></div>
+        <div class="faq__answer"><p>Yes. Content Credentials (C2PA) are a signed record of who made a file and what tool made it, and MetaStrip reads what the record actually says — the tool, whether the origin claim is a camera or a trained model, the signing certificate, the edit history — then removes it if you ask. Worth knowing what you are giving up: removing it also removes the file's proof of authenticity. Both are legitimate choices, so the page shows you the claim and lets you decide.</p></div>
       </details>
-      <details class="faq__item reveal" style="--d:0.40s">
+      <details class="faq__item reveal" style="--d:0.32s">
         <summary>My screenshot has no metadata. Am I safe?</summary>
         <div class="faq__answer"><p>Not necessarily, and this is the one thing metadata removal cannot help with. A screenshot usually carries no camera data at all, while the sensitive part sits in the pixels: a name, an address, a balance, an email thread. MetaStrip points that out when a file looks like a screenshot, and the REDACT PIXELS button blacks out or pixelates whatever you drag over, destroying those pixels rather than covering them.</p></div>
       </details>
-      <details class="faq__item reveal" style="--d:0.48s">
-        <summary>Is it open source?</summary>
-        <div class="faq__answer"><p>Yes. The whole thing is a few hundred lines of plain JavaScript with zero dependencies. <a href="https://github.com/rawsun007/metastrip">Read every byte on GitHub</a>.</p></div>
-      </details>
       <details class="faq__item reveal" style="--d:0.40s">
-        <summary>Found a bug, or have feedback?</summary>
-        <div class="faq__answer"><p>Message Roshan directly on <a href="https://x.com/roshanramani007" target="_blank" rel="noopener">X</a> or <a href="https://www.linkedin.com/in/roshan-ramani-0510102b2" target="_blank" rel="noopener">LinkedIn</a>. Real bugs and rough edges are exactly what shipping in the open is for.</p></div>
+        <summary>Is it open source, and where do I report a bug?</summary>
+        <div class="faq__answer"><p>Yes, all of it, with zero dependencies — <a href="https://github.com/rawsun007/metastrip">read every byte on GitHub</a> or open an issue there. You can also message Roshan on <a href="https://x.com/roshanramani007" target="_blank" rel="noopener">X</a> or <a href="https://www.linkedin.com/in/roshan-ramani-0510102b2" target="_blank" rel="noopener">LinkedIn</a>. Real bugs and rough edges are exactly what shipping in the open is for.</p></div>
       </details>
     </div>
   </section>

@@ -1,4 +1,56 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/blog/what-is-exif",
+      "destination": "/blog/photos-know-where-you-live",
+      "permanent": true
+    },
+    {
+      "source": "/blog/what-is-exif.html",
+      "destination": "/blog/photos-know-where-you-live.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/stop-geotagging",
+      "destination": "/blog/photos-know-where-you-live",
+      "permanent": true
+    },
+    {
+      "source": "/blog/stop-geotagging.html",
+      "destination": "/blog/photos-know-where-you-live.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/keep-the-date-lose-the-location",
+      "destination": "/blog/lossless-explained",
+      "permanent": true
+    },
+    {
+      "source": "/blog/keep-the-date-lose-the-location.html",
+      "destination": "/blog/lossless-explained.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/pdf-metadata",
+      "destination": "/blog/what-your-other-files-hide",
+      "permanent": true
+    },
+    {
+      "source": "/blog/pdf-metadata.html",
+      "destination": "/blog/what-your-other-files-hide.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/raw-files-hide-a-jpeg",
+      "destination": "/blog/what-your-other-files-hide",
+      "permanent": true
+    },
+    {
+      "source": "/blog/raw-files-hide-a-jpeg.html",
+      "destination": "/blog/what-your-other-files-hide.html",
+      "permanent": true
+    }
+  ]
 }

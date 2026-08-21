@@ -88,13 +88,21 @@
     <p>Try it on a photo you care about. Strip it, then compare the two files side by side at full zoom. You will not find a difference, because there is none.</p>
 
 
+    <h2>Keeping some of it, losing the rest</h2>
+
+    <p>Because the work is byte-level rather than a re-render, it can also be partial. Every field on a card has a tick box, so you can drop the coordinates and keep the date, or keep the camera model and lose the serial number. Wedding photographers do the first constantly: the exposure settings are the useful part of the notebook, the location of the client's house is not.</p>
+
+    <p>Removing one field rather than the whole block means editing inside a structure other things point at, so it is done in the way each format tolerates. In a photo's EXIF block the chosen entries are zeroed byte for byte where they sit. Where a PNG chunk gets edited, its CRC is recomputed so the file stays valid rather than merely looking valid. In a video, a PDF or a raw file, values are blanked in place rather than cut, because those formats store byte offsets that break if anything moves.</p>
+
+    <p>The rows with no tick box are the ones that cannot go without breaking the file: a video's duration, frame size and codec, a PDF's page count, a raw file's image dimensions. They are shown because you should know they are readable, not because they are a leak.</p>
+
     <h2>Update, August 2026: the same idea in five other formats</h2>
 
     <p>This post described JPEG segments and PNG chunks. MetaStrip now cleans video, audio, raw files and PDFs the same way, and each format has its own definition of "empty" — because in most of them you cannot simply not copy the bytes.</p>
 
     <p>A video stores absolute file offsets in its chunk tables, so deleting metadata would desynchronise playback. Instead each doomed box keeps its exact size and becomes a <code>free</code> box with a zeroed payload, which every player already skips. Matroska gets a <code>Void</code> element for the same reason. A PDF's cross-reference table stores byte offsets too, so string values are overwritten with spaces inside their own delimiters. A WAV chunk is renamed <code>JUNK</code>, which the format defines as "skip this". A FLAC metadata block becomes a <code>PADDING</code> block. An Ogg page has to be rebuilt and its checksum recomputed. An MP3 is the easy one: nothing stores an offset, so the tag blocks are simply cut out and the file gets smaller.</p>
 
-    <p>In every case the pixels, the frames and the samples pass through untouched. Verified rather than asserted: decoded video frames and audio samples come out hash-identical to the original, and a cleaned PDF renders to identical pixels. <a href="raw-files-hide-a-jpeg.html">Raw files needed a stricter variant again</a>, because their directories hold the structural tags a converter depends on.</p>
+    <p>In every case the pixels, the frames and the samples pass through untouched. Verified rather than asserted: decoded video frames and audio samples come out hash-identical to the original, and a cleaned PDF renders to identical pixels. <a href="what-your-other-files-hide.html">Raw files needed a stricter variant again</a>, because their directories hold the structural tags a converter depends on.</p>
 
     <div class="post__cta">
       <a class="pill pill--strip pill--big" href="../index.html#app">TRY IT ON A PHOTO</a>
