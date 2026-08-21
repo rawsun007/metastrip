@@ -77,7 +77,11 @@ function formatBytes(n) {
 
 async function handleFiles(fileList) {
   const files = [...fileList].filter(
-    (f) => f.type.startsWith("image/") || isVideoFile(f) || /\.(heic|heif)$/i.test(f.name)
+    (f) =>
+      f.type.startsWith("image/") ||
+      isVideoFile(f) ||
+      isPdfFile(f) ||
+      /\.(heic|heif|dng|cr2|cr3|nef|nrw|arw|orf|raf|rw2|pef|srw)$/i.test(f.name)
   );
   if (!files.length) return;
   const refused = [];
@@ -387,6 +391,7 @@ function findFieldValue(meta, label) {
 
 async function readMetadata(file) {
   if (isVideoFile(file)) return parseVideoMetadata(file);
+  if (isPdfFile(file)) return parsePdfMetadata(file);
   return parseMetadata(await file.arrayBuffer());
 }
 
@@ -415,10 +420,20 @@ async function renderCard(file) {
   card.appendChild(dismissBtn);
 
   const isVideo = isVideoFile(file);
-  card.dataset.mediaKind = isVideo ? "video" : "photo";
-  const preview = document.createElement(isVideo ? "video" : "img");
-  preview.className = isVideo ? "result-card__preview result-card__preview--video" : "result-card__preview";
-  if (isVideo) {
+  const isDocument = isPdfFile(file);
+  card.dataset.mediaKind = isVideo ? "video" : isDocument ? "document" : "photo";
+  const preview = document.createElement(isVideo ? "video" : isDocument ? "iframe" : "img");
+  preview.className = isVideo
+    ? "result-card__preview result-card__preview--video"
+    : isDocument
+      ? "result-card__preview result-card__preview--doc"
+      : "result-card__preview";
+  if (isDocument) {
+    // every desktop browser renders a PDF itself, so the first page is the
+    // preview; the blob stays local either way
+    preview.title = `Preview of ${file.name}`;
+    preview.setAttribute("loading", "lazy");
+  } else if (isVideo) {
     // metadata only: the browser reads the header for the poster frame and
     // leaves the rest of the file on disk until playback is asked for
     preview.preload = "metadata";
@@ -447,7 +462,9 @@ async function renderCard(file) {
   // the shape the file says it is, so the card opens close to right, then
   // the decoded shape once the browser knows it for certain
   shapeFromMetadata(card, meta);
-  if (isVideo) {
+  if (isDocument) {
+    // nothing to measure: a PDF page has no intrinsic pixel size
+  } else if (isVideo) {
     preview.addEventListener(
       "loadedmetadata",
       () => applyMediaShape(card, preview.videoWidth, preview.videoHeight),
@@ -461,7 +478,11 @@ async function renderCard(file) {
     );
   }
 
-  if (meta.format === "tiff" && meta.previews && meta.previews.length) {
+  if (isDocument) {
+    card._msObjectUrl = URL.createObjectURL(file);
+    preview.src = `${card._msObjectUrl}#toolbar=0&view=FitH`;
+    applyMediaShape(card, 210, 297); // a page, until the file says otherwise
+  } else if (meta.format === "tiff" && meta.previews && meta.previews.length) {
     // no browser decodes a raw file, but the raw file is carrying a rendered
     // JPEG of the same photo, so that is what gets shown
     const biggest = meta.previews.reduce((a, b) => (b.end - b.start > a.end - a.start ? b : a));
@@ -701,6 +722,7 @@ function initMiniMap(L, frame, lat, lon) {
    the original File, so nothing here ever holds a whole clip in memory. */
 async function computeCleanResult(file, meta, card) {
   if (meta.kind === "video") return computeCleanVideo(file, meta, card);
+  if (meta.format === "pdf") return computeCleanPdf(file, meta, card);
   const buffer = await file.arrayBuffer();
   const boxes = card ? [...card.querySelectorAll(".meta-check input:not(:disabled)")] : [];
   const keepingSome = boxes.length > 0 && boxes.some((b) => !b.checked);
@@ -729,22 +751,32 @@ async function computeCleanResult(file, meta, card) {
 /* Videos never round-trip through an ArrayBuffer: the edit list is byte
    ranges, and the result is slices of the file on disk. */
 async function computeCleanVideo(file, meta, card) {
-  const boxes = card ? [...card.querySelectorAll(".meta-check input:not(:disabled)")] : [];
-  const keepingSome = boxes.length > 0 && boxes.some((b) => !b.checked);
-
-  let edits;
-  if (keepingSome) {
-    edits = [];
-    for (const b of boxes) {
-      if (!b.checked) continue;
-      const field = b.dataset.gps ? meta.gps : meta.fields[Number(b.dataset.field)];
-      if (field && field.edits) edits.push(...field.edits);
-    }
-  } else {
-    edits = allVideoEdits(meta);
-  }
+  const edits = selectedEdits(meta, card, () => allVideoEdits(meta));
   if (!edits.length) throw new Error("nothing to strip");
   return stripVideoFile(file, edits);
+}
+
+/* A PDF is edited in place for the same reason a video is: its
+   cross-reference table holds absolute byte offsets. */
+async function computeCleanPdf(file, meta, card) {
+  const edits = selectedEdits(meta, card, () => allPdfEdits(meta));
+  if (!edits.length) throw new Error("nothing to strip");
+  return stripPdfFile(file, edits);
+}
+
+/* Which byte edits the tick boxes are asking for. With nothing unticked the
+   caller's full list is used, so a format can clean things it never listed as
+   an individual row. */
+function selectedEdits(meta, card, fullList) {
+  const boxes = card ? [...card.querySelectorAll(".meta-check input:not(:disabled)")] : [];
+  if (!boxes.length || boxes.every((b) => b.checked)) return fullList();
+  const edits = [];
+  for (const b of boxes) {
+    if (!b.checked) continue;
+    const field = b.dataset.gps ? meta.gps : meta.fields[Number(b.dataset.field)];
+    if (field && field.edits) edits.push(...field.edits);
+  }
+  return edits;
 }
 
 function buildActions(file, meta) {
@@ -791,7 +823,7 @@ function buildActions(file, meta) {
   copyBtn.title = "Copies the stripped image to your clipboard";
   // a browser cannot rasterise a raw file, so there is nothing to put on a
   // clipboard that came from these pixels
-  if (meta.format === "tiff") copyBtn.style.display = "none";
+  if (meta.format === "tiff" || meta.format === "pdf") copyBtn.style.display = "none";
   copyBtn.addEventListener("click", async () => {
     copyBtn.disabled = true;
     copyBtn.textContent = "COPYING…";
@@ -857,13 +889,17 @@ function buildActions(file, meta) {
   note.textContent =
     meta.kind === "video"
       ? "Lossless. Metadata boxes are blanked in place, so every frame and every playback offset stays exactly as it was."
-      : meta.format === "tiff"
+      : meta.format === "pdf"
+        ? meta.encrypted
+          ? "Encrypted, so nothing here can be read or removed without the password."
+          : "Lossless. Values are blanked in place, so every page renders exactly as before."
+        : meta.format === "tiff"
         ? "Lossless. Values are blanked in place, so a converter still opens the raw exactly as before."
-        : meta.format === "heic"
-          ? "Converts to a clean JPEG, or untick fields to redact the HEIC in place."
-          : meta.format === "other"
-            ? "This format will get a fresh JPEG re-encode."
-            : "Lossless. Zero quality loss.";
+          : meta.format === "heic"
+            ? "Converts to a clean JPEG, or untick fields to redact the HEIC in place."
+            : meta.format === "other"
+              ? "This format will get a fresh JPEG re-encode."
+              : "Lossless. Zero quality loss.";
 
   actions.append(btn, copyBtn, shareBtn, note);
   return actions;

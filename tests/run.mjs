@@ -11,7 +11,7 @@ import vm from "node:vm";
 import * as F from "./fixtures.mjs";
 
 const JS_DIR = path.join(import.meta.dirname, "..", "js");
-const SCRIPTS = ["c2pa.js", "edits.js", "exif.js", "stripper.js", "video.js"];
+const SCRIPTS = ["c2pa.js", "edits.js", "exif.js", "stripper.js", "video.js", "pdf.js"];
 
 const ctx = vm.createContext({ console, File, Blob, DataView, Uint8Array, TextDecoder, TextEncoder });
 for (const name of SCRIPTS) {
@@ -51,6 +51,22 @@ function findBox(u8, type) {
     offset += size;
   }
   throw new Error(`no ${type} box in fixture`);
+}
+
+/* Byte-for-character view, the same one the PDF reader uses. */
+function latin1(u8) {
+  let out = "";
+  for (let i = 0; i < u8.length; i += 0x8000) {
+    out += String.fromCharCode.apply(null, u8.subarray(i, Math.min(i + 0x8000, u8.length)));
+  }
+  return out;
+}
+
+function xrefOffsets(text) {
+  const at = text.lastIndexOf("xref\n0 ");
+  if (at < 0) return [];
+  const rows = text.slice(at).matchAll(/^(\d{10}) 00000 n/gm);
+  return [...rows].map((r) => Number(r[1])).filter((n) => n > 0);
 }
 
 function sameBytes(a, b) {
@@ -389,6 +405,74 @@ async function parseVideo(u8, name = "clip.mp4", type = "video/mp4") {
   // big-endian raw files must read the same way
   const tiff = F.makeTiff({ ifd0: [[0x010f, 2, "PENTAX"]], bigEndian: true });
   eq("raw: big-endian make", valueOf(parse(tiff), "Camera make"), "PENTAX");
+}
+
+/* ---------------- PDF ---------------- */
+
+async function parsePdf(u8, name = "doc.pdf") {
+  return call("parsePdfMetadata(__file)", { __file: asFile(u8, name, "application/pdf") });
+}
+
+{
+  const pdf = F.makePdf({});
+  const meta = await parsePdf(pdf);
+  eq("pdf: format", meta.format, "pdf");
+  eq("pdf: kind", meta.kind, "document");
+  eq("pdf: pages", valueOf(meta, "Pages"), "1");
+  eq("pdf: title", valueOf(meta, "Title"), "Quarterly figures");
+  eq("pdf: author", valueOf(meta, "Author"), "Roshan Ramani");
+  eq("pdf: producer", valueOf(meta, "Written by"), "Skia/PDF m151");
+  eq("pdf: creator", valueOf(meta, "Created with"), "Microsoft Word");
+  check("pdf: created stamp", (valueOf(meta, "Created") || "").includes("20260820"));
+  check("pdf: xmp found", (valueOf(meta, "XMP metadata") || "").includes("Roshan Ramani"), valueOf(meta, "XMP metadata"));
+  check("pdf: file identifier", has(meta, "File identifier"), labels(meta).join(","));
+
+  const result = await call("stripPdfFile(__file, allPdfEdits(__meta))", {
+    __file: asFile(pdf, "doc.pdf", "application/pdf"),
+    __meta: meta,
+  });
+  const cleaned = new Uint8Array(await result.blob.arrayBuffer());
+  eq("pdf: size unchanged", cleaned.length, pdf.length);
+
+  const after = await parsePdf(cleaned);
+  eq("pdf: title gone", valueOf(after, "Title"), undefined);
+  eq("pdf: author gone", valueOf(after, "Author"), undefined);
+  eq("pdf: producer gone", valueOf(after, "Written by"), undefined);
+  eq("pdf: dates gone", valueOf(after, "Created"), undefined);
+  eq("pdf: pages still known", valueOf(after, "Pages"), "1");
+
+  const text = latin1(cleaned);
+  check("pdf: no name left anywhere", !text.includes("Roshan Ramani"));
+  check("pdf: page content untouched", text.includes("(hello there) Tj"));
+  check("pdf: xref table untouched", text.includes("startxref"));
+  check("pdf: object structure intact", (text.match(/\d+ 0 obj/g) || []).length >= 5);
+  // the offsets in the xref must still point at real objects
+  for (const offset of xrefOffsets(text)) {
+    check(`pdf: xref offset ${offset} still lands on an object`, /^\d+ 0 obj/.test(text.slice(offset, offset + 20)));
+  }
+}
+
+{
+  // UTF-16 and hex-encoded strings are the normal case for non-ASCII titles
+  const pdf = F.makePdf({ hexTitle: true, title: "Björk résumé" });
+  const meta = await parsePdf(pdf);
+  eq("pdf: hex string title", valueOf(meta, "Title"), "Björk résumé");
+  const result = await call("stripPdfFile(__file, allPdfEdits(__meta))", {
+    __file: asFile(pdf, "doc.pdf", "application/pdf"),
+    __meta: meta,
+  });
+  const cleaned = new Uint8Array(await result.blob.arrayBuffer());
+  const text = latin1(cleaned);
+  check("pdf: hex title blanked to zeros", /\/Title <0+>/.test(text), text.slice(text.indexOf("/Title"), text.indexOf("/Title") + 40));
+  eq("pdf: hex title gone", valueOf(await parsePdf(cleaned), "Title"), undefined);
+}
+
+{
+  // an encrypted PDF is declined rather than damaged
+  const pdf = F.makePdf({ encrypted: true });
+  const meta = await parsePdf(pdf);
+  check("pdf: encryption reported", has(meta, "Encrypted"), labels(meta).join(","));
+  eq("pdf: nothing offered for removal", meta.fields.filter((f) => f.edits).length, 0);
 }
 
 /* ---------------- report ---------------- */

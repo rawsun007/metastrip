@@ -337,6 +337,69 @@ export const XMP_UUID = [
   0x9c, 0x71, 0x99, 0x94, 0x91, 0xe3, 0xaf, 0xac,
 ];
 
+/* ---------- PDF ----------
+   A real, minimal PDF: one page, an information dictionary, an XMP packet and
+   a cross-reference table whose offsets are computed from the assembled body,
+   so a test can prove that cleaning did not move anything. */
+
+export function makePdf({
+  title = "Quarterly figures",
+  author = "Roshan Ramani",
+  producer = "Skia/PDF m151",
+  creator = "Microsoft Word",
+  xmp = true,
+  encrypted = false,
+  hexTitle = false,
+} = {}) {
+  const xmpPacket = xmp
+    ? `<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<rdf:Description rdf:about="" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<xmp:CreatorTool>${creator}</xmp:CreatorTool>
+<dc:creator><rdf:Seq><rdf:li>${author}</rdf:li></rdf:Seq></dc:creator>
+</rdf:Description></rdf:RDF></x:xmpmeta>
+<?xpacket end="w"?>`
+    : "";
+
+  const objects = [
+    "1 0 obj\n<< /Type /Catalog /Pages 2 0 R" + (xmp ? " /Metadata 6 0 R" : "") + " >>\nendobj\n",
+    "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
+    "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Contents 4 0 R >>\nendobj\n",
+    "4 0 obj\n<< /Length 44 >>\nstream\nBT /F1 12 Tf 20 100 Td (hello there) Tj ET\nendstream\nendobj\n",
+    "5 0 obj\n<< " +
+      (hexTitle ? `/Title <${toHex(title)}> ` : `/Title (${title}) `) +
+      `/Author (${author}) /Creator (${creator}) /Producer (${producer}) ` +
+      "/CreationDate (D:20260820073109+00'00') /ModDate (D:20260821102218+00'00') >>\nendobj\n",
+  ];
+  if (xmp) {
+    objects.push(`6 0 obj\n<< /Type /Metadata /Subtype /XML /Length ${xmpPacket.length} >>\nstream\n${xmpPacket}\nendstream\nendobj\n`);
+  }
+
+  const header = "%PDF-1.7\n%\xe2\xe3\xcf\xd3\n";
+  let body = "";
+  const offsets = [];
+  for (const object of objects) {
+    offsets.push(header.length + body.length);
+    body += object;
+  }
+  const xrefStart = header.length + body.length;
+  let xref = `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  for (const offset of offsets) xref += `${String(offset).padStart(10, "0")} 00000 n \n`;
+  const trailer =
+    `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R /Info 5 0 R` +
+    (encrypted ? " /Encrypt 7 0 R" : "") +
+    " /ID [<0123456789abcdef0123456789abcdef> <0123456789abcdef0123456789abcdef>] >>\n" +
+    `startxref\n${xrefStart}\n%%EOF\n`;
+
+  return bytes(header + body + xref + trailer);
+}
+
+function toHex(text) {
+  let out = "";
+  for (const c of text) out += c.charCodeAt(0).toString(16).padStart(2, "0");
+  return out;
+}
+
 /* ---------- Matroska ---------- */
 
 export function ebml(id, payload) {

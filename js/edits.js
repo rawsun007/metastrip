@@ -11,12 +11,15 @@
      zero   fill with 0x00 — raw fields, timestamps
      free   an ISO-BMFF "free" box of the same size, payload zeroed
      void   the EBML equivalent, for Matroska
-     space  fill with 0x20 — text formats, where a blank must stay parseable */
+     space  fill with 0x20 — text formats, where a blank must stay parseable
+     hexZero fill with ASCII "0" — a hex string that must stay a hex string */
 
 function patchBytes(edit, length) {
   const patch = new Uint8Array(length);
   if (edit.kind === "space") {
     patch.fill(0x20);
+  } else if (edit.kind === "hexZero") {
+    patch.fill(0x30);
   } else if (edit.kind === "free" && length >= 8) {
     new DataView(patch.buffer).setUint32(0, length);
     patch[4] = 0x66; // f
