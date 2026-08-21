@@ -58,6 +58,22 @@
         <div class="changelog__date">
           <span class="changelog__date-text">2026-08-21</span>
           <span class="changelog__badge changelog__badge--release">RELEASE</span>
+          <span class="changelog__version">v1.1.3</span>
+        </div>
+        <h2>A STOP button for a folder run nobody had started</h2>
+        <p>Reported from a screenshot: the folder progress panel and its STOP button were sitting on the page, clickable, before anything had been picked. Nothing was running, so there was nothing to stop.</p>
+        <ul>
+          <li>Both carried the <code>hidden</code> attribute and were visible anyway. That attribute is weaker than it looks: a browser's own stylesheet gives it <code>display: none</code>, but as an ordinary rule with almost no specificity, so any class that sets <code>display</code> beats it. The panel is a flex container and every button here is an inline-flex pill, so both quietly ignored it.</li>
+          <li>The stylesheet already had a one-off <code>.strip-all[hidden]</code> patch from the last time this bit, which fixed one element and left the pattern in place. Replaced with a single global rule that forces <code>[hidden]</code> to <code>display: none</code>, and the patch removed.</li>
+          <li>That also fixed a bug nobody had reported. Folder mode hides its own button on browsers without a directory picker, and being a pill it was staying visible on Firefox and Safari — a button that could only fail when pressed.</li>
+          <li>Now tested rather than eyeballed: the suite asserts the global rule exists, that the panels still start hidden, and that no per-element patch has crept back in. Confirmed in a real browser, where every hidden element computes to <code>display: none</code> and measures zero by zero.</li>
+        </ul>
+      </section>
+
+      <section class="changelog__entry">
+        <div class="changelog__date">
+          <span class="changelog__date-text">2026-08-21</span>
+          <span class="changelog__badge changelog__badge--release">RELEASE</span>
           <span class="changelog__version">v1.1.1</span>
         </div>
         <h2>The writing catches up with the tool</h2>
