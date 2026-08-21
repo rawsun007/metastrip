@@ -10,6 +10,7 @@ const CORE = [
   "./styles.css",
   "./js/app.js",
   "./js/c2pa.js",
+  "./js/edits.js",
   "./js/exif.js",
   "./js/video.js",
   "./js/storage.js",

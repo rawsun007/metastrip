@@ -11,7 +11,7 @@ import vm from "node:vm";
 import * as F from "./fixtures.mjs";
 
 const JS_DIR = path.join(import.meta.dirname, "..", "js");
-const SCRIPTS = ["c2pa.js", "exif.js", "stripper.js", "video.js"];
+const SCRIPTS = ["c2pa.js", "edits.js", "exif.js", "stripper.js", "video.js"];
 
 const ctx = vm.createContext({ console, File, Blob, DataView, Uint8Array, TextDecoder, TextEncoder });
 for (const name of SCRIPTS) {
