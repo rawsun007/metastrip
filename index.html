@@ -294,6 +294,11 @@
       <span class="dropzone__sample-or">or</span>
       <button class="dropzone__sample-btn" id="sampleCleanBtn" type="button">an already-clean one</button>
     </p>
+    <p class="storage-notice" id="storageNotice" role="status" hidden></p>
+    <div class="storage-meter" id="storageMeter" hidden>
+      <div class="storage-meter__track"><span class="storage-meter__fill" id="storageMeterFill"></span></div>
+      <p class="storage-meter__text" id="storageMeterText"></p>
+    </div>
     <div class="strip-all" id="stripAllBar" hidden>
       <p id="stripAllLabel"></p>
       <button class="pill pill--strip" id="stripAllBtn">STRIP ALL &amp; DOWNLOAD ZIP</button>
@@ -468,6 +473,7 @@
   <script src="js/motion.js"></script>
   <script src="js/exif.js"></script>
   <script src="js/video.js"></script>
+  <script src="js/storage.js"></script>
   <script src="js/stripper.js"></script>
   <script src="js/app.js"></script>
 </body>

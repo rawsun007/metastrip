@@ -79,10 +79,19 @@ async function handleFiles(fileList) {
     (f) => f.type.startsWith("image/") || isVideoFile(f) || /\.(heic|heif)$/i.test(f.name)
   );
   if (!files.length) return;
+  const refused = [];
   for (const file of files) {
+    const room = checkStorageRoom(file);
+    if (!room.ok) {
+      refused.push(room.reason);
+      continue;
+    }
     const card = await renderCard(file);
     resultsEl.prepend(card);
+    trackLoaded(card, file);
   }
+  if (refused.length) showStorageNotice(refused[0]);
+  if (refused.length === files.length) return;
   updateStripAllBar();
   resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -128,7 +137,7 @@ wireSampleButton(
 function updateStripAllBar() {
   const count = resultsEl.children.length;
   stripAllBar.hidden = count < 2;
-  if (count >= 2) stripAllLabel.textContent = `${count} photos loaded`;
+  if (count >= 2) stripAllLabel.textContent = `${describeLoad(storageUsage())} loaded`;
 }
 
 const STRIP_ALL_LABEL = "STRIP ALL & DOWNLOAD ZIP";
@@ -287,6 +296,7 @@ async function renderCard(file) {
       "animationend",
       () => {
         if (card._msObjectUrl) URL.revokeObjectURL(card._msObjectUrl);
+        untrackLoaded(card, file);
         card.remove();
         updateStripAllBar();
       },
