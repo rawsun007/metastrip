@@ -50,6 +50,24 @@
 
       <section class="changelog__entry">
         <div class="changelog__date">
+          <span class="changelog__date-text">2026-08-21</span>
+          <span class="changelog__badge changelog__badge--feat">FEATURES</span>
+        </div>
+        <h2>Videos, and a storage budget so nothing falls over</h2>
+        <ul>
+          <li>MP4, MOV, WebM and Matroska clips are now read the same way photos are: GPS coordinates, camera make and model, recording time, software, the Live Photo pairing id, Google Photos upload ids, embedded XMP and any free-form tag a muxer left behind.</li>
+          <li>Stripping a clip is lossless and moves nothing. Chunk offset tables inside a video point at absolute file positions, so instead of cutting bytes out, each doomed box keeps its size and becomes a "free" box with a blank payload. WebM gets the same treatment with Void elements. Frames are never re-encoded, and playback offsets stay exactly where they were.</li>
+          <li>Nothing is ever loaded whole. Only header boxes are read, and a cleaned clip is assembled from slices of the file still sitting on disk, so a multi-gigabyte video costs almost no memory.</li>
+          <li>The tick boxes work per field on video too, so you can drop the location and keep the recording date, or the other way round.</li>
+          <li>A storage budget with a live meter: 2 GB per file, 6 GB across everything open, 20 cards. Going over is refused with the real numbers in the message rather than crashing the tab, and only the clip you are watching ever plays.</li>
+          <li>Strip all no longer tries to zip video. Photos are still bundled; clips are cleaned and saved one at a time, straight from disk.</li>
+          <li>Duration, frame size and codec show on the card but never count as a leak, since every player needs them.</li>
+          <li>A sample leaking video sits next to the sample photos, and the installed app now accepts videos shared from the system share sheet.</li>
+        </ul>
+      </section>
+
+      <section class="changelog__entry">
+        <div class="changelog__date">
           <span class="changelog__date-text">2026-07-07</span>
           <span class="changelog__badge changelog__badge--feat">FEATURES</span>
         </div>
