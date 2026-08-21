@@ -2,7 +2,7 @@
 
 **Your photos and videos. Untracked.**
 
-Live at [metastrip.vercel.app](https://metastrip.vercel.app/)
+Live at [metastrip.vercel.app](https://metastrip.vercel.app/) · current release **v1.0.0** ([changelog](https://metastrip.vercel.app/changelog.html))
 
 Your photos and videos quietly carry hidden metadata: your exact GPS location, your device model, and the exact second you recorded them. MetaStrip shows you everything a file leaks, then strips it, **100% in your browser**. No upload, no server, no account. Nothing ever leaves your device.
 

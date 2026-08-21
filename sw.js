@@ -1,7 +1,9 @@
 /* MetaStrip service worker: offline support + Android share target.
-   Network-first so updates land immediately, cache fallback offline. */
+   Network-first so updates land immediately, cache fallback offline.
+   CACHE carries the release version, so shipping a version retires the
+   previous cache on activate. */
 
-const CACHE = "metastrip-v2";
+const CACHE = "metastrip-v1.0.0";
 const CORE = [
   "./",
   "./index.html",
