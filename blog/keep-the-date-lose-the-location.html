@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Keep the date, lose the location | MetaStrip Blog</title>
   <meta name="description" content="Sometimes you want some metadata gone and some kept. How selective stripping redacts exactly the fields you tick, byte by byte, with zero quality loss." />
+  <link rel="canonical" href="https://metastrip.vercel.app/blog/keep-the-date-lose-the-location.html" />
   <meta property="og:type" content="article" />
   <meta property="og:title" content="Keep the date, lose the location | MetaStrip Blog" />
   <meta property="og:description" content="Sometimes you want some metadata gone and some kept. How selective stripping redacts exactly the fields you tick, byte by byte, with zero quality loss." />
@@ -26,6 +27,7 @@
     "url": "https://metastrip.vercel.app/blog/keep-the-date-lose-the-location.html",
     "image": "https://metastrip.vercel.app/assets/og.jpg",
     "datePublished": "2026-07-03",
+    "dateModified": "2026-08-21",
     "author": { "@type": "Person", "name": "Roshan Ramani", "url": "https://roshan-ramani.vercel.app/" },
     "publisher": { "@type": "Organization", "name": "MetaStrip" }
   }
@@ -78,6 +80,15 @@
     <h2>The default is still everything</h2>
 
     <p>To be clear, if you do not have a reason to keep something, keep nothing. The full strip remains the safest option and the one I use for anything going to a stranger. Selective mode exists for the cases where the notebook has one page you actually need.</p>
+
+
+    <h2>Update, August 2026: selective removal beyond photos</h2>
+
+    <p>The tick boxes work the same way on the formats added since: keep a video's recording date and drop its coordinates, keep a PDF's title and drop its author, keep an audio file's album and drop the recorder's name.</p>
+
+    <p>One difference worth knowing. On a photo, unticking a field means those exact bytes are left alone. On a video, a PDF or a raw file, everything is blanked in place rather than cut, because those formats store byte offsets that would break if anything moved. The result is the same to you, and the file stays exactly the size it was.</p>
+
+    <p>The rows that have no tick box are the ones that cannot be removed without breaking the file: a video's duration, frame size and codec, a PDF's page count, a raw file's image dimensions. They are shown because you should know they are readable, not because they are a leak.</p>
 
     <div class="post__cta">
       <a class="pill pill--strip pill--big" href="../index.html#app">TRY SELECTIVE STRIPPING</a>

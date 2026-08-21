@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>What is EXIF, in plain words | MetaStrip Blog</title>
   <meta name="description" content="EXIF is the hidden notebook inside every photo. A five minute explainer with no jargon, and how to read your own." />
+  <link rel="canonical" href="https://metastrip.vercel.app/blog/what-is-exif.html" />
   <meta property="og:type" content="article" />
   <meta property="og:title" content="What is EXIF, in plain words | MetaStrip Blog" />
   <meta property="og:description" content="EXIF is the hidden notebook inside every photo. A five minute explainer with no jargon, and how to read your own." />
@@ -26,6 +27,7 @@
     "url": "https://metastrip.vercel.app/blog/what-is-exif.html",
     "image": "https://metastrip.vercel.app/assets/og.jpg",
     "datePublished": "2026-07-03",
+    "dateModified": "2026-08-21",
     "author": { "@type": "Person", "name": "Roshan Ramani", "url": "https://roshan-ramani.vercel.app/" },
     "publisher": { "@type": "Organization", "name": "MetaStrip" }
   }
@@ -78,6 +80,15 @@
     <p>The fastest way to make this real is to look at one of your own photos. Drop it into <a href="../index.html#app">MetaStrip</a> and it lists every field it finds, with a map link if there are coordinates. It runs in your browser, so the photo never leaves your device.</p>
 
     <p>Once you see your home coordinates printed under a photo of your breakfast, the abstract idea of metadata becomes very concrete. And removing it takes one click from there.</p>
+
+
+    <h2>Update, August 2026: EXIF is only the version photos use</h2>
+
+    <p>Everything above is about EXIF, which is the notebook a photo carries. Every other kind of file keeps its own notebook in its own dialect, and they say much the same things.</p>
+
+    <p>A video keeps coordinates in a QuickTime atom as an ISO 6709 string, along with the camera model and, on an iPhone, the identifier that pairs it to a Live Photo. A voice memo is an MP4 underneath, so it can carry the same atoms. A WAV from a field recorder carries a Broadcast Wave chunk naming whoever recorded it. An MP3 carries ID3 frames. A PDF carries a document information dictionary and usually an XMP packet saying the same thing twice. A <a href="raw-files-hide-a-jpeg.html">raw file carries EXIF plus maker notes plus a rendered JPEG of the picture</a>.</p>
+
+    <p>And newer than any of them: <a href="remove-content-credentials.html">Content Credentials</a>, a signed record of which tool made a file and whether a trained model was involved. Not EXIF at all, and invisible to tools that only know about EXIF.</p>
 
     <div class="post__cta">
       <a class="pill pill--strip pill--big" href="../index.html#app">READ A PHOTO NOW</a>

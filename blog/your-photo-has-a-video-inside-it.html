@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your photo has a video inside it | MetaStrip Blog</title>
+  <meta name="description" content="Pixel and Galaxy motion photos bolt an entire MP4 onto the end of a JPEG, with its own GPS and camera model. Most metadata tools copy it straight through." />
+  <link rel="canonical" href="https://metastrip.vercel.app/blog/your-photo-has-a-video-inside-it.html" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="Your photo has a video inside it | MetaStrip Blog" />
+  <meta property="og:description" content="Pixel and Galaxy motion photos bolt an entire MP4 onto the end of a JPEG, with its own GPS and camera model. Most metadata tools copy it straight through." />
+  <meta property="og:image" content="https://metastrip.vercel.app/assets/og.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://metastrip.vercel.app/assets/og.jpg" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23fb4903'/><text x='50' y='68' font-size='52' font-family='Arial Black' font-weight='900' text-anchor='middle' fill='white'>M</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:ital,wght@0,400;0,500;0,700;0,800;1,800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
+  <script defer src="/_vercel/insights/script.js"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Your photo has a video inside it",
+    "description": "Pixel and Galaxy motion photos bolt an entire MP4 onto the end of a JPEG, with its own GPS and camera model. Most metadata tools copy it straight through.",
+    "url": "https://metastrip.vercel.app/blog/your-photo-has-a-video-inside-it.html",
+    "image": "https://metastrip.vercel.app/assets/og.jpg",
+    "datePublished": "2026-08-21",
+    "dateModified": "2026-08-21",
+    "author": {
+        "@type": "Person",
+        "name": "Roshan Ramani",
+        "url": "https://roshan-ramani.vercel.app/"
+    },
+    "publisher": {
+        "@type": "Organization",
+        "name": "MetaStrip"
+    }
+}
+  </script>
+</head>
+<body class="blog-body">
+
+  <header class="nav">
+    <a class="nav__logo" href="../index.html" aria-label="MetaStrip home">M</a>
+    <nav class="nav__links" aria-label="Main">
+      <a class="pill pill--nav" href="../index.html#app">CLEAN A FILE</a>
+      <a class="pill pill--nav" href="../index.html#blog">ALL POSTS</a>
+      <a class="pill pill--nav" href="../changelog.html">CHANGELOG</a>
+    </nav>
+    <a class="pill pill--dark nav__github" href="https://github.com/rawsun007/metastrip" target="_blank" rel="noopener">GITHUB</a>
+    <button class="nav__burger" id="navBurger" aria-label="Open menu" aria-expanded="false" aria-controls="navSheet">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <div class="nav__sheet" id="navSheet">
+    <a class="pill pill--nav" href="../index.html#app">CLEAN A FILE</a>
+    <a class="pill pill--nav" href="../index.html#blog">ALL POSTS</a>
+    <a class="pill pill--nav" href="../changelog.html">CHANGELOG</a>
+    <a class="pill pill--dark" href="https://github.com/rawsun007/metastrip" target="_blank" rel="noopener">GITHUB</a>
+  </div>
+
+  <article class="post">
+    <p class="post__meta">By Roshan Ramani, August 2026</p>
+    <h1 class="post__title">YOUR PHOTO HAS A VIDEO INSIDE IT</h1>
+
+    <p>Take a photo on a Pixel or a recent Galaxy with motion on, and you get one file. It looks like a JPEG, it is named like a JPEG, and every app treats it like a JPEG. Inside, after the picture ends, sits an entire MP4 of the second or two around the shot.</p>
+
+    <p>That clip is a file in its own right. It has its own metadata: its own GPS coordinates, its own camera model, its own creation time, sometimes its own software string. And because it lives past the end of the image, most metadata tools never look at it.</p>
+
+    <h2>Why tools miss it</h2>
+
+    <p>A JPEG has a defined end. There is a two-byte end-of-image marker, and by the letter of the format, that is the end of the file. A cleaner walks the segments at the front, drops the ones holding EXIF and XMP, copies the compressed image data, and stops thinking. Whatever bytes follow the end marker get copied along verbatim, because as far as the tool is concerned they are just the rest of the file.</p>
+
+    <p>So you get the worst possible outcome: a badge that says clean, a photo whose EXIF really is gone, and a hidden video inside it that still knows exactly where you were standing.</p>
+
+    <p>MetaStrip had this bug too. It was found while building video support, and fixing it is the reason this post exists.</p>
+
+    <h2>Finding the real end of a picture</h2>
+
+    <p>You cannot just search the file for the end marker, because compressed image data is full of byte patterns that look like markers. The format saves you here. Inside entropy-coded data, every 0xFF byte is stuffed as FF 00, and the only markers allowed to appear are the restart markers FFD0 through FFD7. An FFD9 cannot occur inside the scan. So the first FFD9 after the image data starts is the true end of the picture, exactly, with no guessing. Everything after it is an addition.</p>
+
+    <h2>What MetaStrip does with it now</h2>
+
+    <p>The tail gets handed to the video parser, so instead of a vague warning you see what is really in there: the clip's duration, its frame size, its camera model, its coordinates. If the photo's own EXIF is clean but the buried clip still has GPS, the location alert fires anyway, because the leak is just as real.</p>
+
+    <p>Then one tick box removes the whole tail. That is a genuine cut rather than a blanking, because nothing in the JPEG references those bytes, so your file gets smaller by however many megabytes the clip was.</p>
+
+    <h2>Two related things people get wrong</h2>
+
+    <p><strong>Apple Live Photos are different.</strong> On an iPhone, the photo and the video are two separate files that a pairing identifier ties together. MetaStrip reads that identifier and reports it, because it is the thing that proves two files came from one capture. AirDrop a Live Photo and both halves travel.</p>
+
+    <p><strong>Samsung appends other things too.</strong> Galaxy phones write a block of extra data closed off with a SEF footer, which is not a video but is still a chunk of vendor metadata living past the end of your picture. It gets found and reported separately, rather than being mislabelled a hidden clip.</p>
+
+    <p>If you have a motion photo on your phone, drop it in and look at the row that says Hidden video. It is a strange feeling the first time.</p>
+
+    <div class="post__cta">
+      <a class="pill pill--strip pill--big" href="../index.html#app">CHECK A MOTION PHOTO</a>
+    </div>
+  </article>
+
+  <footer class="post__footer">
+    <p>MetaStrip runs fully on your device. Your files never upload. No cookies, just anonymous page counts.</p>
+  </footer>
+
+  <script>
+    (function () {
+      const burger = document.getElementById("navBurger");
+      const sheet = document.getElementById("navSheet");
+      function closeSheet() {
+        sheet.classList.remove("is-open");
+        burger.setAttribute("aria-expanded", "false");
+      }
+      burger.addEventListener("click", () => {
+        const open = sheet.classList.toggle("is-open");
+        burger.setAttribute("aria-expanded", String(open));
+      });
+      sheet.querySelectorAll("a").forEach((a) => a.addEventListener("click", closeSheet));
+    })();
+  </script>
+</body>
+</html>

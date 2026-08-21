@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your raw file is hiding a full-size JPEG of your photo | MetaStrip Blog</title>
+  <meta name="description" content="DNG, CR2, NEF and ARW files carry rendered JPEG previews, camera and lens serial numbers, your name, and the original file name off the memory card." />
+  <link rel="canonical" href="https://metastrip.vercel.app/blog/raw-files-hide-a-jpeg.html" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="Your raw file is hiding a full-size JPEG of your photo | MetaStrip Blog" />
+  <meta property="og:description" content="DNG, CR2, NEF and ARW files carry rendered JPEG previews, camera and lens serial numbers, your name, and the original file name off the memory card." />
+  <meta property="og:image" content="https://metastrip.vercel.app/assets/og.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://metastrip.vercel.app/assets/og.jpg" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23fb4903'/><text x='50' y='68' font-size='52' font-family='Arial Black' font-weight='900' text-anchor='middle' fill='white'>M</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:ital,wght@0,400;0,500;0,700;0,800;1,800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
+  <script defer src="/_vercel/insights/script.js"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Your raw file is hiding a full-size JPEG of your photo",
+    "description": "DNG, CR2, NEF and ARW files carry rendered JPEG previews, camera and lens serial numbers, your name, and the original file name off the memory card.",
+    "url": "https://metastrip.vercel.app/blog/raw-files-hide-a-jpeg.html",
+    "image": "https://metastrip.vercel.app/assets/og.jpg",
+    "datePublished": "2026-08-21",
+    "dateModified": "2026-08-21",
+    "author": {
+        "@type": "Person",
+        "name": "Roshan Ramani",
+        "url": "https://roshan-ramani.vercel.app/"
+    },
+    "publisher": {
+        "@type": "Organization",
+        "name": "MetaStrip"
+    }
+}
+  </script>
+</head>
+<body class="blog-body">
+
+  <header class="nav">
+    <a class="nav__logo" href="../index.html" aria-label="MetaStrip home">M</a>
+    <nav class="nav__links" aria-label="Main">
+      <a class="pill pill--nav" href="../index.html#app">CLEAN A FILE</a>
+      <a class="pill pill--nav" href="../index.html#blog">ALL POSTS</a>
+      <a class="pill pill--nav" href="../changelog.html">CHANGELOG</a>
+    </nav>
+    <a class="pill pill--dark nav__github" href="https://github.com/rawsun007/metastrip" target="_blank" rel="noopener">GITHUB</a>
+    <button class="nav__burger" id="navBurger" aria-label="Open menu" aria-expanded="false" aria-controls="navSheet">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <div class="nav__sheet" id="navSheet">
+    <a class="pill pill--nav" href="../index.html#app">CLEAN A FILE</a>
+    <a class="pill pill--nav" href="../index.html#blog">ALL POSTS</a>
+    <a class="pill pill--nav" href="../changelog.html">CHANGELOG</a>
+    <a class="pill pill--dark" href="https://github.com/rawsun007/metastrip" target="_blank" rel="noopener">GITHUB</a>
+  </div>
+
+  <article class="post">
+    <p class="post__meta">By Roshan Ramani, August 2026</p>
+    <h1 class="post__title">YOUR RAW FILE IS HIDING A JPEG</h1>
+
+    <p>Photographers tend to assume a raw file is closer to the sensor and therefore closer to anonymous. It is the opposite. A raw file is the most talkative image file you own.</p>
+
+    <h2>A raw file is a TIFF wearing a costume</h2>
+
+    <p>DNG, CR2, NEF, ARW, ORF, RAF, PEF: different extensions, same skeleton. They open with a TIFF header and store their metadata in ordinary image file directories, the same structure a JPEG hides inside its EXIF block. Which is why a tool that can read EXIF can read a raw file without learning anything new.</p>
+
+    <p>What comes out is longer than a JPEG's list:</p>
+
+    <ul>
+      <li><strong>The camera body's serial number</strong>, and often the lens serial too. This is the single most linkable thing in photography: it ties every photo you have ever published to one physical object you own.</li>
+      <li><strong>Your name</strong>, if you ever set the copyright or artist field in the camera menu, which most people do once and forget.</li>
+      <li><strong>The original file name off the memory card</strong>, such as DSC_4821.NEF. Renaming your export does not remove it.</li>
+      <li><strong>Maker notes</strong>: kilobytes of undocumented, vendor-specific camera internals. Shutter counts, focus data, sometimes serials again.</li>
+      <li><strong>GPS</strong>, if the body or the grip had it.</li>
+    </ul>
+
+    <h2>The embedded JPEG</h2>
+
+    <p>Here is the part that surprises people. Every raw file carries at least one fully rendered JPEG of the picture, so that your operating system, your camera's screen and your catalogue software have something to display without demosaicing anything.</p>
+
+    <p>That preview is a real image of your photo, and it survives everything you do to the raw data. Crop the raw in your editor and export a JPEG for the client: the raw file you archived still contains the uncropped view. Send that raw to someone and you have sent them the version you meant to crop out.</p>
+
+    <p>MetaStrip reports the previews with their real size and can blank them. It also uses one of them to show you the photo in the browser, since no browser can decode a raw file itself. It is the same trick your file manager uses.</p>
+
+    <h2>Cleaning a raw without breaking your converter</h2>
+
+    <p>Raw files cannot be cleaned the way an EXIF blob can. In a JPEG, MetaStrip can blank a whole directory entry, because that entry describes nothing the picture needs. In a raw file the same directory holds the structural tags: image width, image height, where the strips of sensor data actually live. Blank those and Lightroom or Capture One will not open the file.</p>
+
+    <p>So raw removal blanks values in place and leaves every entry header standing, which keeps the directories sorted and the structural tags pointing where they always did. The test suite checks exactly that: image width and image height survive a strip byte for byte, and the directory keeps its entry count.</p>
+
+    <p>Nothing is re-encoded, no sensor data is touched, and the file is the same size it was. Your converter opens it exactly as before. It just no longer knows your name.</p>
+
+    <div class="post__cta">
+      <a class="pill pill--strip pill--big" href="../index.html#app">CHECK A RAW FILE</a>
+    </div>
+  </article>
+
+  <footer class="post__footer">
+    <p>MetaStrip runs fully on your device. Your files never upload. No cookies, just anonymous page counts.</p>
+  </footer>
+
+  <script>
+    (function () {
+      const burger = document.getElementById("navBurger");
+      const sheet = document.getElementById("navSheet");
+      function closeSheet() {
+        sheet.classList.remove("is-open");
+        burger.setAttribute("aria-expanded", "false");
+      }
+      burger.addEventListener("click", () => {
+        const open = sheet.classList.toggle("is-open");
+        burger.setAttribute("aria-expanded", String(open));
+      });
+      sheet.querySelectorAll("a").forEach((a) => a.addEventListener("click", closeSheet));
+    })();
+  </script>
+</body>
+</html>

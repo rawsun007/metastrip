@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Instagram strips your metadata. Your email does not. | MetaStrip Blog</title>
   <meta name="description" content="Some apps clean your photos before sharing them, most do not. A practical map of where your photo metadata survives and where it dies." />
+  <link rel="canonical" href="https://metastrip.vercel.app/blog/who-strips-your-metadata.html" />
   <meta property="og:type" content="article" />
   <meta property="og:title" content="Instagram strips your metadata. Your email does not. | MetaStrip Blog" />
   <meta property="og:description" content="Some apps clean your photos before sharing them, most do not. A practical map of where your photo metadata survives and where it dies." />
@@ -26,6 +27,7 @@
     "url": "https://metastrip.vercel.app/blog/who-strips-your-metadata.html",
     "image": "https://metastrip.vercel.app/assets/og.jpg",
     "datePublished": "2026-07-03",
+    "dateModified": "2026-08-21",
     "author": { "@type": "Person", "name": "Roshan Ramani", "url": "https://roshan-ramani.vercel.app/" },
     "publisher": { "@type": "Organization", "name": "MetaStrip" }
   }
@@ -76,6 +78,17 @@
     <p>Clean the photo before it leaves your hands, then it does not matter what the platform does. <a href="../index.html#app">MetaStrip</a> does this in your browser in a couple of seconds. Drop the photo in, see what it carries, strip it, download the clean copy, share that one.</p>
 
     <p>Nothing uploads, nothing is stored, and for JPEG and PNG the cleaned image is pixel for pixel identical to the original. There is no quality trade at all, so there is no reason not to do it.</p>
+
+
+    <h2>Update, August 2026: what the map misses</h2>
+
+    <p>Two things have changed since this was written, and both make "the platform will handle it" a weaker bet.</p>
+
+    <p>First, platform stripping is about the file you upload, not the file you keep. A <a href="your-photo-has-a-video-inside-it.html">motion photo carries an entire MP4 after the end of the image</a>, with its own GPS. Plenty of tools, and some platforms, copy that tail through untouched while reporting the photo as clean.</p>
+
+    <p>Second, provenance metadata is being added on purpose now, not left behind by accident. <a href="remove-content-credentials.html">Content Credentials</a> are written by Adobe, by OpenAI, by Pixel cameras, and are increasingly requested rather than stripped by the platforms themselves. A cleaner that only knows EXIF and XMP will leave every one of them in place.</p>
+
+    <p>The safe assumption has not changed: clean the file yourself before it leaves your device, and check what is actually in it rather than trusting a badge.</p>
 
     <div class="post__cta">
       <a class="pill pill--strip pill--big" href="../index.html#app">CLEAN A PHOTO NOW</a>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your PDF knows who made it, twice | MetaStrip Blog</title>
+  <meta name="description" content="A PDF stores your name in the information dictionary and again in an XMP packet, plus a file identifier that follows the document through every save. Here is how to read it and clear it." />
+  <link rel="canonical" href="https://metastrip.vercel.app/blog/pdf-metadata.html" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="Your PDF knows who made it, twice | MetaStrip Blog" />
+  <meta property="og:description" content="A PDF stores your name in the information dictionary and again in an XMP packet, plus a file identifier that follows the document through every save. Here is how to read it and clear it." />
+  <meta property="og:image" content="https://metastrip.vercel.app/assets/og.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://metastrip.vercel.app/assets/og.jpg" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23fb4903'/><text x='50' y='68' font-size='52' font-family='Arial Black' font-weight='900' text-anchor='middle' fill='white'>M</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:ital,wght@0,400;0,500;0,700;0,800;1,800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
+  <script defer src="/_vercel/insights/script.js"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Your PDF knows who made it, twice",
+    "description": "A PDF stores your name in the information dictionary and again in an XMP packet, plus a file identifier that follows the document through every save. Here is how to read it and clear it.",
+    "url": "https://metastrip.vercel.app/blog/pdf-metadata.html",
+    "image": "https://metastrip.vercel.app/assets/og.jpg",
+    "datePublished": "2026-08-21",
+    "dateModified": "2026-08-21",
+    "author": {
+        "@type": "Person",
+        "name": "Roshan Ramani",
+        "url": "https://roshan-ramani.vercel.app/"
+    },
+    "publisher": {
+        "@type": "Organization",
+        "name": "MetaStrip"
+    }
+}
+  </script>
+</head>
+<body class="blog-body">
+
+  <header class="nav">
+    <a class="nav__logo" href="../index.html" aria-label="MetaStrip home">M</a>
+    <nav class="nav__links" aria-label="Main">
+      <a class="pill pill--nav" href="../index.html#app">CLEAN A FILE</a>
+      <a class="pill pill--nav" href="../index.html#blog">ALL POSTS</a>
+      <a class="pill pill--nav" href="../changelog.html">CHANGELOG</a>
+    </nav>
+    <a class="pill pill--dark nav__github" href="https://github.com/rawsun007/metastrip" target="_blank" rel="noopener">GITHUB</a>
+    <button class="nav__burger" id="navBurger" aria-label="Open menu" aria-expanded="false" aria-controls="navSheet">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <div class="nav__sheet" id="navSheet">
+    <a class="pill pill--nav" href="../index.html#app">CLEAN A FILE</a>
+    <a class="pill pill--nav" href="../index.html#blog">ALL POSTS</a>
+    <a class="pill pill--nav" href="../changelog.html">CHANGELOG</a>
+    <a class="pill pill--dark" href="https://github.com/rawsun007/metastrip" target="_blank" rel="noopener">GITHUB</a>
+  </div>
+
+  <article class="post">
+    <p class="post__meta">By Roshan Ramani, August 2026</p>
+    <h1 class="post__title">YOUR PDF KNOWS WHO MADE IT, TWICE</h1>
+
+    <p>Send a CV, a quote, a rental application, a court filing. It is a PDF, so it feels finished and inert, like paper. It is not. A PDF is a database, and it usually knows more about its own history than you would put in the covering email.</p>
+
+    <h2>Two places, the same name</h2>
+
+    <p>Every PDF has a document information dictionary. Title, Author, Subject, Keywords, Creator, Producer, plus creation and modification timestamps. Author is often your operating system account name, which is often your full name. Creator names the application you actually wrote it in, which quietly tells the recipient whether that "professionally prepared report" came out of Word, Canva or a phone scanner.</p>
+
+    <p>Then there is usually an XMP packet: the same information again in XML, and often more of it. Editing history. The software chain the file passed through. On some office exports, a stored account name that no longer matches anything you would recognise.</p>
+
+    <p>Both get read and both get cleared, because clearing one and leaving the other is the kind of half-fix that makes people trust a tool they should not.</p>
+
+    <h2>The identifier nobody mentions</h2>
+
+    <p>PDFs also carry a file identifier in the trailer: a pair of hashes. The first half is meant to stay stable across saves, so a viewer can tell that two files are versions of one document.</p>
+
+    <p>Which means it also links two files you did not want linked. Send a quote to one client and a near-identical quote to another, and the shared identifier says they came from the same original. MetaStrip reports it and can zero it, and if you drop several documents in at once it will tell you which of them share one.</p>
+
+    <h2>Cleaning a PDF without breaking it</h2>
+
+    <p>This is the part that makes most tools re-render the whole document, which is how you get a fuzzy scan out of a crisp vector file.</p>
+
+    <p>A PDF has a cross-reference table listing the exact byte offset of every object in the file. Delete one byte anywhere earlier and every offset after it is wrong. Some readers repair that silently, others refuse the file.</p>
+
+    <p>So nothing moves. A literal string value is overwritten with spaces inside its own parentheses, a hex string becomes zeros so it stays valid hex, and an XMP packet is blanked where it sits. Same length, same offsets, same table, same pages. Nothing is re-rendered and no content stream is touched.</p>
+
+    <p>Checked against a real file: a PDF printed by Chrome came out the same length, with not one byte inside a content stream changed, every cross-reference offset still landing on an object, and macOS's own PDF engine rendering it to pixels identical to the original.</p>
+
+    <h2>The one case that gets declined</h2>
+
+    <p>If a PDF is encrypted, its strings are ciphertext. Blanking them would corrupt the file without being able to tell you what was in there, so MetaStrip says so and stops. Remove the password first, then clean it. A tool that quietly mangles an encrypted file to look busy is worse than one that admits the limit.</p>
+
+    <div class="post__cta">
+      <a class="pill pill--strip pill--big" href="../index.html#app">CHECK A PDF</a>
+    </div>
+  </article>
+
+  <footer class="post__footer">
+    <p>MetaStrip runs fully on your device. Your files never upload. No cookies, just anonymous page counts.</p>
+  </footer>
+
+  <script>
+    (function () {
+      const burger = document.getElementById("navBurger");
+      const sheet = document.getElementById("navSheet");
+      function closeSheet() {
+        sheet.classList.remove("is-open");
+        burger.setAttribute("aria-expanded", "false");
+      }
+      burger.addEventListener("click", () => {
+        const open = sheet.classList.toggle("is-open");
+        burger.setAttribute("aria-expanded", String(open));
+      });
+      sheet.querySelectorAll("a").forEach((a) => a.addEventListener("click", closeSheet));
+    })();
+  </script>
+</body>
+</html>
