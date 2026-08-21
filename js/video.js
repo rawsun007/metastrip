@@ -88,7 +88,7 @@ function fourcc(bytes, offset) {
 
 /** Parse an MP4/MOV File. Async because it reads only the boxes it needs. */
 async function parseMp4(file) {
-  const result = { fields: [], gps: null, format: "mp4", kind: "video", edits: [], mdatEnd: 0 };
+  const result = { fields: [], gps: null, format: "mp4", kind: "video", containerEdits: [], mdatEnd: 0 };
   const boxes = [];
   let offset = 0;
   let guard = 0;
@@ -115,9 +115,14 @@ function walkMoov(bytes, base, result) {
   for (const box of childBoxes(bytes, base, 8)) {
     if (box.type === "mvhd") readMovieHeader(bytes, box, result);
     else if (box.type === "trak") walkTrak(bytes, box, result);
-    else if (box.type === "udta") walkUdta(bytes, box, result);
-    else if (box.type === "meta") walkMeta(bytes, box, result);
-    else if (box.type === "uuid") pushXmpField(box, result);
+    else if (box.type === "udta" || box.type === "meta" || box.type === "uuid") {
+      // free the whole container on a full strip, so anything in there this
+      // parser does not recognise is cleared too
+      result.containerEdits.push({ kind: "free", start: box.absStart, end: box.absEnd });
+      if (box.type === "udta") walkUdta(bytes, box, result);
+      else if (box.type === "meta") walkMeta(bytes, box, result);
+      else pushXmpField(box, result);
+    }
   }
 }
 
@@ -125,8 +130,11 @@ function walkTrak(bytes, trak, result) {
   for (const box of childBoxes(bytes, trak.absStart - trak.start, trak.dataStart, trak.end)) {
     if (box.type === "tkhd") readTrackHeader(bytes, box, result);
     else if (box.type === "mdia") walkMdia(bytes, box, result);
-    else if (box.type === "udta") walkUdta(bytes, box, result);
-    else if (box.type === "meta") walkMeta(bytes, box, result);
+    else if (box.type === "udta" || box.type === "meta") {
+      result.containerEdits.push({ kind: "free", start: box.absStart, end: box.absEnd });
+      if (box.type === "udta") walkUdta(bytes, box, result);
+      else walkMeta(bytes, box, result);
+    }
   }
 }
 
@@ -447,6 +455,101 @@ function pushVideoField(result, field) {
     return;
   }
   result.fields.push(field);
+}
+
+/* ---------- stripping ----------
+   A video cannot be cleaned the way a JPEG is. Chunk offset tables (stco,
+   co64) hold absolute file positions into mdat, so deleting a single byte
+   anywhere ahead of them silently desynchronises playback.
+
+   So nothing moves. Each doomed box keeps its size and gets its type
+   rewritten to "free" with a zeroed payload — a box every demuxer already
+   knows to skip — and raw timestamp fields are zeroed where they sit. The
+   file stays byte-for-byte aligned, pixels are never re-encoded, and the
+   output is assembled from Blob slices so a 4 GB clip never enters memory. */
+
+function patchBytes(edit, length) {
+  const patch = new Uint8Array(length);
+  if (edit.kind === "free" && length >= 8) {
+    new DataView(patch.buffer).setUint32(0, length);
+    patch[4] = 0x66; // f
+    patch[5] = 0x72; // r
+    patch[6] = 0x65; // e
+    patch[7] = 0x65; // e
+  } else if (edit.kind === "void") {
+    writeVoidElement(patch);
+  }
+  return patch;
+}
+
+/* EBML's equivalent of a free box. The element is ID 0xEC plus a length
+   prefix, so the prefix width is chosen to make the total land exactly on
+   the hole being filled. */
+function writeVoidElement(patch) {
+  const total = patch.length;
+  if (total < 2) return; // nothing valid fits, leave it zeroed
+  patch[0] = 0xec;
+  if (total <= 128) {
+    patch[1] = 0x80 | (total - 2); // one-byte length
+    return;
+  }
+  if (total < 9) return;
+  patch[1] = 0x01; // eight-byte length marker
+  const payload = total - 9;
+  for (let i = 0; i < 7; i++) patch[8 - i] = (payload / 2 ** (8 * i)) & 0xff;
+}
+
+/* Overlapping edits are the norm: a whole udta box may be freed while one
+   of its children was already marked. Sort, then clip each edit to what the
+   previous one did not already cover, so byte ranges are written once. */
+function mergeEdits(edits) {
+  const clean = edits
+    .filter((e) => e && e.end > e.start)
+    .sort((a, b) => a.start - b.start || b.end - a.end);
+  const out = [];
+  let reach = -1;
+  for (const edit of clean) {
+    if (edit.start >= reach) {
+      out.push({ ...edit });
+      reach = edit.end;
+    } else if (edit.end > reach) {
+      // partially covered: keep only the tail, and only if a valid box
+      // header still fits, otherwise fall back to plain zeroing
+      const tail = { ...edit, start: reach };
+      if (tail.kind === "free" && tail.end - tail.start < 8) tail.kind = "zero";
+      out.push(tail);
+      reach = edit.end;
+    }
+  }
+  return out;
+}
+
+/** Rewrite a video File with the given edits applied. Returns a Blob. */
+async function stripVideoFile(file, edits) {
+  const merged = mergeEdits(edits);
+  const parts = [];
+  let pos = 0;
+  let cleared = 0;
+  for (const edit of merged) {
+    const start = Math.max(pos, Math.min(edit.start, file.size));
+    const end = Math.min(edit.end, file.size);
+    if (end <= start) continue;
+    if (start > pos) parts.push(file.slice(pos, start));
+    parts.push(patchBytes(edit, end - start));
+    cleared += end - start;
+    pos = end;
+  }
+  if (pos < file.size) parts.push(file.slice(pos));
+  return { blob: new Blob(parts, { type: file.type || "video/mp4" }), lossless: true, cleared };
+}
+
+/** Every edit that a full strip should apply: recognised fields, GPS, and
+    the whole metadata containers, so unrecognised tags inside them go too. */
+function allVideoEdits(meta) {
+  const edits = [...(meta.containerEdits || [])];
+  for (const f of meta.fields) if (f.edits) edits.push(...f.edits);
+  if (meta.gps && meta.gps.edits) edits.push(...meta.gps.edits);
+  return edits;
 }
 
 /* ---------- helpers ---------- */
