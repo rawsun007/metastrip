@@ -1,0 +1,21 @@
+name: tests
+
+# The suite is plain node with no dependencies, so this needs no install step
+# and no lockfile. If it goes red, something in js/ changed behaviour.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run the test suite
+        run: node tests/run.mjs
+      - name: Check every script parses
+        run: for f in js/*.js sw.js; do node --check "$f"; done
