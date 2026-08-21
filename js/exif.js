@@ -7,6 +7,17 @@
    tag can never silently inherit the wrong icon. */
 const IFD0_TAGS = {
   0x010f: { label: "Camera make", risk: "device" },
+  0x00fe: null, // NewSubfileType: structural, never a leak
+  0x02bc: { label: "XMP packet", risk: "device" },
+  0xc614: { label: "Camera model (DNG)", risk: "device" },
+  0xc62f: { label: "Camera serial no.", risk: "identity" },
+  0xc68b: { label: "Original file name", risk: "identity" },
+  0xc6fe: { label: "Original raw name", risk: "identity" },
+  0x9c9b: { label: "Windows title", risk: "identity" },
+  0x9c9c: { label: "Windows comment", risk: "identity" },
+  0x9c9d: { label: "Windows author", risk: "identity" },
+  0x9c9e: { label: "Windows keywords", risk: "identity" },
+  0x9c9f: { label: "Windows subject", risk: "identity" },
   0x0110: { label: "Camera model", risk: "device" },
   0x0131: { label: "Software", risk: "device" },
   0x0132: { label: "Modified", risk: "time" },
@@ -27,10 +38,18 @@ const EXIF_TAGS = {
   0xa003: { label: "Pixel height", risk: "dimensions" },
   0xa430: { label: "Owner name", risk: "identity" },
   0xa431: { label: "Camera serial no.", risk: "identity" },
+  0xa435: { label: "Lens serial no.", risk: "identity" },
+  0x9286: { label: "User comment", risk: "identity" },
+  0xc4a5: { label: "Print image matching", risk: "device" },
 };
 
+const MAKER_NOTE_TAG = 0x927c;
+const USER_COMMENT_TAG = 0x9286;
 const EXIF_IFD_POINTER = 0x8769;
 const GPS_IFD_POINTER = 0x8825;
+const SUB_IFDS_TAG = 0x014a;
+const PREVIEW_OFFSET_TAG = 0x0201; // JPEGInterchangeFormat
+const PREVIEW_LENGTH_TAG = 0x0202;
 
 const TYPE_SIZES = { 1: 1, 2: 1, 3: 2, 4: 4, 5: 8, 6: 1, 7: 1, 8: 2, 9: 4, 10: 8 };
 
@@ -40,7 +59,65 @@ function parseMetadata(buffer) {
   if (bytes[0] === 0xff && bytes[1] === 0xd8) return parseJpeg(bytes);
   if (isPng(bytes)) return parsePng(bytes);
   if (isHeic(bytes)) return parseHeic(bytes);
+  if (tiffStartOf(bytes) >= 0) return parseTiffFile(bytes);
   return { fields: [], gps: null, format: "other" };
+}
+
+/* ---------- RAW ----------
+   A raw file from a camera is a TIFF: DNG, CR2, NEF, ARW, ORF and PEF all
+   open with a TIFF header and keep their metadata in ordinary IFDs, which is
+   the same structure JPEG hides inside APP1. So the parser already written
+   reads them; what changes is how they get cleaned.
+
+   A raw file cannot have its IFD entries blanked wholesale the way an APP1
+   blob can: entries must stay sorted by tag, and the structural ones point at
+   the actual image strips. So raw removal blanks values in place and leaves
+   every entry header standing, which keeps the file loadable by a converter
+   while the personal parts read empty. */
+
+const TIFF_MAGIC_LE = [0x49, 0x49, 0x2a, 0x00];
+const TIFF_MAGIC_BE = [0x4d, 0x4d, 0x00, 0x2a];
+const ORF_MAGICS = [[0x49, 0x49, 0x52, 0x4f], [0x4d, 0x4d, 0x4f, 0x52], [0x49, 0x49, 0x52, 0x53]];
+const FUJI_MAGIC = "FUJIFILMCCD-RAW";
+
+/** Byte offset of the TIFF header, or -1 when this is not a TIFF-based file. */
+function tiffStartOf(bytes) {
+  if (bytes.length < 16) return -1;
+  const at = (magic, offset = 0) => magic.every((b, i) => bytes[offset + i] === b);
+  if (at(TIFF_MAGIC_LE) || at(TIFF_MAGIC_BE)) return 0;
+  // Olympus writes a TIFF whose version field is its own marker
+  if (ORF_MAGICS.some((m) => at(m))) return 0;
+  // Fujifilm wraps a TIFF inside its own container, at an offset it records
+  if (asciiSlice(bytes, 0, 15) === FUJI_MAGIC) {
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.length);
+    const offset = view.getUint32(84);
+    if (offset > 0 && offset + 8 < bytes.length) return offset;
+  }
+  return -1;
+}
+
+function parseTiffFile(bytes) {
+  const result = { fields: [], gps: null, format: "tiff", kind: "image", previews: [] };
+  const tiffStart = tiffStartOf(bytes);
+  if (tiffStart < 0) return result;
+  parseTiff(bytes, tiffStart, result, null, { blankValuesOnly: true, followChain: true });
+  describePreviews(result);
+  return result;
+}
+
+/* Every raw file carries at least one fully rendered JPEG of the picture so
+   that a viewer has something to show. People do not know it is in there, and
+   it survives anything that only edits the raw data. */
+function describePreviews(result) {
+  const total = result.previews.reduce((n, p) => n + (p.end - p.start), 0);
+  if (!total) return;
+  result.fields.push({
+    label: "Embedded preview",
+    value: `${result.previews.length} rendered JPEG${result.previews.length === 1 ? "" : "s"} of this photo, ${formatTrailerSize(total)}`,
+    risk: "device",
+    mode: "zero",
+    ranges: result.previews.map((p) => [p.start, p.end]),
+  });
 }
 
 const HEIC_BRANDS = new Set(["heic", "heix", "hevc", "hevx", "heif", "mif1", "msf1"]);
@@ -238,18 +315,30 @@ function asciiSlice(bytes, start, end) {
 
 /* ---------- TIFF / IFD (shared by JPEG EXIF and PNG eXIf) ---------- */
 
-function parseTiff(bytes, tiffStart, result, crcChunk) {
+function parseTiff(bytes, tiffStart, result, crcChunk, options = {}) {
   if (tiffStart + 8 > bytes.length) return;
   const view = new DataView(bytes.buffer, bytes.byteOffset);
   const le = bytes[tiffStart] === 0x49; // "II" little-endian, "MM" big-endian
-  if (view.getUint16(tiffStart + 2, le) !== 42) return;
+  const version = view.getUint16(tiffStart + 2, le);
+  // 42 is TIFF; Olympus and a few others stamp their own version here
+  if (version !== 42 && !options.blankValuesOnly) return;
   const ifd0 = tiffStart + view.getUint32(tiffStart + 4, le);
 
   const firstField = result.fields.length;
   const pointers = {};
-  readIfd(view, bytes, tiffStart, ifd0, le, IFD0_TAGS, result.fields, pointers);
+  let next = readIfd(view, bytes, tiffStart, ifd0, le, IFD0_TAGS, result.fields, pointers, options, result);
+  // a raw file chains further IFDs, and that is where the previews live
+  let guard = 0;
+  while (options.followChain && next && guard++ < 8) {
+    const at = tiffStart + next;
+    if (at + 2 > bytes.length) break;
+    next = readIfd(view, bytes, tiffStart, at, le, IFD0_TAGS, result.fields, pointers, options, result);
+  }
+  for (const sub of pointers.subIfds || []) {
+    readIfd(view, bytes, tiffStart, tiffStart + sub, le, IFD0_TAGS, result.fields, pointers, options, result);
+  }
   if (pointers[EXIF_IFD_POINTER]) {
-    readIfd(view, bytes, tiffStart, tiffStart + pointers[EXIF_IFD_POINTER].value, le, EXIF_TAGS, result.fields, pointers);
+    readIfd(view, bytes, tiffStart, tiffStart + pointers[EXIF_IFD_POINTER].value, le, EXIF_TAGS, result.fields, pointers, options, result);
   }
   if (pointers[GPS_IFD_POINTER]) {
     result.gps = readGps(view, bytes, tiffStart, tiffStart + pointers[GPS_IFD_POINTER].value, le);
@@ -265,34 +354,91 @@ function parseTiff(bytes, tiffStart, result, crcChunk) {
   }
 }
 
-function readIfd(view, bytes, tiffStart, ifdOffset, le, tagMap, fields, pointers) {
-  if (ifdOffset + 2 > bytes.length) return;
+function readIfd(view, bytes, tiffStart, ifdOffset, le, tagMap, fields, pointers, options = {}, result = null) {
+  if (ifdOffset + 2 > bytes.length) return 0;
   const count = view.getUint16(ifdOffset, le);
+  let preview = {};
   for (let i = 0; i < count; i++) {
     const entry = ifdOffset + 2 + i * 12;
-    if (entry + 12 > bytes.length) return;
+    if (entry + 12 > bytes.length) return 0;
     const tag = view.getUint16(entry, le);
     const type = view.getUint16(entry + 2, le);
     const num = view.getUint32(entry + 4, le);
+    const size = (TYPE_SIZES[type] || 1) * num;
 
     if (tag === EXIF_IFD_POINTER || tag === GPS_IFD_POINTER) {
       pointers[tag] = { value: view.getUint32(entry + 8, le), offset: entry };
       continue;
     }
+    if (tag === SUB_IFDS_TAG) {
+      pointers.subIfds = pointers.subIfds || [];
+      const listAt = size > 4 ? tiffStart + view.getUint32(entry + 8, le) : entry + 8;
+      for (let k = 0; k < Math.min(num, 8); k++) {
+        if (listAt + k * 4 + 4 > bytes.length) break;
+        pointers.subIfds.push(view.getUint32(listAt + k * 4, le));
+      }
+      continue;
+    }
+    // the rendered JPEG a raw file keeps for viewers to display
+    if (tag === PREVIEW_OFFSET_TAG) preview.start = tiffStart + view.getUint32(entry + 8, le);
+    if (tag === PREVIEW_LENGTH_TAG) preview.length = view.getUint32(entry + 8, le);
+
+    const valueRanges = () => {
+      if (options.blankValuesOnly) {
+        // keep the entry header so the IFD stays sorted and valid
+        return size > 4
+          ? valueBlockRange(view, bytes, tiffStart, entry, size, le)
+          : [[entry + 8, entry + 12]];
+      }
+      const ranges = [[entry, entry + 12]];
+      if (size > 4) ranges.push(...valueBlockRange(view, bytes, tiffStart, entry, size, le));
+      return ranges;
+    };
+
+    if (tag === MAKER_NOTE_TAG && size > 4) {
+      const block = valueRanges();
+      // after a strip the entry header stays but the block is zeroed, and an
+      // empty block is not something to report as present
+      if (!block.length || allZero(bytes, block)) continue;
+      fields.push({
+        label: "Maker notes",
+        value: `${formatTrailerSize(size)} of camera internals, often including a serial number`,
+        risk: "identity",
+        mode: "zero",
+        ranges: block,
+      });
+      continue;
+    }
+
     const tagInfo = tagMap[tag];
     if (!tagInfo) continue;
 
-    const value = readTagValue(view, bytes, tiffStart, entry, type, num, le);
+    const value = tag === USER_COMMENT_TAG
+      ? asciiSlice(bytes, tiffStart + view.getUint32(entry + 8, le) + 8, tiffStart + view.getUint32(entry + 8, le) + size)
+      : readTagValue(view, bytes, tiffStart, entry, type, num, le);
     if (value === null || value === "") continue;
 
-    const size = (TYPE_SIZES[type] || 1) * num;
-    const ranges = [[entry, entry + 12]];
-    if (size > 4) {
-      const off = tiffStart + view.getUint32(entry + 8, le);
-      if (off + size <= bytes.length) ranges.push([off, off + size]);
-    }
-    fields.push({ label: tagInfo.label, value: String(value), risk: tagInfo.risk, mode: "zero", ranges });
+    fields.push({ label: tagInfo.label, value: String(value), risk: tagInfo.risk, mode: "zero", ranges: valueRanges() });
   }
+
+  if (result && preview.start && preview.length && preview.start + preview.length <= bytes.length) {
+    result.previews = result.previews || [];
+    result.previews.push({ start: preview.start, end: preview.start + preview.length });
+  }
+  const nextAt = ifdOffset + 2 + count * 12;
+  return nextAt + 4 <= bytes.length ? view.getUint32(nextAt, le) : 0;
+}
+
+function allZero(bytes, ranges) {
+  for (const [start, end] of ranges) {
+    for (let i = start; i < end; i++) if (bytes[i] !== 0) return false;
+  }
+  return true;
+}
+
+function valueBlockRange(view, bytes, tiffStart, entry, size, le) {
+  const off = tiffStart + view.getUint32(entry + 8, le);
+  return off + size <= bytes.length ? [[off, off + size]] : [];
 }
 
 function readTagValue(view, bytes, tiffStart, entry, type, num, le) {

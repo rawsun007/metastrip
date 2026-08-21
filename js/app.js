@@ -461,7 +461,16 @@ async function renderCard(file) {
     );
   }
 
-  if (meta.format === "heic") {
+  if (meta.format === "tiff" && meta.previews && meta.previews.length) {
+    // no browser decodes a raw file, but the raw file is carrying a rendered
+    // JPEG of the same photo, so that is what gets shown
+    const biggest = meta.previews.reduce((a, b) => (b.end - b.start > a.end - a.start ? b : a));
+    card._msObjectUrl = URL.createObjectURL(file.slice(biggest.start, biggest.end, "image/jpeg"));
+    preview.src = card._msObjectUrl;
+  } else if (meta.format === "tiff") {
+    preview.alt = "This raw file carries no preview to show";
+    preview.classList.add("result-card__preview--blank");
+  } else if (meta.format === "heic") {
     // browsers other than Safari cannot show HEIC, so preview via conversion
     heicToJpegBlob(file, 0.5)
       .then((blob) => { preview.src = URL.createObjectURL(blob); })
@@ -780,6 +789,9 @@ function buildActions(file, meta) {
   // clipboards take images, not clips
   if (meta.kind === "video") copyBtn.style.display = "none";
   copyBtn.title = "Copies the stripped image to your clipboard";
+  // a browser cannot rasterise a raw file, so there is nothing to put on a
+  // clipboard that came from these pixels
+  if (meta.format === "tiff") copyBtn.style.display = "none";
   copyBtn.addEventListener("click", async () => {
     copyBtn.disabled = true;
     copyBtn.textContent = "COPYING…";
@@ -845,11 +857,13 @@ function buildActions(file, meta) {
   note.textContent =
     meta.kind === "video"
       ? "Lossless. Metadata boxes are blanked in place, so every frame and every playback offset stays exactly as it was."
-      : meta.format === "heic"
-        ? "Converts to a clean JPEG, or untick fields to redact the HEIC in place."
-        : meta.format === "other"
-          ? "This format will get a fresh JPEG re-encode."
-          : "Lossless. Zero quality loss.";
+      : meta.format === "tiff"
+        ? "Lossless. Values are blanked in place, so a converter still opens the raw exactly as before."
+        : meta.format === "heic"
+          ? "Converts to a clean JPEG, or untick fields to redact the HEIC in place."
+          : meta.format === "other"
+            ? "This format will get a fresh JPEG re-encode."
+            : "Lossless. Zero quality loss.";
 
   actions.append(btn, copyBtn, shareBtn, note);
   return actions;

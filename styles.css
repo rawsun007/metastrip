@@ -338,6 +338,11 @@ a { color: inherit; text-decoration: none; }
   background: #000;
   max-height: 46vh;
 }
+/* a raw file with no embedded preview still needs a box, not a broken image */
+.result-card__preview--blank {
+  border: 2px dashed #333333;
+  min-height: 160px;
+}
 .result-card__name { font-weight: 800; font-size: 18px; word-break: break-all; }
 .result-card__sub { color: var(--color-muted); font-size: 13px; margin-top: 4px; }
 

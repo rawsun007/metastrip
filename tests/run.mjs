@@ -59,6 +59,24 @@ function sameBytes(a, b) {
   return true;
 }
 
+/* Reads a LONG value straight out of IFD0, to prove a structural tag came
+   through a strip untouched. */
+function readTiffTag(u8, tag) {
+  const view = new DataView(u8.buffer, u8.byteOffset, u8.length);
+  const ifd0 = view.getUint32(4, true);
+  const count = view.getUint16(ifd0, true);
+  for (let i = 0; i < count; i++) {
+    const entry = ifd0 + 2 + i * 12;
+    if (view.getUint16(entry, true) === tag) return view.getUint32(entry + 8, true);
+  }
+  return null;
+}
+
+function countTiffEntries(u8) {
+  const view = new DataView(u8.buffer, u8.byteOffset, u8.length);
+  return view.getUint16(view.getUint32(4, true), true);
+}
+
 const parse = (u8) => call("parseMetadata(__buf)", { __buf: u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.length) });
 const strip = (u8) => call("stripMetadata(__buf)", { __buf: u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.length) });
 const crc32 = (b, s, e) => call("crc32(__b, __s, __e)", { __b: b, __s: s, __e: e });
@@ -334,6 +352,43 @@ async function parseVideo(u8, name = "clip.mp4", type = "video/mp4") {
   const jpeg = F.makeJpeg({ exif: exifBlob, trailer: sef });
   const meta = parse(jpeg);
   check("samsung trailer: found", has(meta, "Samsung extra data"), labels(meta).join(","));
+}
+
+/* ---------------- RAW ---------------- */
+
+{
+  const { tiff } = F.makeRaw({ makerNote: new Uint8Array(64).fill(0x41) });
+  const meta = parse(tiff);
+  eq("raw: format", meta.format, "tiff");
+  eq("raw: make", valueOf(meta, "Camera make"), "NIKON CORPORATION");
+  eq("raw: model", valueOf(meta, "Camera model"), "NIKON Z 8");
+  eq("raw: artist", valueOf(meta, "Artist"), "Roshan Ramani");
+  eq("raw: dng serial", valueOf(meta, "Camera serial no."), "3021455");
+  eq("raw: original file name", valueOf(meta, "Original file name"), "DSC_4821.NEF");
+  check("raw: maker notes found", has(meta, "Maker notes"), labels(meta).join(","));
+  check("raw: gps found", Boolean(meta.gps));
+
+  const cleaned = strip(tiff);
+  check("raw: strip is lossless", cleaned && cleaned.lossless === true);
+  eq("raw: size unchanged", cleaned.bytes.length, tiff.length);
+  const after = parse(cleaned.bytes);
+  eq("raw: make gone", valueOf(after, "Camera make"), undefined);
+  eq("raw: serial gone", valueOf(after, "Camera serial no."), undefined);
+  eq("raw: original name gone", valueOf(after, "Original file name"), undefined);
+  eq("raw: gps gone", after.gps, null);
+  check("raw: maker notes gone", !has(after, "Maker notes"));
+
+  // the structural tags a converter needs must survive untouched
+  const width = readTiffTag(cleaned.bytes, 0x0100);
+  eq("raw: ImageWidth survives", width, 8280);
+  eq("raw: ImageLength survives", readTiffTag(cleaned.bytes, 0x0101), 5520);
+  check("raw: entry headers kept", countTiffEntries(cleaned.bytes) === countTiffEntries(tiff), "IFD lost entries");
+}
+
+{
+  // big-endian raw files must read the same way
+  const tiff = F.makeTiff({ ifd0: [[0x010f, 2, "PENTAX"]], bigEndian: true });
+  eq("raw: big-endian make", valueOf(parse(tiff), "Camera make"), "PENTAX");
 }
 
 /* ---------------- report ---------------- */

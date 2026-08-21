@@ -8,7 +8,19 @@ function stripMetadata(buffer) {
   const bytes = new Uint8Array(buffer);
   if (bytes[0] === 0xff && bytes[1] === 0xd8) return { bytes: stripJpeg(bytes), lossless: true };
   if (isPng(bytes)) return { bytes: stripPng(bytes), lossless: true };
+  if (tiffStartOf(bytes) >= 0) return stripTiffFile(buffer, bytes);
   return null;
+}
+
+/* A raw file is cleaned by blanking values in place: entry headers stay, so
+   the IFDs remain sorted and the structural tags still point at the real image
+   data. Nothing moves and nothing is re-encoded. */
+function stripTiffFile(buffer, bytes) {
+  const meta = parseTiffFile(bytes);
+  const targets = [...meta.fields];
+  if (meta.gps) targets.push(meta.gps);
+  if (!targets.length) return { bytes: new Uint8Array(buffer.slice(0)), lossless: true };
+  return selectiveStrip(buffer, targets);
 }
 
 /* ---------- JPEG ----------

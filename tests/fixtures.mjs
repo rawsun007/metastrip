@@ -122,6 +122,32 @@ export const GPS_SURAT = [
   [6, 5, [[12, 1]]],
 ];
 
+/* A raw file is a TIFF: same header, same IFDs, plus the structural tags a
+   converter needs and a rendered preview a viewer can show. */
+export function makeRaw({ preview = null, makerNote = null, extra = [] } = {}) {
+  const previewBytes = preview || bytes(0xff, 0xd8, 0xff, 0xe0, new Uint8Array(40), 0xff, 0xd9);
+  const tiff = makeTiff({
+    ifd0: [
+      [0x0100, 4, 8280], // ImageWidth: structural, must survive
+      [0x0101, 4, 5520], // ImageLength
+      [0x010f, 2, "NIKON CORPORATION"],
+      [0x0110, 2, "NIKON Z 8"],
+      [0x0131, 2, "Ver.2.10"],
+      [0x013b, 2, "Roshan Ramani"],
+      [0xc62f, 2, "3021455"],
+      [0xc68b, 2, "DSC_4821.NEF"],
+      ...extra,
+    ],
+    exif: [
+      [0x9003, 2, "2026:08:20 07:31:09"],
+      [0xa431, 2, "SN-0428871"],
+      ...(makerNote ? [[0x927c, 7, makerNote]] : []),
+    ],
+    gps: GPS_SURAT,
+  });
+  return { tiff, previewBytes };
+}
+
 /* ---------- JPEG ---------- */
 
 function segment(marker, payload) {
