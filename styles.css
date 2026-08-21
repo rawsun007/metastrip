@@ -348,7 +348,9 @@ a { color: inherit; text-decoration: none; }
   .result-card--square,
   .result-card--landscape { grid-template-columns: 1fr; }
   .result-card__preview { max-height: 52vh; }
-  .result-card--portrait .result-card__preview { max-width: 260px; }
+  /* a vertical photo does not need the whole phone screen, a vertical clip
+     does — that is the shape the phone is already holding */
+  .result-card[data-media-kind="photo"].result-card--portrait .result-card__preview { max-width: 260px; }
 }
 
 /* ===== GPS alert ===== */
