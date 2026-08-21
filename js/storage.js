@@ -24,14 +24,24 @@ const STORAGE_LIMITS = {
 const loadedBytesByCard = new WeakMap();
 let loadedTotal = 0;
 let loadedCount = 0;
-let loadedVideoCount = 0;
+const loadedByKind = { photo: 0, video: 0, audio: 0, document: 0 };
+
+/* What a file is, for counting purposes. A voice memo is not a photo, and a
+   meter that says it is reads as a bug. */
+function fileKind(file) {
+  if (isVideoFile(file)) return "video";
+  if (typeof isPdfFile === "function" && isPdfFile(file)) return "document";
+  if (typeof isAudioFile === "function" && isAudioFile(file)) return "audio";
+  return "photo";
+}
 
 function storageUsage() {
   return {
     bytes: loadedTotal,
     count: loadedCount,
-    videos: loadedVideoCount,
-    photos: loadedCount - loadedVideoCount,
+    ...loadedByKind,
+    videos: loadedByKind.video,
+    photos: loadedByKind.photo,
     limit: STORAGE_LIMITS.maxTotalBytes,
     ratio: loadedTotal / STORAGE_LIMITS.maxTotalBytes,
   };
@@ -65,7 +75,7 @@ function trackLoaded(card, file) {
   loadedBytesByCard.set(card, file.size);
   loadedTotal += file.size;
   loadedCount++;
-  if (isVideoFile(file)) loadedVideoCount++;
+  loadedByKind[fileKind(file)]++;
   renderStorageMeter();
 }
 
@@ -74,7 +84,10 @@ function untrackLoaded(card, file) {
   loadedTotal = Math.max(0, loadedTotal - loadedBytesByCard.get(card));
   loadedBytesByCard.delete(card);
   loadedCount = Math.max(0, loadedCount - 1);
-  if (file && isVideoFile(file)) loadedVideoCount = Math.max(0, loadedVideoCount - 1);
+  if (file) {
+    const kind = fileKind(file);
+    loadedByKind[kind] = Math.max(0, loadedByKind[kind] - 1);
+  }
   renderStorageMeter();
 }
 
@@ -96,11 +109,20 @@ function renderStorageMeter() {
     `${describeLoad(use)} open, ${formatBytes(use.bytes)} of ${formatBytes(use.limit)} this tab will hold. Nothing is uploaded or saved.`;
 }
 
-function describeLoad({ photos, videos }) {
+function describeLoad(use) {
+  const names = {
+    photo: ["photo", "photos"],
+    video: ["video", "videos"],
+    audio: ["audio file", "audio files"],
+    document: ["document", "documents"],
+  };
   const parts = [];
-  if (photos) parts.push(`${photos} photo${photos === 1 ? "" : "s"}`);
-  if (videos) parts.push(`${videos} video${videos === 1 ? "" : "s"}`);
-  return parts.join(" and ") || "nothing";
+  for (const [kind, [one, many]] of Object.entries(names)) {
+    const count = use[kind] || 0;
+    if (count) parts.push(`${count} ${count === 1 ? one : many}`);
+  }
+  if (parts.length <= 1) return parts[0] || "nothing";
+  return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
 }
 
 /* ---------- refusals ---------- */
