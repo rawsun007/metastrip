@@ -97,6 +97,7 @@ async function parseMp4(file) {
     if (!box) break;
     boxes.push(box);
     if (box.type === "mdat") result.mdatEnd = Math.max(result.mdatEnd, box.end);
+    if (box.type === "uuid" || box.type === "jumb") await readTopLevelProvenance(file, box, result);
     if (box.end <= offset) break;
     offset = box.end;
   }
@@ -110,6 +111,29 @@ async function parseMp4(file) {
     pushFrameSizeField(result);
   }
   return result;
+}
+
+/* A top-level uuid box is where MP4 and HEIF keep Content Credentials, and
+   where a lot of writers keep XMP. Neither is inside moov, so the moov walk
+   never saw them. */
+async function readTopLevelProvenance(file, box, result) {
+  const head = await readSlice(file, box.dataStart, 16);
+  const isC2pa = box.type === "jumb" || isC2paUuid(head, 0);
+  const isXmp = box.type === "uuid" && isXmpUuid(head, 0);
+  if (!isC2pa && !isXmp) return;
+
+  result.containerEdits.push({ kind: "free", start: box.start, end: box.end });
+  if (isXmp) {
+    pushXmpField({ absStart: box.start, absEnd: box.end }, result);
+    return;
+  }
+  // manifests are small relative to a video, so this one box can be read whole
+  const payloadStart = box.type === "jumb" ? box.dataStart : box.dataStart + 16;
+  const manifest = await readSlice(file, payloadStart, Math.min(4 * 1024 * 1024, box.end - payloadStart));
+  const analysis = analyzeC2paManifest(manifest, 0, manifest.length);
+  for (const field of c2paFields(analysis, { edits: [{ kind: "free", start: box.start, end: box.end }] })) {
+    pushVideoField(result, field);
+  }
 }
 
 function walkMoov(bytes, base, result) {

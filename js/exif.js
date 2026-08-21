@@ -64,7 +64,39 @@ function parseHeic(bytes) {
       break;
     }
   }
+  readHeicC2pa(bytes, result);
   return result;
+}
+
+/* HEIF keeps Content Credentials in a uuid box stamped with the C2PA
+   identifier. Only the payload is cleared, so the box chain the image itself
+   depends on stays intact. */
+function readHeicC2pa(bytes, result) {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.length);
+  let offset = 0;
+  let guard = 0;
+  while (offset + 8 <= bytes.length && guard++ < 4096) {
+    let size = view.getUint32(offset);
+    const type = asciiSlice(bytes, offset + 4, offset + 8);
+    let headerSize = 8;
+    if (size === 1) {
+      if (offset + 16 > bytes.length) return;
+      size = view.getUint32(offset + 8) * 2 ** 32 + view.getUint32(offset + 12);
+      headerSize = 16;
+    } else if (size === 0) {
+      size = bytes.length - offset;
+    }
+    if (size < headerSize) return;
+    const end = Math.min(offset + size, bytes.length);
+    if (type === "uuid" && isC2paUuid(bytes, offset + headerSize)) {
+      const payloadStart = offset + headerSize + 16;
+      const analysis = analyzeC2paManifest(bytes, payloadStart, end);
+      for (const field of c2paFields(analysis, { mode: "zero", ranges: [[payloadStart, end]] })) {
+        result.fields.push(field);
+      }
+    }
+    offset = end;
+  }
 }
 
 function isPng(b) {
@@ -75,6 +107,9 @@ function isPng(b) {
 
 function parseJpeg(bytes) {
   const result = { fields: [], gps: null, format: "jpeg" };
+  // a manifest larger than a segment is split across several APP11s, so they
+  // are collected and read as one
+  const app11 = { ranges: [], payload: [] };
   let offset = 2;
   while (offset + 4 <= bytes.length) {
     if (bytes[offset] !== 0xff) break;
@@ -89,6 +124,12 @@ function parseJpeg(bytes) {
         label: "XMP metadata", value: "present (editing history, IDs)", risk: "device",
         mode: "zero", ranges: [[segStart, segStart + length - 2]],
       });
+    } else if (marker === 0xeb && hasPrefix(bytes, segStart, "JP")) {
+      // APP11: 'JP', box instance number, packet sequence number, then JUMBF
+      const bodyStart = segStart + 8;
+      const bodyEnd = segStart + length - 2;
+      app11.ranges.push([offset, segStart + length - 2]);
+      if (bodyEnd > bodyStart) app11.payload.push(bytes.subarray(bodyStart, bodyEnd));
     } else if (marker === 0xfe) {
       const comment = asciiSlice(bytes, segStart, Math.min(segStart + length - 2, bytes.length)).trim();
       if (comment) result.fields.push({
@@ -98,7 +139,28 @@ function parseJpeg(bytes) {
     }
     offset = segStart + length - 2;
   }
+  if (app11.payload.length) readEmbeddedC2pa(app11, result);
   return result;
+}
+
+/* JPEG can drop whole APP11 segments: marker segments are self-delimiting and
+   nothing in the file points into them. */
+function readEmbeddedC2pa(app11, result) {
+  const joined = concatChunks(app11.payload);
+  const analysis = analyzeC2paManifest(joined, 0, joined.length);
+  const fields = c2paFields(analysis, { mode: "cut", chunkRanges: app11.ranges });
+  for (const field of fields) result.fields.push(field);
+}
+
+function concatChunks(chunks) {
+  const total = chunks.reduce((n, c) => n + c.length, 0);
+  const out = new Uint8Array(total);
+  let pos = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, pos);
+    pos += chunk.length;
+  }
+  return out;
 }
 
 function hasPrefix(bytes, offset, str) {
@@ -290,6 +352,11 @@ function parsePng(bytes) {
       let value = type === "tEXt" ? asciiSlice(bytes, valueStart, dataStart + length) : "(embedded text)";
       if (value.length > 120) value = value.slice(0, 120) + "…";
       result.fields.push({ label: `PNG ${keyword || type}`, value, risk: "device", mode: "cut", chunkRange: [offset, chunkEnd] });
+    } else if (type === "caBX") {
+      const analysis = analyzeC2paManifest(bytes, dataStart, dataStart + length);
+      for (const field of c2paFields(analysis, { mode: "cut", chunkRange: [offset, chunkEnd] })) {
+        result.fields.push(field);
+      }
     } else if (type === "tIME" && length >= 7) {
       const y = view.getUint16(dataStart);
       const [mo, day, h, mi, s] = [1, 2, 3, 4, 5].map((i) => bytes[dataStart + i]);

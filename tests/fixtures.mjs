@@ -134,7 +134,8 @@ export function makeJpeg({ exif, jumbf, comment, xmp, trailer, app2 } = {}) {
   if (exif) parts.push(segment(0xe1, bytes("Exif\0\0", exif)));
   if (xmp) parts.push(segment(0xe1, bytes("http://ns.adobe.com/xap/1.0/\0", xmp)));
   if (app2) parts.push(segment(0xe2, bytes("ICC_PROFILE\0", app2)));
-  if (jumbf) parts.push(segment(0xeb, bytes("JP", jumbf)));
+  // APP11: 'JP', box instance number, packet sequence number, then the JUMBF
+  if (jumbf) parts.push(segment(0xeb, bytes("JP", be16(1), be32(1), jumbf)));
   if (comment) parts.push(segment(0xfe, bytes(comment)));
   parts.push(bytes(0xff, 0xda, be16(12), [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]));
   parts.push(bytes(0x12, 0x34, 0x56, 0x78)); // stand-in scan data
@@ -143,35 +144,98 @@ export function makeJpeg({ exif, jumbf, comment, xmp, trailer, app2 } = {}) {
   return bytes(...parts);
 }
 
-/* A C2PA manifest store, shaped like the real thing: a JUMBF superbox whose
-   description box names c2pa, holding a CBOR-ish claim payload. The parser
-   under test reads labels and strings, not full CBOR, so the payload here
-   carries realistic strings in a realistic nesting. */
-export function makeC2paJumbf({
-  generator = "Adobe Firefly 3.0",
-  signer = "Jane Photographer",
-  action = "c2pa.created",
-  aiGenerated = true,
-} = {}) {
-  const jumd = (type, label) =>
-    jumbfBox("jumd", bytes(type, [0x00, 0x03], label, 0));
-  const claim = bytes(
-    "claim_generator", 0,
-    generator, 0,
-    "signature", 0,
-    signer, 0,
-    "actions", 0,
-    action, 0,
-    aiGenerated ? "c2pa.trainedAlgorithmicMedia" : "c2pa.digitalCapture", 0
-  );
-  const claimBox = jumbfBox("jumb", bytes(jumd("c2cl", "c2pa.claim"), jumbfBox("cbor", claim)));
-  const assertionBox = jumbfBox("jumb", bytes(jumd("c2as", "c2pa.assertions"), jumbfBox("cbor", claim)));
-  const manifest = jumbfBox("jumb", bytes(jumd("c2ma", "urn:uuid:test-manifest"), claimBox, assertionBox));
-  return jumbfBox("jumb", bytes(jumd("c2pa", "c2pa"), manifest));
-}
+/* ---------- C2PA ----------
+   Spec-shaped: a JUMBF superbox per level, each opening with a jumd
+   description box whose type UUID is the four-character code followed by the
+   JUMBF suffix, and CBOR payloads that a real decoder can read. */
+
+const JUMBF_UUID_SUFFIX = [0x00, 0x11, 0x00, 0x10, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71];
 
 export function jumbfBox(type, payload) {
   return bytes(be32(payload.length + 8), type, payload);
+}
+
+function jumd(code, label) {
+  const toggles = label ? 0x03 : 0x01;
+  return jumbfBox("jumd", bytes(code, JUMBF_UUID_SUFFIX, toggles, label ? bytes(label, 0) : []));
+}
+
+function superbox(code, label, ...children) {
+  return jumbfBox("jumb", bytes(jumd(code, label), ...children));
+}
+
+/* ---------- CBOR encoder (definite lengths only) ---------- */
+
+function cborHead(major, value) {
+  if (value < 24) return bytes((major << 5) | value);
+  if (value < 0x100) return bytes((major << 5) | 24, value);
+  if (value < 0x10000) return bytes((major << 5) | 25, be16(value));
+  return bytes((major << 5) | 26, be32(value));
+}
+
+export function cbor(value) {
+  if (value === null || value === undefined) return bytes(0xf6);
+  if (value === true) return bytes(0xf5);
+  if (value === false) return bytes(0xf4);
+  if (typeof value === "number") {
+    return value >= 0 ? cborHead(0, value) : cborHead(1, -value - 1);
+  }
+  if (typeof value === "string") {
+    const utf8 = new TextEncoder().encode(value);
+    return bytes(cborHead(3, utf8.length), utf8);
+  }
+  if (value instanceof Uint8Array) return bytes(cborHead(2, value.length), value);
+  if (Array.isArray(value)) return bytes(cborHead(4, value.length), ...value.map(cbor));
+  const keys = Object.keys(value);
+  return bytes(cborHead(5, keys.length), ...keys.map((k) => bytes(cbor(k), cbor(value[k]))));
+}
+
+/* A DER fragment carrying a common name, the way a signing certificate does:
+   OID 2.5.4.3 then a UTF8String. */
+function derCommonName(name) {
+  const utf8 = new TextEncoder().encode(name);
+  return bytes(0x06, 0x03, 0x55, 0x04, 0x03, 0x0c, utf8.length, utf8);
+}
+
+export function makeC2paJumbf({
+  generator = "Adobe Firefly 3.0",
+  signer = "Jane Photographer",
+  actions = ["c2pa.created", "c2pa.edited"],
+  sourceType = "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia",
+  author = null,
+  ingredients = 0,
+} = {}) {
+  const claim = cbor({
+    claim_generator: generator,
+    instanceID: "xmp:iid:0f1e2d3c",
+    assertions: actions.length,
+  });
+  const actionsAssertion = cbor({
+    actions: actions.map((action, i) => ({
+      action,
+      softwareAgent: generator,
+      ...(i === 0 && sourceType ? { digitalSourceType: sourceType } : {}),
+    })),
+  });
+
+  const children = [
+    superbox("c2cl", "c2pa.claim.v2", jumbfBox("cbor", claim)),
+    superbox("c2as", "c2pa.assertions",
+      superbox("c2as", "c2pa.actions.v2", jumbfBox("cbor", actionsAssertion))),
+    superbox("c2cs", "c2pa.signature", jumbfBox("cbor", bytes(derCommonName(signer)))),
+  ];
+  if (author) {
+    children.push(
+      superbox("c2as", "stds.schema-org.CreativeWork",
+        jumbfBox("json", bytes(JSON.stringify({ "@type": "CreativeWork", author: [{ name: author }] }))))
+    );
+  }
+  for (let i = 0; i < ingredients; i++) {
+    children.push(superbox("c2as", `c2pa.ingredient.v3__${i}`, jumbfBox("cbor", cbor({ title: `source-${i}.jpg` }))));
+  }
+
+  const manifest = superbox("c2ma", "urn:uuid:0000-test-manifest", ...children);
+  return superbox("c2pa", "c2pa", manifest);
 }
 
 /* ---------- PNG ---------- */
@@ -236,6 +300,11 @@ export function makeMp4({
 export function textAtom(type, text) {
   return box(type, be16(text.length), be16(0), text);
 }
+
+export const C2PA_UUID = [
+  0xd8, 0xfe, 0xc3, 0xd6, 0x1b, 0x0e, 0x48, 0x3c,
+  0x92, 0x97, 0x58, 0x28, 0x87, 0x7e, 0xc4, 0x81,
+];
 
 export const XMP_UUID = [
   0xbe, 0x7a, 0xcf, 0xcb, 0x97, 0xa9, 0x42, 0xe8,

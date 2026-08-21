@@ -12,11 +12,12 @@ function stripMetadata(buffer) {
 }
 
 /* ---------- JPEG ----------
-   Drop: APP1 (EXIF + XMP), APP13 (Photoshop IRB), COM (comments).
+   Drop: APP1 (EXIF + XMP), APP11 (JUMBF, which is where C2PA Content
+   Credentials live), APP13 (Photoshop IRB), COM (comments).
    Keep: APP0 (JFIF), APP2 (ICC color profile), APP14 (Adobe color
    transform — removing it corrupts colors), and all coding segments. */
 
-const JPEG_DROP_MARKERS = new Set([0xe1, 0xed, 0xfe]);
+const JPEG_DROP_MARKERS = new Set([0xe1, 0xeb, 0xed, 0xfe]);
 
 function stripJpeg(bytes) {
   const out = [bytes.subarray(0, 2)]; // SOI
@@ -41,7 +42,7 @@ function stripJpeg(bytes) {
    Drop text/time/exif chunks; keep everything else (incl. IHDR/IDAT/
    PLTE/tRNS/gAMA/iCCP etc.) so pixels and rendering are untouched. */
 
-const PNG_DROP_CHUNKS = new Set(["tEXt", "zTXt", "iTXt", "eXIf", "tIME"]);
+const PNG_DROP_CHUNKS = new Set(["tEXt", "zTXt", "iTXt", "eXIf", "tIME", "caBX"]);
 
 function stripPng(bytes) {
   const view = new DataView(bytes.buffer, bytes.byteOffset);
@@ -99,8 +100,10 @@ function selectiveStrip(buffer, removeFields) {
 
   for (const f of removeFields) {
     if (!f) continue;
-    if (f.mode === "cut" && f.chunkRange) {
-      cuts.push(f.chunkRange);
+    if (f.mode === "cut" && (f.chunkRange || f.chunkRanges)) {
+      // a C2PA manifest larger than one JPEG segment spans several of them
+      if (f.chunkRanges) cuts.push(...f.chunkRanges);
+      if (f.chunkRange) cuts.push(f.chunkRange);
     } else if (f.ranges) {
       for (const [a, b] of f.ranges) out.fill(0, a, b);
       if (f.crcChunk) crcChunks.set(f.crcChunk.start, f.crcChunk);
