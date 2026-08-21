@@ -12,7 +12,7 @@ import * as F from "./fixtures.mjs";
 
 const JS_DIR = path.join(import.meta.dirname, "..", "js");
 const SCRIPTS = ["aitags.js", "c2pa.js", "edits.js", "exif.js", "stripper.js", "video.js", "pdf.js", "audio.js"];
-const DOM_SCRIPTS = ["folder.js"];
+const DOM_SCRIPTS = ["linkage.js", "folder.js"];
 
 const ctx = vm.createContext({ console, File, Blob, DataView, Uint8Array, TextDecoder, TextEncoder });
 for (const name of SCRIPTS) {
@@ -727,6 +727,75 @@ async function stripAudio(u8, name, type, meta) {
   check("ai: software name recognised", has(parse(software), "AI prompt (NovelAI)"), labels(parse(software)).join(","));
   const other = F.makePng([F.pngText("Software", "GIMP 2.10")], { crc32 });
   check("ai: unrelated software left alone", has(parse(other), "PNG Software"), labels(parse(other)).join(","));
+}
+
+/* ---------------- linkage across files ---------------- */
+
+{
+  const withSerial = (serial, name) => ({
+    name,
+    meta: parse(F.makeJpeg({
+      exif: F.makeTiff({
+        ifd0: [[0x010f, 2, "Canon"], [0x0110, 2, "Canon EOS R5"]],
+        exif: [[0xa431, 2, serial], [0x9003, 2, "2026:08:20 07:31:09"]],
+      }),
+    })),
+  });
+
+  const findings = call("computeLinkage(__entries)", {
+    __entries: [withSerial("SN-11", "a.jpg"), withSerial("SN-11", "b.jpg"), withSerial("SN-99", "c.jpg")],
+  });
+  const serialFinding = findings.find((f) => f.detail.startsWith("Camera serial"));
+  check("linkage: shared serial found", Boolean(serialFinding), JSON.stringify(findings.map((f) => f.detail)));
+  eq("linkage: only the two matching files", serialFinding.files.join(","), "a.jpg,b.jpg");
+  eq("linkage: serial is a strong link", serialFinding.kind, "strong");
+  check("linkage: shared model also found", findings.some((f) => f.detail.startsWith("Camera model")));
+  check("linkage: strong findings come first", findings[0].kind === "strong");
+
+  eq("linkage: one file links to nothing", call("computeLinkage(__one)", { __one: [withSerial("SN-11", "a.jpg")] }).length, 0);
+}
+
+{
+  // coordinates in the same building are one finding, not three
+  const at = (lat, lon, name) => ({ name, meta: { fields: [], gps: { lat, lon } } });
+  const findings = call("computeLinkage(__entries)", {
+    __entries: [
+      at(21.1702, 72.8311, "kitchen.jpg"),
+      at(21.17025, 72.83115, "balcony.jpg"),
+      at(21.1704, 72.8313, "street.jpg"),
+      at(28.6139, 77.209, "delhi.jpg"),
+    ],
+  });
+  const place = findings.filter((f) => f.text.includes("within 100 m"));
+  eq("linkage: one place cluster", place.length, 1);
+  eq("linkage: three files in it", place[0].files.length, 3);
+  check("linkage: the far file is excluded", !place[0].files.includes("delhi.jpg"));
+}
+
+{
+  // timestamps close together group, and a distant one does not
+  const at = (stamp, name) => ({ name, meta: { fields: [{ label: "Taken", value: stamp }], gps: null } });
+  const findings = call("computeLinkage(__entries)", {
+    __entries: [
+      at("2026:08:20 07:31:09", "a.jpg"),
+      at("2026:08:20 07:35:00", "b.jpg"),
+      at("2026:08:21 19:00:00", "c.jpg"),
+    ],
+  });
+  const time = findings.filter((f) => f.text.includes("minutes of each other"));
+  eq("linkage: one time run", time.length, 1);
+  eq("linkage: two files in the run", time[0].files.join(","), "a.jpg,b.jpg");
+}
+
+{
+  // a PDF and a photo can still be linked by the person named in both
+  const pdfMeta = { fields: [{ label: "Author", value: "Roshan Ramani" }], gps: null };
+  const photoMeta = { fields: [{ label: "Artist", value: "Roshan Ramani" }], gps: null };
+  const findings = call("computeLinkage(__entries)", {
+    __entries: [{ name: "cv.pdf", meta: pdfMeta }, { name: "headshot.jpg", meta: photoMeta }],
+  });
+  // different labels, so no single-field group: this must not report a match
+  eq("linkage: different labels do not merge", findings.length, 0);
 }
 
 /* ---------------- one global scope ----------------

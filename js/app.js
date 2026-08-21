@@ -151,6 +151,7 @@ wireSampleButton(
 );
 
 function updateStripAllBar() {
+  if (typeof renderLinkage === "function") renderLinkage();
   const count = resultsEl.children.length;
   stripAllBar.hidden = count < 2;
   if (count < 2) return;
