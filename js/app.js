@@ -137,53 +137,95 @@ wireSampleButton(
 function updateStripAllBar() {
   const count = resultsEl.children.length;
   stripAllBar.hidden = count < 2;
-  if (count >= 2) stripAllLabel.textContent = `${describeLoad(storageUsage())} loaded`;
+  if (count < 2) return;
+  stripAllLabel.textContent = `${describeLoad(storageUsage())} loaded`;
+  stripAllBtn.textContent = stripAllLabelText();
 }
 
-const STRIP_ALL_LABEL = "STRIP ALL & DOWNLOAD ZIP";
+/* Videos are never zipped, so the button must not promise a zip when one is
+   in the batch. */
+function stripAllLabelText() {
+  return countVideoCards() ? "STRIP ALL & DOWNLOAD" : "STRIP ALL & DOWNLOAD ZIP";
+}
+
+function countVideoCards() {
+  return [...resultsEl.querySelectorAll(".result-card")].filter((c) => c._msMeta?.kind === "video").length;
+}
+
+function downloadBlob(blob, filename) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 30_000);
+}
 
 stripAllBtn.addEventListener("click", async () => {
   const cards = [...resultsEl.querySelectorAll(".result-card")];
   if (!cards.length) return;
   stripAllBtn.disabled = true;
-  try {
-    const JSZip = await ensureJSZip();
-    const zip = new JSZip();
-    const usedNames = new Set();
-    let failures = 0;
 
-    for (let i = 0; i < cards.length; i++) {
-      stripAllBtn.textContent = `CLEANING ${i + 1} OF ${cards.length}`;
-      const card = cards[i];
+  /* A zip has to exist in memory in one piece before it can be saved, which
+     is fine for photos and impossible for a few gigabytes of video. So the
+     clips are cleaned and saved one at a time, straight from disk, and only
+     the photos are bundled. */
+  const videoCards = cards.filter((c) => c._msMeta?.kind === "video");
+  const photoCards = cards.filter((c) => c._msMeta?.kind !== "video");
+
+  let cleaned = 0;
+  let failures = 0;
+  let step = 0;
+
+  try {
+    if (photoCards.length) {
+      const JSZip = await ensureJSZip();
+      const zip = new JSZip();
+      const usedNames = new Set();
+
+      for (const card of photoCards) {
+        stripAllBtn.textContent = `CLEANING ${++step} OF ${cards.length}`;
+        const { _msFile: file, _msMeta: meta } = card;
+        try {
+          const result = await computeCleanResult(file, meta, card);
+          zip.file(dedupeZipName(cleanFilename(file.name, !result.lossless), usedNames), result.blob);
+        } catch (err) {
+          console.error("strip-all: one photo failed", file?.name, err);
+          failures++;
+        }
+      }
+
+      if (usedNames.size) {
+        stripAllBtn.textContent = "BUILDING ZIP...";
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+        downloadBlob(zipBlob, `metastrip-cleaned-${usedNames.size}-photo${usedNames.size === 1 ? "" : "s"}.zip`);
+        cleaned += usedNames.size;
+      }
+    }
+
+    for (const card of videoCards) {
+      stripAllBtn.textContent = `CLEANING ${++step} OF ${cards.length}`;
       const { _msFile: file, _msMeta: meta } = card;
       try {
         const result = await computeCleanResult(file, meta, card);
-        const name = dedupeZipName(cleanFilename(file.name, !result.lossless), usedNames);
-        zip.file(name, result.blob);
+        downloadBlob(result.blob, cleanFilename(file.name, false));
+        cleaned++;
+        // browsers drop back-to-back downloads, so let each one land
+        await new Promise((resolve) => setTimeout(resolve, 900));
       } catch (err) {
-        console.error("strip-all: one photo failed", file?.name, err);
+        console.error("strip-all: one video failed", file?.name, err);
         failures++;
       }
     }
 
-    if (usedNames.size === 0) throw new Error("every photo failed to clean");
-
-    stripAllBtn.textContent = "BUILDING ZIP...";
-    const zipBlob = await zip.generateAsync({ type: "blob" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(zipBlob);
-    a.download = `metastrip-cleaned-${usedNames.size}-photo${usedNames.size === 1 ? "" : "s"}.zip`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
-
-    stripAllBtn.textContent = failures ? `ZIP READY, ${failures} FAILED` : "ZIP DOWNLOADED";
+    if (!cleaned) throw new Error("every file failed to clean");
+    stripAllBtn.textContent = failures ? `${cleaned} SAVED, ${failures} FAILED` : "ALL SAVED";
   } catch (err) {
     console.error(err);
     stripAllBtn.textContent = "SOMETHING FAILED, TRY AGAIN";
   } finally {
     setTimeout(() => {
       stripAllBtn.disabled = false;
-      stripAllBtn.textContent = STRIP_ALL_LABEL;
+      stripAllBtn.textContent = stripAllLabelText();
     }, 3500);
   }
 });
