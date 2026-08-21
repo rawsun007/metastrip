@@ -318,6 +318,11 @@ function makeBadge(meta) {
 
 /* One door for both worlds. A photo is small enough to read whole; a video
    is read by slicing, so it stays async either way. */
+function findFieldValue(meta, label) {
+  const field = meta.fields.find((f) => f.label === label);
+  return field ? field.value : "";
+}
+
 async function readMetadata(file) {
   if (isVideoFile(file)) return parseVideoMetadata(file);
   return parseMetadata(await file.arrayBuffer());
@@ -366,7 +371,7 @@ async function renderCard(file) {
   body.className = "result-card__body";
   body.innerHTML = `
     <h3 class="result-card__name">${escapeHtml(file.name)}</h3>
-    <p class="result-card__sub">${escapeHtml(file.type || "unknown type")}, ${formatBytes(file.size)}</p>
+    <p class="result-card__sub">${escapeHtml(file.type || "unknown type")}, ${formatBytes(file.size)}<span class="result-card__shape"></span></p>
   `;
 
   let meta = { fields: [], gps: null, format: "other" };
@@ -397,7 +402,7 @@ async function renderCard(file) {
     alert.className = "gps-alert";
     alert.innerHTML = `
       <div>
-        <strong>${icon("st-pin", "icon icon--alert")} THIS PHOTO LEAKS YOUR LOCATION</strong>
+        <strong>${icon("st-pin", "icon icon--alert")} THIS ${meta.kind === "video" ? "VIDEO" : "PHOTO"} LEAKS YOUR LOCATION</strong>
         <p>${lat.toFixed(6)}, ${lon.toFixed(6)}${alt != null ? `, ${alt.toFixed(0)}m altitude` : ""}</p>
       </div>
       <div class="gps-alert__actions">
@@ -476,8 +481,15 @@ async function renderCard(file) {
     clean.innerHTML =
       meta.format === "other"
         ? `${icon("st-warn")} This format is not fully supported yet, so something may still be hiding in there.`
-        : `${icon("st-shield")} Nothing readable in here. This photo already looks clean.`;
+        : `${icon("st-shield")} Nothing readable in here. This ${meta.kind === "video" ? "video" : "photo"} already looks clean.`;
     body.appendChild(clean);
+  }
+
+  if (meta.kind === "video") {
+    const shape = [findFieldValue(meta, "Duration"), findFieldValue(meta, "Frame size"), findFieldValue(meta, "Codec")]
+      .filter(Boolean)
+      .join(", ");
+    if (shape) body.querySelector(".result-card__shape").textContent = `, ${shape}`;
   }
 
   body.appendChild(buildActions(file, meta));
