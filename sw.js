@@ -1,13 +1,15 @@
 /* MetaStrip service worker: offline support + Android share target.
    Network-first so updates land immediately, cache fallback offline. */
 
-const CACHE = "metastrip-v1";
+const CACHE = "metastrip-v2";
 const CORE = [
   "./",
   "./index.html",
   "./styles.css",
   "./js/app.js",
   "./js/exif.js",
+  "./js/video.js",
+  "./js/storage.js",
   "./js/stripper.js",
   "./js/motion.js",
 ];
@@ -42,8 +44,8 @@ self.addEventListener("fetch", (event) => {
               `./shared-photo-${i}`,
               new Response(f, {
                 headers: {
-                  "Content-Type": f.type || "image/jpeg",
-                  "X-Name": encodeURIComponent(f.name || `shared-${i}.jpg`),
+                  "Content-Type": f.type || "application/octet-stream",
+                  "X-Name": encodeURIComponent(f.name || `shared-${i}`),
                 },
               })
             )

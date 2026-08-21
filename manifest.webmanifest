@@ -1,7 +1,7 @@
 {
   "name": "MetaStrip",
   "short_name": "MetaStrip",
-  "description": "See what your photos leak, then strip it. All on your device.",
+  "description": "See what your photos and videos leak, then strip it. All on your device.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -17,7 +17,7 @@
     "enctype": "multipart/form-data",
     "params": {
       "files": [
-        { "name": "photos", "accept": ["image/*", ".heic", ".heif"] }
+        { "name": "photos", "accept": ["image/*", "video/*", ".heic", ".heif", ".mov", ".mp4", ".webm"] }
       ]
     }
   }

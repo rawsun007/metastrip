@@ -880,7 +880,7 @@ if ("serviceWorker" in navigator) {
       const res = await inbox.match(req);
       if (!res) continue;
       const blob = await res.blob();
-      const name = decodeURIComponent(res.headers.get("X-Name") || "shared.jpg");
+      const name = decodeURIComponent(res.headers.get("X-Name") || "shared");
       files.push(new File([blob], name, { type: blob.type }));
       await inbox.delete(req);
     }
