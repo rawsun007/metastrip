@@ -13,6 +13,7 @@ const CORE = [
   "./js/edits.js",
   "./js/pdf.js",
   "./js/audio.js",
+  "./js/folder.js",
   "./js/exif.js",
   "./js/video.js",
   "./js/storage.js",

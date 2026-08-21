@@ -1183,3 +1183,40 @@ a { color: inherit; text-decoration: none; }
   font-weight: 600;
   box-shadow: 3px 4px 0 #0a0a0a;
 }
+
+/* ===== Folder mode ===== */
+.dropzone__folder {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 18px;
+  text-align: center;
+}
+.dropzone__folder-note {
+  color: var(--color-muted);
+  font-size: 12.5px;
+  max-width: 420px;
+  text-align: left;
+}
+.dropzone__folder-note code {
+  font-size: 12px;
+  background: #1a1a1a;
+  padding: 1px 5px;
+  border-radius: 6px;
+}
+.folder-panel {
+  max-width: 640px;
+  margin: 18px auto 0;
+  padding: 16px 18px;
+  border: 3px solid #0a0a0a;
+  border-radius: 18px;
+  background: #101722;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.folder-panel__status { font-size: 14px; line-height: 1.5; flex: 1 1 320px; }

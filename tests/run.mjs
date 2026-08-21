@@ -12,6 +12,7 @@ import * as F from "./fixtures.mjs";
 
 const JS_DIR = path.join(import.meta.dirname, "..", "js");
 const SCRIPTS = ["c2pa.js", "edits.js", "exif.js", "stripper.js", "video.js", "pdf.js", "audio.js"];
+const DOM_SCRIPTS = ["folder.js"];
 
 const ctx = vm.createContext({ console, File, Blob, DataView, Uint8Array, TextDecoder, TextEncoder });
 for (const name of SCRIPTS) {
@@ -21,6 +22,36 @@ const call = (expr, args = {}) => {
   Object.assign(ctx, args);
   return vm.runInContext(expr, ctx);
 };
+
+/* folder.js reaches for the page for its buttons and for app.js helpers, so
+   the pieces it needs are stubbed and the rest of the page is absent. */
+Object.assign(ctx, {
+  window: {},
+  document: { getElementById: () => null },
+  isRemovableField: (f) => Boolean(f.ranges || f.chunkRange || f.chunkRanges || (f.edits && f.edits.length)),
+  formatBytes: (n) => `${n} B`,
+  async readMetadata(file) {
+    if (ctx.isVideoFile(file)) return ctx.parseVideoMetadata(file);
+    if (ctx.isPdfFile(file)) return ctx.parsePdfMetadata(file);
+    if (ctx.isAudioFile(file)) return ctx.parseAudioMetadata(file);
+    return ctx.parseMetadata(await file.arrayBuffer());
+  },
+  async computeCleanResult(file, meta) {
+    if (meta.kind === "video") return ctx.stripVideoFile(file, ctx.allVideoEdits(meta));
+    if (meta.format === "pdf") return ctx.stripPdfFile(file, ctx.allPdfEdits(meta));
+    if (meta.kind === "audio") {
+      const edits = meta.format === "m4a" ? ctx.allVideoEdits(meta) : ctx.allAudioEdits(meta);
+      return ctx.stripAudioFile(file, meta, edits);
+    }
+    const buffer = await file.arrayBuffer();
+    const result = ctx.stripMetadata(buffer);
+    if (!result) throw new Error("unsupported");
+    return { blob: new Blob([result.bytes]), lossless: result.lossless };
+  },
+});
+for (const name of DOM_SCRIPTS) {
+  vm.runInContext(fs.readFileSync(path.join(JS_DIR, name), "utf8"), ctx, { filename: name });
+}
 
 let passed = 0;
 const failures = [];
@@ -587,6 +618,66 @@ async function stripAudio(u8, name, type, meta) {
     const stored = new DataView(page.buffer, page.byteOffset, page.length).getUint32(22, true);
     eq(`opus: page ${page.sequence} checksum valid`, stored, F.oggCrcReference(page));
   }
+}
+
+/* ---------------- folder mode ---------------- */
+
+{
+  const leakyJpeg = F.makeJpeg({ exif: exifBlob, comment: "at home" });
+  const cleanJpeg = F.makeJpeg({});
+  const tree = F.fakeDirectory({
+    "holiday.jpg": leakyJpeg,
+    "already-clean.jpg": cleanJpeg,
+    "notes.txt": F.bytes("nothing to see"),
+    ".hidden.jpg": leakyJpeg,
+    trip: {
+      "clip.mp4": F.makeMp4({ udta: [F.textAtom("©xyz", "+21.1702+072.8311/")] }),
+      "memo.mp3": F.makeMp3({}),
+      "doc.pdf": F.makePdf({}),
+    },
+    "metastrip-clean": { "holiday-clean.jpg": leakyJpeg },
+  });
+
+  ctx.__tree = tree;
+  const summary = await vm.runInContext("cleanFolder(__tree, {})", ctx);
+  eq("folder: files seen", summary.seen, 5);
+  eq("folder: cleaned", summary.cleaned, 4);
+  eq("folder: already clean", summary.alreadyClean, 1);
+  eq("folder: failures", summary.failed, 0);
+
+  const written = F.writtenFiles(tree);
+  const names = [...written.keys()].sort();
+  check("folder: output mirrors structure", names.includes("metastrip-clean/trip/clip-clean.mp4"), names.join(","));
+  check("folder: jpeg written", names.includes("metastrip-clean/holiday-clean.jpg"), names.join(","));
+  check("folder: pdf written", names.includes("metastrip-clean/trip/doc-clean.pdf"), names.join(","));
+  check("folder: skips non-media", !names.some((n) => n.endsWith(".txt")));
+  check("folder: skips dotfiles", !names.some((n) => n.includes(".hidden")));
+  check("folder: does not re-clean its own output", !names.some((n) => n.includes("clean-clean")), names.join(","));
+
+  // the written files must actually be clean
+  const outJpeg = written.get("metastrip-clean/holiday-clean.jpg");
+  eq("folder: written jpeg has no fields", parse(outJpeg).fields.length, 0);
+  eq("folder: written jpeg has no gps", parse(outJpeg).gps, null);
+  const outVideo = written.get("metastrip-clean/trip/clip-clean.mp4");
+  eq("folder: written video has no gps", (await parseVideo(outVideo)).gps, null);
+}
+
+{
+  // stopping mid-run must leave everything after it untouched
+  const tree = F.fakeDirectory({
+    "a.jpg": F.makeJpeg({ exif: exifBlob }),
+    "b.jpg": F.makeJpeg({ exif: exifBlob }),
+    "c.jpg": F.makeJpeg({ exif: exifBlob }),
+  });
+  const flag = { stop: false };
+  const summary = await call("cleanFolder(__tree, { shouldStop: __shouldStop, onProgress: __onProgress })", {
+    __tree: tree,
+    __shouldStop: () => flag.stop,
+    __onProgress: () => { flag.stop = true; }, // stop after the first file starts
+  });
+  eq("folder: stop reported", summary.stopped, true);
+  eq("folder: stopped after one file", summary.seen, 1);
+  eq("folder: only one file written", F.writtenFiles(tree).size, 1);
 }
 
 /* ---------------- report ---------------- */

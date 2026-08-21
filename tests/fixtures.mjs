@@ -572,3 +572,72 @@ export function makeWebm({ title = "", tags = [], width = 1280, height = 720, di
   const header = ebml(0x1a45dfa3, bytes(ebml(0x4286, bytes(1))));
   return bytes(header, segment);
 }
+
+/* ---------- fake File System Access handles ----------
+   Enough of the API surface for the folder walk to run with no disk behind
+   it: entries(), getFile(), getDirectoryHandle({create}) and a writable that
+   records what was written. */
+
+export function fakeDirectory(tree, name = "root") {
+  const children = new Map();
+  const written = new Map();
+
+  for (const [key, value] of Object.entries(tree)) {
+    if (value instanceof Uint8Array) {
+      children.set(key, {
+        kind: "file",
+        name: key,
+        async getFile() {
+          return new File([value], key, { type: "" });
+        },
+      });
+    } else {
+      children.set(key, fakeDirectory(value, key));
+    }
+  }
+
+  const handle = {
+    kind: "directory",
+    name,
+    written,
+    children,
+    async *entries() {
+      for (const [key, value] of children) yield [key, value];
+    },
+    async getDirectoryHandle(dirName, { create } = {}) {
+      if (!children.has(dirName)) {
+        if (!create) throw new Error(`no such directory ${dirName}`);
+        children.set(dirName, fakeDirectory({}, dirName));
+      }
+      return children.get(dirName);
+    },
+    async getFileHandle(fileName, { create } = {}) {
+      if (!children.has(fileName) && !create) throw new Error(`no such file ${fileName}`);
+      return {
+        kind: "file",
+        name: fileName,
+        async createWritable() {
+          return {
+            async write(blob) {
+              written.set(fileName, new Uint8Array(await blob.arrayBuffer()));
+            },
+            async close() {},
+          };
+        },
+      };
+    },
+  };
+  return handle;
+}
+
+/* Collects every file written anywhere under a fake tree. */
+export function writtenFiles(handle, prefix = "") {
+  const out = new Map();
+  for (const [name, bytes] of handle.written) out.set(prefix + name, bytes);
+  for (const [name, child] of handle.children) {
+    if (child.kind === "directory") {
+      for (const [key, value] of writtenFiles(child, `${prefix}${name}/`)) out.set(key, value);
+    }
+  }
+  return out;
+}

@@ -304,6 +304,14 @@
       <span class="dropzone__sample-or">or</span>
       <button class="dropzone__sample-btn" id="sampleCleanBtn" type="button">an already-clean one</button>
     </p>
+    <p class="dropzone__folder">
+      <button class="pill pill--light" id="folderBtn" type="button">CLEAN A WHOLE FOLDER</button>
+      <span class="dropzone__folder-note">Cleaned copies go into a new <code>metastrip-clean</code> folder. Your originals are never touched, and nothing is uploaded.</span>
+    </p>
+    <div class="folder-panel" id="folderPanel" hidden>
+      <p class="folder-panel__status" id="folderStatus" role="status"></p>
+      <button class="pill pill--dark" id="folderStopBtn" type="button" hidden>STOP</button>
+    </div>
     <p class="storage-notice" id="storageNotice" role="status" hidden></p>
     <div class="storage-meter" id="storageMeter" hidden>
       <div class="storage-meter__track"><span class="storage-meter__fill" id="storageMeterFill"></span></div>
@@ -494,5 +502,6 @@
   <script src="js/storage.js"></script>
   <script src="js/stripper.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/folder.js"></script>
 </body>
 </html>
