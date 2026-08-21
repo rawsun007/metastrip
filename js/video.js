@@ -457,6 +457,254 @@ function pushVideoField(result, field) {
   result.fields.push(field);
 }
 
+/* ---------- WebM / Matroska ----------
+   Same idea, different container. EBML elements carry a variable-length id
+   and a variable-length size, so the tree is walked without ever reading a
+   Cluster: those hold the actual frames and are simply skipped over. */
+
+const EBML_MAGIC = [0x1a, 0x45, 0xdf, 0xa3];
+
+const EBML = {
+  segment: 0x18538067,
+  seekHead: 0x114d9b74,
+  info: 0x1549a966,
+  timecodeScale: 0x2ad7b1,
+  duration: 0x4489,
+  dateUtc: 0x4461,
+  muxingApp: 0x4d80,
+  writingApp: 0x5741,
+  title: 0x7ba9,
+  tracks: 0x1654ae6b,
+  trackEntry: 0xae,
+  codecId: 0x86,
+  trackName: 0x536e,
+  language: 0x22b59c,
+  video: 0xe0,
+  pixelWidth: 0xb0,
+  pixelHeight: 0xba,
+  tags: 0x1254c367,
+  tag: 0x7373,
+  simpleTag: 0x67c8,
+  tagName: 0x45a3,
+  tagString: 0x4487,
+  attachments: 0x1941a469,
+  cluster: 0x1f43b675,
+  cues: 0x1c53bb6b,
+};
+
+/* Milliseconds between 2001-01-01 (the Matroska epoch) and the Unix epoch */
+const EBML_EPOCH_MS = 978307200000;
+
+function vintLength(firstByte) {
+  for (let i = 0; i < 8; i++) if (firstByte & (0x80 >> i)) return i + 1;
+  return 0;
+}
+
+/* Reads one EBML element header. Ids keep their marker bits (that is how
+   they are written in the spec tables); sizes drop theirs. A size of all
+   ones means "unknown", which live-muxed files use for the Segment. */
+async function readEbmlHeader(file, offset) {
+  const head = await readSlice(file, offset, 16);
+  if (head.length < 2) return null;
+  const idLen = vintLength(head[0]);
+  if (!idLen || idLen > 4 || head.length < idLen + 1) return null;
+  let id = 0;
+  for (let i = 0; i < idLen; i++) id = id * 256 + head[i];
+
+  const sizeLen = vintLength(head[idLen]);
+  if (!sizeLen || sizeLen > 8 || head.length < idLen + sizeLen) return null;
+  let size = head[idLen] & (0xff >> sizeLen);
+  let unknown = size === 0xff >> sizeLen;
+  for (let i = 1; i < sizeLen; i++) {
+    size = size * 256 + head[idLen + i];
+    if (head[idLen + i] !== 0xff) unknown = false;
+  }
+  const dataStart = offset + idLen + sizeLen;
+  return {
+    id, start: offset, dataStart,
+    dataEnd: unknown ? file.size : Math.min(dataStart + size, file.size),
+    end: unknown ? file.size : Math.min(dataStart + size, file.size),
+  };
+}
+
+async function* ebmlChildren(file, from, to) {
+  let offset = from;
+  let guard = 0;
+  while (offset < to && guard++ < 8192) {
+    const el = await readEbmlHeader(file, offset);
+    if (!el || el.end <= offset) return;
+    yield el;
+    offset = el.end;
+  }
+}
+
+async function parseWebm(file) {
+  const result = { fields: [], gps: null, format: "webm", kind: "video", containerEdits: [] };
+  for await (const top of ebmlChildren(file, 0, file.size)) {
+    if (top.id !== EBML.segment) continue;
+    let timecodeScale = 1e6;
+    let duration = 0;
+    for await (const el of ebmlChildren(file, top.dataStart, top.dataEnd)) {
+      // clusters are the payload; never read them, just step over
+      if (el.id === EBML.cluster || el.id === EBML.cues || el.id === EBML.seekHead) continue;
+      if (el.id === EBML.info) {
+        for await (const info of ebmlChildren(file, el.dataStart, el.dataEnd)) {
+          if (info.id === EBML.timecodeScale) timecodeScale = (await ebmlUint(file, info)) || 1e6;
+          else if (info.id === EBML.duration) duration = await ebmlFloat(file, info);
+          else if (info.id === EBML.dateUtc) {
+            const ns = await ebmlUint(file, info);
+            pushVideoField(result, {
+              label: "Recorded", value: new Date(EBML_EPOCH_MS + ns / 1e6).toISOString().replace("T", " ").replace(/\.\d+Z$/, " UTC"),
+              risk: "time", edits: [{ kind: "void", start: info.start, end: info.end }],
+            });
+          } else if (info.id === EBML.muxingApp || info.id === EBML.writingApp || info.id === EBML.title) {
+            const text = await ebmlString(file, info);
+            if (!text) continue;
+            pushVideoField(result, {
+              label: info.id === EBML.title ? "Title" : info.id === EBML.muxingApp ? "Muxing app" : "Writing app",
+              value: text,
+              risk: info.id === EBML.title ? "identity" : "device",
+              edits: [{ kind: "void", start: info.start, end: info.end }],
+            });
+          }
+        }
+      } else if (el.id === EBML.tracks) {
+        await readWebmTracks(file, el, result);
+      } else if (el.id === EBML.tags) {
+        result.containerEdits.push({ kind: "void", start: el.start, end: el.end });
+        await readWebmTags(file, el, result);
+      } else if (el.id === EBML.attachments) {
+        result.containerEdits.push({ kind: "void", start: el.start, end: el.end });
+        pushVideoField(result, {
+          label: "Attached files", value: "present (cover art or arbitrary files)", risk: "device",
+          edits: [{ kind: "void", start: el.start, end: el.end }],
+        });
+      }
+    }
+    if (duration) {
+      pushVideoField(result, { label: "Duration", value: formatDuration((duration * timecodeScale) / 1e9), risk: "dimensions" });
+    }
+  }
+  return result;
+}
+
+async function readWebmTracks(file, tracks, result) {
+  for await (const entry of ebmlChildren(file, tracks.dataStart, tracks.dataEnd)) {
+    if (entry.id !== EBML.trackEntry) continue;
+    let width = 0;
+    let height = 0;
+    for await (const el of ebmlChildren(file, entry.dataStart, entry.dataEnd)) {
+      if (el.id === EBML.codecId) {
+        const codec = await ebmlString(file, el);
+        const name = WEBM_CODECS[codec] || codec;
+        if (name) pushVideoField(result, { label: "Codec", value: name, risk: "device" });
+      } else if (el.id === EBML.trackName) {
+        const text = await ebmlString(file, el);
+        if (text) {
+          pushVideoField(result, {
+            label: "Track name", value: text, risk: "identity",
+            edits: [{ kind: "void", start: el.start, end: el.end }],
+          });
+        }
+      } else if (el.id === EBML.video) {
+        for await (const v of ebmlChildren(file, el.dataStart, el.dataEnd)) {
+          if (v.id === EBML.pixelWidth) width = await ebmlUint(file, v);
+          else if (v.id === EBML.pixelHeight) height = await ebmlUint(file, v);
+        }
+      }
+    }
+    if (width && height) pushVideoField(result, { label: "Frame size", value: `${width} x ${height}`, risk: "dimensions" });
+  }
+}
+
+const WEBM_CODECS = {
+  "V_VP8": "VP8", "V_VP9": "VP9", "V_AV1": "AV1", "V_MPEG4/ISO/AVC": "H.264",
+  "V_MPEGH/ISO/HEVC": "HEVC / H.265", "A_OPUS": "Opus audio", "A_VORBIS": "Vorbis audio",
+  "A_AAC": "AAC audio", "A_FLAC": "FLAC audio",
+};
+
+/* Matroska tags are free-form name/value pairs, and that is exactly where
+   phone and desktop editors park location strings and device names. */
+async function readWebmTags(file, tags, result) {
+  for await (const tag of ebmlChildren(file, tags.dataStart, tags.dataEnd)) {
+    if (tag.id !== EBML.tag) continue;
+    for await (const simple of ebmlChildren(file, tag.dataStart, tag.dataEnd)) {
+      if (simple.id !== EBML.simpleTag) continue;
+      let name = "";
+      let value = "";
+      for await (const el of ebmlChildren(file, simple.dataStart, simple.dataEnd)) {
+        if (el.id === EBML.tagName) name = await ebmlString(file, el);
+        else if (el.id === EBML.tagString) value = await ebmlString(file, el);
+      }
+      if (!name || !value) continue;
+      // muxers write a per-track DURATION tag that just repeats the Info
+      // duration; showing it twice reads like a second leak
+      if (/^duration$/i.test(name)) continue;
+      const edits = [{ kind: "void", start: simple.start, end: simple.end }];
+      if (/^(LOCATION|GPS.*|GEO.*)$/i.test(name)) {
+        readIso6709Field(value, { absStart: simple.start, absEnd: simple.end }, result);
+        continue;
+      }
+      pushVideoField(result, {
+        label: WEBM_TAG_LABELS[name.toUpperCase()] || titleCase(name),
+        value,
+        risk: WEBM_TAG_RISKS[name.toUpperCase()] || "identity",
+        edits,
+      });
+    }
+  }
+}
+
+const WEBM_TAG_LABELS = {
+  TITLE: "Title", COMMENT: "Comment", DESCRIPTION: "Description", ARTIST: "Artist",
+  ENCODER: "Encoder", DATE_RECORDED: "Recorded", DATE: "Recorded", COPYRIGHT: "Copyright",
+  DEVICE: "Device", MODEL: "Camera model", MAKE: "Camera make",
+};
+
+const WEBM_TAG_RISKS = {
+  ENCODER: "device", DEVICE: "device", MODEL: "device", MAKE: "device",
+  DATE_RECORDED: "time", DATE: "time",
+};
+
+function titleCase(name) {
+  const words = name.toLowerCase().replace(/_/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+async function ebmlUint(file, el) {
+  const bytes = await readSlice(file, el.dataStart, Math.min(8, el.dataEnd - el.dataStart));
+  let value = 0;
+  for (const b of bytes) value = value * 256 + b;
+  return value;
+}
+
+async function ebmlFloat(file, el) {
+  const length = el.dataEnd - el.dataStart;
+  const bytes = await readSlice(file, el.dataStart, length);
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.length);
+  if (length === 4) return view.getFloat32(0);
+  if (length === 8) return view.getFloat64(0);
+  return 0;
+}
+
+async function ebmlString(file, el) {
+  const bytes = await readSlice(file, el.dataStart, Math.min(512, el.dataEnd - el.dataStart));
+  return utf8Slice(bytes, 0, bytes.length);
+}
+
+/* ---------- dispatch ---------- */
+
+/** Read metadata from any supported video File. */
+async function parseVideoMetadata(file) {
+  const head = await readSlice(file, 0, 16);
+  if (EBML_MAGIC.every((b, i) => head[i] === b)) return parseWebm(file);
+  const brand = fourcc(head, 4);
+  if (brand === "ftyp" || brand === "moov" || brand === "mdat" || brand === "free" || brand === "skip") {
+    return parseMp4(file);
+  }
+  return { fields: [], gps: null, format: "other", kind: "video", containerEdits: [] };
+}
+
 /* ---------- stripping ----------
    A video cannot be cleaned the way a JPEG is. Chunk offset tables (stco,
    co64) hold absolute file positions into mdat, so deleting a single byte
