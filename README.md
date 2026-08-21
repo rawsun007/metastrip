@@ -2,7 +2,7 @@
 
 **Your files. Untracked.**
 
-Live at [metastrip.vercel.app](https://metastrip.vercel.app/) · current release **v1.1.0** ([changelog](https://metastrip.vercel.app/changelog.html))
+Live at [metastrip.vercel.app](https://metastrip.vercel.app/) · current release **v1.1.1** ([changelog](https://metastrip.vercel.app/changelog.html))
 
 Your files quietly carry hidden metadata: your exact GPS location, your device model, its serial number, and the exact second you pressed the button. MetaStrip shows you everything a file leaks, then strips it, **100% in your browser**. No upload, no server, no account. Nothing ever leaves your device.
 
@@ -65,6 +65,13 @@ python3 -m http.server 4173
 ```
 
 Then open http://localhost:4173
+
+## Contributing
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) first — it covers the three things that
+are not obvious from reading one file: these are plain scripts in one shared
+global scope, nothing may move because most of these formats store absolute byte
+offsets, and no whole file may be loaded because a clip can be gigabytes.
 
 ## Tests
 

@@ -10,6 +10,12 @@
   <meta property="og:title" content="Changelog | MetaStrip" />
   <meta property="og:description" content="Everything shipped on MetaStrip, in order, from the first commit to today." />
   <meta property="og:image" content="https://metastrip.vercel.app/assets/og.jpg" />
+  <meta property="og:url" content="https://metastrip.vercel.app/changelog.html" />
+  <meta property="og:site_name" content="MetaStrip" />
+  <meta name="twitter:title" content="Changelog | MetaStrip" />
+  <meta name="twitter:description" content="Everything shipped on MetaStrip, in order, from the first commit to today." />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+  <meta name="author" content="Roshan Ramani" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://metastrip.vercel.app/assets/og.jpg" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23fb4903'/><text x='50' y='68' font-size='52' font-family='Arial Black' font-weight='900' text-anchor='middle' fill='white'>M</text></svg>" />
@@ -47,6 +53,42 @@
     <p>MetaStrip is built in the open, one feature at a time, each one tested and shipped on its own. This page tracks all of it. Newest first.</p>
 
     <div class="changelog">
+
+      <section class="changelog__entry">
+        <div class="changelog__date">
+          <span class="changelog__date-text">2026-08-21</span>
+          <span class="changelog__badge changelog__badge--release">RELEASE</span>
+          <span class="changelog__version">v1.1.1</span>
+        </div>
+        <h2>The writing catches up with the tool</h2>
+        <p>Ten features shipped in a day and the site was still describing a photo cleaner. This release changes no behaviour: it is the words, the plumbing and the keyboard.</p>
+        <h3>Four new posts</h3>
+        <ul>
+          <li><a href="blog/remove-content-credentials.html">What Content Credentials say about you</a> — what is actually inside a C2PA manifest, the private corner each format hides it in, and the honest trade in removing it, since it also removes the file's proof of itself.</li>
+          <li><a href="blog/your-photo-has-a-video-inside-it.html">Your photo has a video inside it</a> — why motion photos defeat most cleaners, and how the real end of a JPEG is found exactly rather than guessed.</li>
+          <li><a href="blog/pdf-metadata.html">Your PDF knows who made it, twice</a> — the information dictionary, the XMP packet repeating it, and the identifier that links two documents you did not want linked.</li>
+          <li><a href="blog/raw-files-hide-a-jpeg.html">Your raw file is hiding a JPEG</a> — serials, the name you set in the camera menu once, and the rendered preview that survives every crop.</li>
+        </ul>
+        <h3>The six older posts stop being wrong</h3>
+        <ul>
+          <li>Each gets an "Update, August 2026" section rather than a rewrite, so it keeps its own voice while correcting what it now gets wrong: the lossless explainer covers how five other formats define "empty", the EXIF explainer covers the dialects other formats use, and the platform map notes that provenance metadata is now added on purpose rather than left behind by accident.</li>
+          <li>All ten posts gained a canonical link, which none of them had, and a dateModified so an edited post is not read as stale.</li>
+        </ul>
+        <h3>Plumbing</h3>
+        <ul>
+          <li>The sitemap knew about six posts and had never heard of the changelog. Now twelve pages with real dates, change frequencies and priorities.</li>
+          <li>robots.txt says why it allows everything, and stops pointing crawlers at <code>/js/</code>, <code>/vendor/</code> and <code>/tests/</code>, which are not pages.</li>
+          <li>The app's structured data was four lines describing a photo tool. It now carries the real feature list, the formats actually handled, the version, and the two facts that matter for this kind of tool: no permissions needed, nothing stored. A Blog node ties the ten posts together as one set.</li>
+          <li>Every page gained og:url, og:site_name, twitter:title, twitter:description, an author tag and a robots directive. The blog had none of it.</li>
+          <li>Two new FAQ entries for what people actually search: removing Content Credentials, and whether a screenshot with no metadata is safe.</li>
+        </ul>
+        <h3>Keyboard and contributors</h3>
+        <ul>
+          <li>The redactor was a modal letting Tab wander behind it. It now traps focus while open, moves focus in on open and back out on close, and labels its canvas. Drawing needs a pointer, which is a real limit, so it says so and points keyboard users at the ordinary strip button rather than pretending.</li>
+          <li>The linkage, receipt, storage and folder panels are labelled regions, the receipt's scrollable block is keyboard reachable, and the meter stops animating under reduced-motion.</li>
+          <li>The test suite now runs in CI on every push, and CONTRIBUTING.md writes down the three traps in this codebase: one shared global scope, nothing may move, and never load a whole file.</li>
+        </ul>
+      </section>
 
       <section class="changelog__entry">
         <div class="changelog__date">
