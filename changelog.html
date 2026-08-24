@@ -56,6 +56,24 @@
 
       <section class="changelog__entry">
         <div class="changelog__date">
+          <span class="changelog__date-text">2026-08-24</span>
+          <span class="changelog__badge changelog__badge--release">RELEASE</span>
+          <span class="changelog__version">v1.2.1</span>
+        </div>
+        <h2>A false alarm over the name of a muxer</h2>
+        <p>Reported with a downloaded video whose entire metadata was <code>Lavf62.3.100</code>, the version string ffmpeg writes when it remuxes a file. Duration, codec and frame size are not removable and never counted, so that one string was the only thing scoring, and it turned the badge yellow.</p>
+        <ul>
+          <li>That is a false alarm, and false alarms are expensive here. A muxer name says a version of ffmpeg touched the file. It does not say who you are, what you shot it on, when, or where. Badging it the same as a photo carrying a home address teaches people to ignore the badge.</li>
+          <li>Tool strings are now their own tier. The encoder atom in MP4, the muxing and writing app in Matroska, the encoder frame in ID3, the Vorbis vendor string and a PDF's Producer are all marked as trivia: still listed, still ticked, still removed, just not a reason to raise an alarm.</li>
+          <li>Everything that points at a person or a device scores exactly as it did. A recording timestamp still counts too, because that says when you were somewhere.</li>
+          <li>A file that now comes out CLEAN with a tool string still in it says so in a line under the table, rather than showing a row while claiming there is nothing there.</li>
+          <li>Also reported in the same screenshot: "Codec" appearing twice with different values, which reads like a bug. A file with a picture and a sound track now says Video codec and Audio codec.</li>
+          <li>The scoring logic moved out of the page wiring into its own file, so the one rule that decides what the tool claims about a file is now covered by tests instead of needing a browser to check.</li>
+        </ul>
+      </section>
+
+      <section class="changelog__entry">
+        <div class="changelog__date">
           <span class="changelog__date-text">2026-08-21</span>
           <span class="changelog__badge changelog__badge--release">RELEASE</span>
           <span class="changelog__version">v1.2.0</span>
