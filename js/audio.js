@@ -77,7 +77,7 @@ const ID3_FRAMES = {
   TDAT: { label: "Recording date", risk: "time" },
   TIME: { label: "Recording time", risk: "time" },
   TENC: { label: "Encoded by", risk: "device" },
-  TSSE: { label: "Encoder software", risk: "device" },
+  TSSE: { label: "Encoder software", risk: "trivia" },
   TOWN: { label: "File owner", risk: "identity" },
   TPUB: { label: "Publisher", risk: "identity" },
   TCOP: { label: "Copyright", risk: "identity" },
@@ -311,7 +311,7 @@ const FLAC_TAGS = {
   DESCRIPTION: { label: "Description", risk: "identity" },
   GENRE: { label: "Genre", risk: "identity" },
   COPYRIGHT: { label: "Copyright", risk: "identity" },
-  ENCODER: { label: "Encoder software", risk: "device" },
+  ENCODER: { label: "Encoder software", risk: "trivia" },
   ENCODED_BY: { label: "Encoded by", risk: "device" },
   ORGANIZATION: { label: "Organisation", risk: "identity" },
   PERFORMER: { label: "Performer", risk: "identity" },
@@ -365,7 +365,7 @@ function readVorbisComments(block, result, removal) {
   if (offset + 4 > block.length) return;
   const vendor = utf8Of(block, 4, Math.min(block.length, offset));
   if (vendor) {
-    result.fields.push({ label: "Encoder software", value: vendor, risk: "device", edits: removal });
+    result.fields.push({ label: "Encoder software", value: vendor, risk: "trivia", edits: removal });
   }
   const count = view.getUint32(offset, true);
   offset += 4;

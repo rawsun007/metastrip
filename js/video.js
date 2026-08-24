@@ -236,7 +236,14 @@ function readSampleDescription(bytes, box, result) {
   for (let i = 0; i < count && offset + 8 <= box.end; i++) {
     const size = view.getUint32(offset);
     const format = fourcc(bytes, offset + 4);
-    pushVideoField(result, { label: "Codec", value: CODEC_NAMES[format] || format, risk: "device" });
+    const codec = CODEC_NAMES[format] || format;
+    // a file with a picture and a sound track has two of these, and "Codec"
+    // twice with different values reads like a bug
+    pushVideoField(result, {
+      label: /audio/i.test(codec) ? "Audio codec" : "Video codec",
+      value: codec.replace(/ audio$/i, ""),
+      risk: "device",
+    });
 
     // a visual sample entry puts the stored pixel size 32 bytes in
     if (offset + 36 <= box.end && !result.storedSize) {
@@ -280,7 +287,7 @@ const UDTA_LABELS = {
   "©mak": { label: "Camera make", risk: "device" },
   "©mod": { label: "Camera model", risk: "device" },
   "©swr": { label: "Software", risk: "device" },
-  "©too": { label: "Encoder", risk: "device" },
+  "©too": { label: "Encoder", risk: "trivia" },
   "©day": { label: "Recorded", risk: "time" },
   "©nam": { label: "Title", risk: "identity" },
   "©cmt": { label: "Comment", risk: "identity" },
@@ -615,7 +622,8 @@ async function parseWebm(file) {
             pushVideoField(result, {
               label: info.id === EBML.title ? "Title" : info.id === EBML.muxingApp ? "Muxing app" : "Writing app",
               value: text,
-              risk: info.id === EBML.title ? "identity" : "device",
+              // which library wrote the file says nothing about who made it
+              risk: info.id === EBML.title ? "identity" : "trivia",
               edits: [{ kind: "void", start: info.start, end: info.end }],
             });
           }
@@ -651,7 +659,13 @@ async function readWebmTracks(file, tracks, result) {
       if (el.id === EBML.codecId) {
         const codec = await ebmlString(file, el);
         const name = WEBM_CODECS[codec] || codec;
-        if (name) pushVideoField(result, { label: "Codec", value: name, risk: "device" });
+        if (name) {
+          pushVideoField(result, {
+            label: /audio/i.test(name) ? "Audio codec" : "Video codec",
+            value: name.replace(/ audio$/i, ""),
+            risk: "device",
+          });
+        }
       } else if (el.id === EBML.trackName) {
         const text = await ebmlString(file, el);
         if (text) {
@@ -722,7 +736,7 @@ const WEBM_TAG_LABELS = {
 };
 
 const WEBM_TAG_RISKS = {
-  ENCODER: "device", DEVICE: "device", MODEL: "device", MAKE: "device",
+  ENCODER: "trivia", DEVICE: "device", MODEL: "device", MAKE: "device",
   DATE_RECORDED: "time", DATE: "time",
 };
 

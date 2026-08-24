@@ -963,6 +963,18 @@ a { color: inherit; text-decoration: none; }
   outline: 2.5px solid var(--accent-orange);
   outline-offset: 2px;
 }
+.meta-list__reassure {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #10231a;
+  border-left: 4px solid var(--accent-green);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
 .meta-list__hint { color: var(--color-muted); font-size: 12.5px; margin-top: 8px; }
 .meta-list__copy-json {
   background: none;

@@ -23,7 +23,7 @@ const PDF_INFO_KEYS = {
   Subject: { label: "Subject", risk: "identity" },
   Keywords: { label: "Keywords", risk: "identity" },
   Creator: { label: "Created with", risk: "device" },
-  Producer: { label: "Written by", risk: "device" },
+  Producer: { label: "Written by", risk: "trivia" },
   CreationDate: { label: "Created", risk: "time" },
   ModDate: { label: "Last modified", risk: "time" },
   Company: { label: "Company", risk: "identity" },
