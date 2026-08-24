@@ -11,7 +11,7 @@ import vm from "node:vm";
 import * as F from "./fixtures.mjs";
 
 const JS_DIR = path.join(import.meta.dirname, "..", "js");
-const SCRIPTS = ["aitags.js", "c2pa.js", "edits.js", "exif.js", "stripper.js", "video.js", "pdf.js", "audio.js"];
+const SCRIPTS = ["score.js", "aitags.js", "c2pa.js", "edits.js", "exif.js", "stripper.js", "video.js", "pdf.js", "audio.js"];
 const DOM_SCRIPTS = ["linkage.js", "receipt.js", "redact.js", "storage.js", "folder.js"];
 
 const ctx = vm.createContext({ console, File, Blob, DataView, Uint8Array, TextDecoder, TextEncoder });
@@ -29,7 +29,6 @@ Object.assign(ctx, {
   window: {},
   document: { getElementById: () => null, addEventListener: () => {}, querySelectorAll: () => [] },
   HTMLVideoElement: class {},
-  isRemovableField: (f) => Boolean(f.ranges || f.chunkRange || f.chunkRanges || (f.edits && f.edits.length)),
   // mirrors app.js, which owns the real one
   formatBytes: (n) =>
     n < 1024
@@ -261,7 +260,7 @@ async function parseVideo(u8, name = "clip.mp4", type = "video/mp4") {
   eq("mp4: kind", meta.kind, "video");
   eq("mp4: model", valueOf(meta, "Camera model"), "iPhone 15 Pro");
   eq("mp4: frame size", valueOf(meta, "Frame size"), "1920 x 1080");
-  eq("mp4: codec", valueOf(meta, "Codec"), "H.264");
+  eq("mp4: codec", valueOf(meta, "Video codec"), "H.264");
   eq("mp4: duration", valueOf(meta, "Duration"), "0:02");
   check("mp4: gps", meta.gps && Math.abs(meta.gps.lat - 21.1702) < 0.001, JSON.stringify(meta.gps));
 
@@ -950,6 +949,70 @@ const pixelAt = (image, x, y) => {
   check("storage: refusal names the real number", huge.reason.includes("3.00 GB"), huge.reason);
   const fine = call("checkStorageRoom({ name: 'ok.jpg', size: 2000, type: 'image/jpeg' })", {});
   eq("storage: normal file accepted", fine.ok, true);
+}
+
+/* ---------------- what the badge claims ----------------
+   A file whose only metadata is the name of the muxer that wrote it is not
+   risky in any sense a person cares about. Badging it the same as a photo
+   carrying a home address makes the badge meaningless. */
+
+{
+  const tool = { label: "Encoder", value: "Lavf62.3.100", risk: "trivia", edits: [{ kind: "free", start: 0, end: 8 }] };
+  const structural = { label: "Video codec", value: "H.264", risk: "device" };
+  const camera = { label: "Camera model", value: "iPhone 15 Pro", risk: "device", edits: [{ kind: "free", start: 0, end: 8 }] };
+
+  eq("badge: nothing at all is clean", call("scoreMeta({ fields: [], gps: null })", {}).label, "CLEAN");
+  eq(
+    "badge: structural rows alone are clean",
+    call("scoreMeta({ fields: [__f], gps: null })", { __f: structural }).label,
+    "CLEAN"
+  );
+  eq(
+    "badge: a muxer string is not risky",
+    call("scoreMeta({ fields: [__a, __b], gps: null })", { __a: structural, __b: tool }).label,
+    "CLEAN"
+  );
+  eq(
+    "badge: a camera model is risky",
+    call("scoreMeta({ fields: [__a, __b], gps: null })", { __a: tool, __b: camera }).label,
+    "RISKY"
+  );
+  eq(
+    "badge: coordinates outrank everything",
+    call("scoreMeta({ fields: [__a], gps: { lat: 21, lon: 72 } })", { __a: tool }).label,
+    "LEAKING"
+  );
+
+  // trivia is still removable, and still counted when something is removed
+  eq("badge: trivia still counts as removable", call("countRemovable({ fields: [__a], gps: null })", { __a: tool }), 1);
+  check(
+    "badge: a clean file with a tool string says so",
+    (call("describeCleanState({ fields: [__a, __b] })", { __a: structural, __b: tool }) || "").includes("encoder"),
+    call("describeCleanState({ fields: [__a, __b] })", { __a: structural, __b: tool })
+  );
+  eq(
+    "badge: a truly empty file gets no note",
+    call("describeCleanState({ fields: [__a] })", { __a: structural }),
+    null
+  );
+}
+
+{
+  // end to end: the exact shape of file that started this, a download whose
+  // only metadata is the muxer that wrote it. A remux writes zeroed movie
+  // timestamps, which is why there is no recording date to find.
+  const mp4 = F.makeMp4({ created: 0, udta: [F.textAtom("©too", "Lavf62.3.100")] });
+  const meta = await parseVideo(mp4);
+  eq("download: encoder read", valueOf(meta, "Encoder"), "Lavf62.3.100");
+  eq("download: badge is clean", call("scoreMeta(__m)", { __m: meta }).label, "CLEAN");
+  eq("download: still removable", call("countRemovable(__m)", { __m: meta }), 1);
+
+  const withCamera = F.makeMp4({ created: 0, udta: [F.textAtom("©too", "Lavf62.3.100"), F.textAtom("©mod", "iPhone 15 Pro")] });
+  eq(
+    "download: a real device pushes it back to risky",
+    call("scoreMeta(__m)", { __m: await parseVideo(withCamera) }).label,
+    "RISKY"
+  );
 }
 
 /* ---------------- the hidden attribute ----------------

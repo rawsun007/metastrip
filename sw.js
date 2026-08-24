@@ -9,6 +9,7 @@ const CORE = [
   "./index.html",
   "./styles.css",
   "./js/app.js",
+  "./js/score.js",
   "./js/aitags.js",
   "./js/c2pa.js",
   "./js/edits.js",

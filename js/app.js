@@ -318,19 +318,6 @@ const RISK_META = {
   dimensions: { icon: icon("st-resize") },
 };
 
-/* Duration, frame size and codec are read out of boxes every player needs,
-   so they are shown but never counted as a leak and never offered for
-   removal. Only a field that can actually be removed scores. */
-function isRemovableField(f) {
-  return Boolean(f.ranges || f.chunkRange || (f.edits && f.edits.length));
-}
-
-function scoreMeta(meta) {
-  if (meta.gps) return { label: "LEAKING", cls: "score-badge--leak" };
-  if (meta.fields.some(isRemovableField)) return { label: "RISKY", cls: "score-badge--risky" };
-  return { label: "CLEAN", cls: "score-badge--clean" };
-}
-
 function makeBadge(meta) {
   const { label, cls } = scoreMeta(meta);
   const badge = document.createElement("span");
@@ -588,6 +575,14 @@ async function renderCard(file) {
       `;
       list.appendChild(row);
     }
+    const triviaOnly = describeCleanState(meta);
+    if (triviaOnly && scoreMeta(meta).label === "CLEAN") {
+      const note = document.createElement("p");
+      note.className = "meta-list__reassure";
+      note.innerHTML = `${icon("st-shield")} ${escapeHtml(triviaOnly)}`;
+      body.appendChild(note);
+    }
+
     const hint = document.createElement("p");
     hint.className = "meta-list__hint";
     hint.innerHTML = `Everything ticked gets removed. Untick anything you want to keep. <button class="meta-list__copy-json" type="button">Copy as JSON</button>`;
