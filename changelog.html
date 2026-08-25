@@ -56,6 +56,25 @@
 
       <section class="changelog__entry">
         <div class="changelog__date">
+          <span class="changelog__date-text">2026-08-25</span>
+          <span class="changelog__badge changelog__badge--release">RELEASE</span>
+          <span class="changelog__version">v1.2.2</span>
+        </div>
+        <h2>Surviving a busy day on a free plan</h2>
+        <p>The site went dark for exceeding a free tier allowance. Nothing here runs on a server, so the only way that happens is traffic, and traffic is metered two ways: a million edge requests a month and 100 GB of transfer. Every file a visitor asks for spends the first one, which turns page structure into an uptime problem.</p>
+        <ul>
+          <li><strong>One script instead of sixteen.</strong> A cold visit was costing about twenty requests, most of them scripts, which capped the site at roughly 50,000 visits a month no matter how small those files were. The scripts are now concatenated into a single bundle at build time, taking a visit to about five requests and the ceiling to roughly 200,000.</li>
+          <li>Still no dependency, no transpiler and no framework. The individual files stay the source of truth, the bundle is committed so the site runs on any static server with no build step, and the test suite fails if the two have drifted.</li>
+          <li><strong>Returning visitors now cost almost nothing.</strong> The service worker serves assets from cache rather than asking the network each time whether a version stamped file has changed.</li>
+          <li><strong>A 302 KB photo was being shipped for a 210 pixel circle.</strong> It is 47 KB now, which is the single largest saving here, and the share image went from 140 KB to 83 KB.</li>
+          <li>Assets are cached for a year and marked immutable, since a release changes the URL. Pages are cached at the edge with stale-while-revalidate, so a spike is answered by the CDN instead of the origin.</li>
+          <li><strong>Security headers</strong>, one of which is on topic: the site can no longer be embedded on someone else's page, which is a cheap way to spend another site's bandwidth. The content security policy allows exactly what this tool does and nothing more, and was tested in a real browser against every preview type before shipping.</li>
+          <li>OPERATIONS.md documents what a repository cannot do for itself, including the most useful fact for this particular failure: Vercel's Attack Challenge Mode is free on every plan, and requests it blocks do not count toward your usage.</li>
+        </ul>
+      </section>
+
+      <section class="changelog__entry">
+        <div class="changelog__date">
           <span class="changelog__date-text">2026-08-24</span>
           <span class="changelog__badge changelog__badge--release">RELEASE</span>
           <span class="changelog__version">v1.2.1</span>

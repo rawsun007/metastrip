@@ -2,7 +2,7 @@
 
 **Your files. Untracked.**
 
-Live at [metastrip.vercel.app](https://metastrip.vercel.app/) · current release **v1.2.1** ([changelog](https://metastrip.vercel.app/changelog.html))
+Live at [metastrip.vercel.app](https://metastrip.vercel.app/) · current release **v1.2.2** ([changelog](https://metastrip.vercel.app/changelog.html))
 
 Your files quietly carry hidden metadata: your exact GPS location, your device model, its serial number, and the exact second you pressed the button. MetaStrip shows you everything a file leaks, then strips it, **100% in your browser**. No upload, no server, no account. Nothing ever leaves your device.
 
