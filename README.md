@@ -73,6 +73,17 @@ are not obvious from reading one file: these are plain scripts in one shared
 global scope, nothing may move because most of these formats store absolute byte
 offsets, and no whole file may be loaded because a clip can be gigabytes.
 
+## Building
+
+```bash
+node build.mjs
+```
+
+Concatenates `js/` into `js/bundle.js`, which is what the page actually loads.
+No dependencies and no transpiler. The bundle is committed, so the site runs on
+any static server with no build step at all, and the test suite fails if it has
+drifted from its sources. Running the site is otherwise just serving the folder.
+
 ## Tests
 
 ```bash

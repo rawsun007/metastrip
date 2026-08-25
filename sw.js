@@ -1,30 +1,26 @@
 /* MetaStrip service worker: offline support + Android share target.
-   Network-first so updates land immediately, cache fallback offline.
+
+   Two strategies, chosen by what the thing is.
+
+   HTML is network-first, so a new release lands immediately.
+
+   Everything else is cache-first. The bundle, the stylesheet and the images
+   are version-stamped and only change when the cache name changes, so asking
+   the network about them again on every visit spends bandwidth to be told
+   nothing changed. A returning visitor now costs close to zero requests,
+   which is what keeps a traffic spike from taking the site off the air.
+
    CACHE carries the release version, so shipping a version retires the
    previous cache on activate. */
 
-const CACHE = "metastrip-v1.2.1";
-const CORE = [
-  "./",
-  "./index.html",
-  "./styles.css",
-  "./js/app.js",
-  "./js/score.js",
-  "./js/aitags.js",
-  "./js/c2pa.js",
-  "./js/edits.js",
-  "./js/pdf.js",
-  "./js/audio.js",
-  "./js/linkage.js",
-  "./js/receipt.js",
-  "./js/redact.js",
-  "./js/folder.js",
-  "./js/exif.js",
-  "./js/video.js",
-  "./js/storage.js",
-  "./js/stripper.js",
-  "./js/motion.js",
-];
+const CACHE = "metastrip-v1.2.2";
+const CORE = ["./", "./index.html", "./styles.css", "./js/bundle.js"];
+
+/* Things that never change without a new release, so once they are in the
+   cache there is no reason to ask again. */
+function isImmutable(url) {
+  return /\.(css|js|png|jpg|jpeg|webp|avif|svg|woff2?|mp4)$/i.test(url.pathname);
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -71,6 +67,24 @@ self.addEventListener("fetch", (event) => {
 
   if (event.request.method !== "GET" || url.origin !== self.location.origin) return;
 
+  // cache-first for assets: a hit costs nothing and never reaches the network
+  if (isImmutable(url)) {
+    event.respondWith(
+      caches.match(event.request).then((hit) => {
+        if (hit) return hit;
+        return fetch(event.request).then((res) => {
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+          }
+          return res;
+        });
+      })
+    );
+    return;
+  }
+
+  // network-first for pages, so a new release is never held back by a cache
   event.respondWith(
     fetch(event.request)
       .then((res) => {

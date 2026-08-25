@@ -15,6 +15,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Rebuild the bundle
+        run: node build.mjs
+      - name: Fail if the committed bundle was stale
+        run: git diff --exit-code js/bundle.js
       - name: Run the test suite
         run: node tests/run.mjs
       - name: Check every script parses

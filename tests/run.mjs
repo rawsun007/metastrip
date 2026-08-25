@@ -9,6 +9,7 @@ import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
 import * as F from "./fixtures.mjs";
+import { buildBundle, BUNDLE_ORDER } from "../build.mjs";
 
 const JS_DIR = path.join(import.meta.dirname, "..", "js");
 const SCRIPTS = ["score.js", "aitags.js", "c2pa.js", "edits.js", "exif.js", "stripper.js", "video.js", "pdf.js", "audio.js"];
@@ -1013,6 +1014,33 @@ const pixelAt = (image, x, y) => {
     call("scoreMeta(__m)", { __m: await parseVideo(withCamera) }).label,
     "RISKY"
   );
+}
+
+/* ---------------- the shipped bundle ----------------
+   The page loads one generated file instead of sixteen, because every file is
+   a billable request. The bundle is committed so a plain static server still
+   works, which means it can go stale. This makes that a failing test rather
+   than a mystery in production. */
+
+{
+  const bundlePath = path.join(JS_DIR, "bundle.js");
+  const committed = fs.existsSync(bundlePath) ? fs.readFileSync(bundlePath, "utf8") : "";
+  check("bundle: exists", committed.length > 0, "run: node build.mjs");
+  check("bundle: matches its sources", committed === buildBundle(JS_DIR), "stale bundle, run: node build.mjs");
+
+  // every script the page needs has to be in the load order, or it ships broken
+  const shipped = new Set(BUNDLE_ORDER);
+  const onDisk = fs
+    .readdirSync(JS_DIR)
+    .filter((f) => f.endsWith(".js") && f !== "bundle.js");
+  const missing = onDisk.filter((f) => !shipped.has(f));
+  check("bundle: no script left out of the load order", missing.length === 0, missing.join(","));
+
+  const html = fs.readFileSync(path.join(JS_DIR, "..", "index.html"), "utf8");
+  const tags = [...html.matchAll(/<script src="js\/([^"?]+)/g)].map((m) => m[1]);
+  eq("bundle: the page loads exactly one script file", tags.length, 1);
+  eq("bundle: and it is the bundle", tags[0], "bundle.js");
+  check("bundle: the tag is version stamped so it can be cached forever", /bundle\.js\?v=/.test(html));
 }
 
 /* ---------------- the hidden attribute ----------------

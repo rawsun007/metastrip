@@ -7,6 +7,7 @@ whole tool and satisfy themselves that files never leave the device.
 ## Running it
 
 ```bash
+node build.mjs            # only needed after editing anything in js/
 python3 -m http.server 4173
 ```
 
@@ -50,6 +51,13 @@ them.
 headers with `file.slice()`, and build output from slices so the browser
 streams it. `await file.arrayBuffer()` is fine for a photo and wrong for a
 clip.
+
+**The page loads one bundle, not sixteen scripts.** Every file a visitor asks
+for is a billable edge request, and that arithmetic decides how much traffic a
+free plan absorbs before the site goes dark. Edit the files in `js/`, run
+`node build.mjs`, and commit the regenerated `js/bundle.js` with your change.
+The load order lives in `BUNDLE_ORDER` in build.mjs, and a new file has to be
+added there or it never ships. See OPERATIONS.md for the rest of it.
 
 **Say what is true in the UI.** If something cannot be removed, the card
 says so rather than offering a tick box that does nothing. If an operation
