@@ -14,6 +14,7 @@
 <script src="../js/c2pa.js"></script>
 <script src="../js/edits.js"></script>
 <script src="../js/exif.js"></script>
+<script src="../js/stripper.js"></script>
 <style>
   html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #000; }
   canvas { display: block; }
@@ -173,6 +174,19 @@ window.stageReady = (async () => {
   SUBJECT.bytes = new Uint8Array(ab);
   SUBJECT.leak = parseMetadata(ab);        // exif.js, the site's own reader
   SUBJECT.img.src = BEATS.subject; await SUBJECT.img.decode();
+  // What "Strip all" really does to this file, computed by stripper.js, and
+  // two checks on it: the image data is byte-identical, and a second read
+  // finds nothing left.
+  SUBJECT.clean = stripMetadata(ab).bytes;
+  const sos = (b) => { for (let i = 2; i + 1 < b.length; i++) if (b[i] === 0xff && b[i + 1] === 0xda) return i; return -1; };
+  const a0 = sos(SUBJECT.bytes), c0 = sos(SUBJECT.clean);
+  const imgA = SUBJECT.bytes.subarray(a0), imgC = SUBJECT.clean.subarray(c0);
+  SUBJECT.imageBytes = imgA.length;
+  SUBJECT.imageIdentical = imgA.length === imgC.length && imgA.every((v, i) => v === imgC[i]);
+  const again = parseMetadata(SUBJECT.clean.buffer.slice(SUBJECT.clean.byteOffset, SUBJECT.clean.byteOffset + SUBJECT.clean.byteLength));
+  SUBJECT.leftAfter = (again.fields || []).length + (again.gps ? 1 : 0);
+  // the segment that was cut: in this file, APP1 from byte 2
+  SUBJECT.cutFrom = 2; SUBJECT.cutTo = 2 + (SUBJECT.bytes.length - SUBJECT.clean.length);
   draw(0);
   return true;
 })();
@@ -348,6 +362,60 @@ ACTS.formats = (u, t) => {
   slam(`${FORMAT_COUNT} FORMATS.`, 56, 640, fit(`${FORMAT_COUNT} FORMATS.`, W - 112), C.yellow, u, BEAT * 3);
   // one beat is too short to type this, so it lands with the slam
   if (u >= BEAT * 3) mono("photos, raw, video, audio, pdf. all read, all stripped.", 62, 800, 40, C.text);
+};
+</script>
+
+<!-- ===== act 6: strip, "CLEANING A FILE WITHOUT TOUCHING A PIXEL" ===== -->
+<script>
+// The file's real bytes, spliced on screen the way stripJpeg splices them:
+// the EXIF segment is cut out and every other byte closes up behind it.
+const HEX = { x: 70, y: 70, row: 30, cell: 38, ascii: 830, achar: 13, rows: 34, size: 21 };
+const hx = (n) => n.toString(16).toUpperCase().padStart(2, "0");
+const posOf = (k) => [HEX.x + 120 + (k % 16) * HEX.cell, HEX.y + Math.floor(k / 16) * HEX.row];
+ACTS.strip = (u, t) => {
+  const b = u / BEAT, B = SUBJECT.bytes, cf = SUBJECT.cutFrom, ct = SUBJECT.cutTo, cutLen = ct - cf;
+  const lit = clamp((b - 1.2) / 1.6);                   // highlight sweep through the segment
+  const cut = ioE((b - 4) / 1.6);                       // 0 = original, 1 = spliced
+  font(HEX.size, MONO, 400); g.textAlign = "left";
+  const rowsShown = Math.ceil(clamp(b / 0.8) * HEX.rows);
+  // offsets column follows the file as it will be after the cut
+  for (let r = 0; r < Math.min(rowsShown, HEX.rows); r++) mono((r * 16).toString(16).padStart(6, "0"), HEX.x, HEX.y + r * HEX.row, HEX.size, C.muted);
+  const upto = Math.min(B.length, HEX.rows * 16 + cutLen);
+  for (let i = 0; i < upto; i++) {
+    const inCut = i >= cf && i < ct;
+    const j = i < cf ? i : i - cutLen;                  // where the byte lands after the splice
+    let [x, y] = posOf(i);
+    if (!inCut) { const [x2, y2] = posOf(j); x = lerp(x, x2, cut); y = lerp(y, y2, cut); }
+    else y += cut * 260;                                 // the cut bytes drop away
+    if (y > H + 20 || Math.floor((i < cf ? i : i) / 16) >= rowsShown && cut === 0) continue;
+    let a = 1;
+    if (inCut) a = 1 - cut;
+    if (a <= 0.02) continue;
+    const hot = inCut && i - cf < lit * cutLen;
+    if (hot) { g.fillStyle = `rgba(251,73,3,${0.35 * a})`; g.fillRect(x - 3, y - HEX.size + 2, HEX.cell - 4, HEX.size + 6); }
+    g.fillStyle = hot ? `rgba(255,215,49,${a})` : inCut ? `rgba(255,255,255,${0.9 * a})` : `rgba(220,238,255,${0.75 * a})`;
+    g.fillText(hx(B[i]), x, y);
+    // ascii column
+    const ch = B[i] >= 32 && B[i] < 127 ? String.fromCharCode(B[i]) : ".";
+    const ax = HEX.ascii + ((inCut ? i : (cut > 0.5 ? j : i)) % 16) * HEX.achar;
+    if (!inCut || a > 0.5) g.fillText(ch, ax, y);
+  }
+  // right column: the site's line, and what happened, in numbers
+  const rx = 1120, rw = W - rx - 60;
+  const size = Math.min(fit("WITHOUT TOUCHING", rw), fit("CLEANING A FILE", rw));
+  slam("CLEANING A FILE", rx, 60 + size * 0.86, size, C.text, u, BEAT * 0.3);
+  slam("WITHOUT TOUCHING", rx, 60 + size * 1.78, size, C.text, u, BEAT * 0.8);
+  slam("A PIXEL.", rx, 60 + size * 2.7, size, C.orange, u, BEAT * 1.3);
+  const ry = 60 + size * 2.7 + 90;
+  if (b >= 1.6) {
+    mono("APP1 · EXIF + GPS", rx, ry, 34, C.yellow, { weight: 600 });
+    mono(`bytes ${cf}-${ct} · ${cutLen} B`, rx, ry + 46, 30, C.muted);
+  }
+  const before = B.length, after = SUBJECT.clean.length;
+  const shown = Math.round(lerp(before, after, cut));
+  if (b >= 3.2) mono(`${before.toLocaleString("en-US")} B  →  ${shown.toLocaleString("en-US")} B`, rx, ry + 120, 40, C.text, { weight: 600 });
+  if (b >= 6.6) mono(`${SUBJECT.imageIdentical ? "✓" : "✗"} image data identical, ${SUBJECT.imageBytes.toLocaleString("en-US")} B`, rx, ry + 186, 32, SUBJECT.imageIdentical ? C.green : C.orange, { weight: 600 });
+  if (b >= 7.1) mono(`✓ read it again: ${SUBJECT.leftAfter} fields left`, rx, ry + 236, 32, SUBJECT.leftAfter === 0 ? C.green : C.orange, { weight: 600 });
 };
 </script>
 </body>
