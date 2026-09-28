@@ -20,16 +20,17 @@ const bytes = fs.readFileSync(file);
 ctx.__file = new File([bytes], path.basename(file), { type: "video/mp4" });
 const meta = await vm.runInContext("parseVideoMetadata(__file)", ctx);
 
-// The reader also reports the stream's own structure. Every video has a
-// duration, a frame size and a codec, and none of them can be taken out
-// without taking out the video, so they are shown but not counted. It files
-// the codec under "device"; for a film rendered in a browser and encoded
-// with x264 it names the encoder software, not anybody's camera.
-const STRUCTURE = new Set(["Duration", "Frame size", "Video codec", "Audio codec"]);
+// Judged the way the site judges it, with score.js rather than a rule of
+// our own: scoreMeta() is the badge a visitor would see, and countRemovable()
+// is what a strip would take out. Duration, frame size and codec are shown
+// but are not removable, so the site never counts them, and neither does this.
 const fields = meta.fields || [];
-const telling = fields.filter((f) => !STRUCTURE.has(f.label));
-for (const f of fields) console.log(`${telling.includes(f) ? "LEAK " : "     "} ${f.label}: ${f.value}  [${f.risk}]`);
+const badge = vm.runInContext("scoreMeta", ctx)(meta).label;
+const removable = vm.runInContext("countRemovable", ctx)(meta);
+const isRemovable = vm.runInContext("isRemovableField", ctx);
+for (const f of fields) console.log(`${isRemovable(f) ? "LEAK " : "     "} ${f.label}: ${f.value}  [${f.risk}]`);
 if (meta.gps) console.log(`LEAK  GPS: ${meta.gps.lat}, ${meta.gps.lon}`);
-const n = telling.length + (meta.gps ? 1 : 0);
-console.log(n === 0 ? `clean: MetaStrip finds nothing in ${path.basename(file)}` : `${n} leak(s) in ${path.basename(file)}`);
-process.exit(n === 0 ? 0 : 1);
+const n = removable;
+console.log(`badge ${badge}, ${removable} removable`);
+console.log(n === 0 && badge === "CLEAN" ? `clean: MetaStrip finds nothing to strip in ${path.basename(file)}` : `${n} removable in ${path.basename(file)}`);
+process.exit(n === 0 && badge === "CLEAN" ? 0 : 1);
