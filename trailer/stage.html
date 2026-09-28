@@ -418,5 +418,52 @@ ACTS.strip = (u, t) => {
   if (b >= 7.1) mono(`✓ read it again: ${SUBJECT.leftAfter} fields left`, rx, ry + 236, 32, SUBJECT.leftAfter === 0 ? C.green : C.orange, { weight: 600 });
 };
 </script>
+
+<!-- ===== act 7: local, "100% IN YOUR BROWSER." ===== -->
+<script>
+ACTS.local = (u, t) => {
+  const b = u / BEAT, L = 56;
+  if (b < 3) {
+    field(C.green);
+    const size = Math.min(fit("100% IN YOUR", W - 2 * L), 360);
+    const top = (H - size * 1.9 - 90) / 2;               // the block and its caption, centred
+    slam("100% IN YOUR", L, top + size * 0.86, size, C.ink, u, 0);
+    slam("BROWSER.", L, top + size * 1.8, size, C.ink, u, BEAT * 0.5);
+    if (b >= 1.2) mono("works offline once loaded", L + 6, top + size * 1.8 + 110, 44, C.ink, { weight: 600 });
+    return;
+  }
+  // A window the data never leaves. The packets bouncing off its edge are a
+  // picture of "nothing leaves your device", not a claim that something tried.
+  const wx = 1010, wy = 220, ww = 820, wh = 620;
+  g.strokeStyle = C.text; g.lineWidth = 4;
+  g.beginPath(); g.roundRect(wx, wy, ww, wh, 30); g.stroke();
+  g.beginPath(); g.moveTo(wx, wy + 64); g.lineTo(wx + ww, wy + 64); g.stroke();
+  [0, 1, 2].forEach((k) => { g.fillStyle = [C.orange, C.yellow, C.green][k]; g.beginPath(); g.arc(wx + 40 + k * 34, wy + 32, 10, 0, Math.PI * 2); g.fill(); });
+  mono("metastrip.vercel.app", wx + 150, wy + 42, 26, C.muted);
+  const iw = 560, ih = 350, ix = wx + (ww - iw) / 2, iy = wy + 140;
+  g.drawImage(SUBJECT.img, ix, iy, iw, ih);
+  mono("sample-photo.jpg · cleaned on this device", ix, iy + ih + 50, 24, C.green);
+  // packets rise toward the top edge and bounce back down inside the window
+  for (let k = 0; k < 7; k++) {
+    const ph = (b - 3 - k * 0.18) / 0.9;
+    if (ph < 0 || ph > 1) continue;
+    const x = ix + 60 + k * 70, top = wy + 70, start = iy + 40;
+    const y = ph < 0.5 ? lerp(start, top, oE(ph * 2)) : lerp(top, start + 60, iE((ph - 0.5) * 2));
+    g.fillStyle = C.yellow; g.fillRect(x - 9, y - 9, 18, 18);
+    if (Math.abs(ph - 0.5) < 0.06) { g.strokeStyle = C.orange; g.lineWidth = 3; g.beginPath(); g.moveTo(x - 30, top - 4); g.lineTo(x + 30, top - 4); g.stroke(); }
+  }
+  // above the window, the server it never talks to, crossed out
+  const sx = wx + ww / 2, sy = 120;
+  g.strokeStyle = C.muted; g.lineWidth = 4; g.setLineDash([12, 12]);
+  g.beginPath(); g.moveTo(sx, wy - 10); g.lineTo(sx, sy + 40); g.stroke(); g.setLineDash([]);
+  g.strokeStyle = C.muted; g.beginPath(); g.roundRect(sx - 70, sy - 40, 140, 80, 16); g.stroke();
+  mono("SERVER", sx, sy + 10, 24, C.muted, { align: "center", weight: 600 });
+  g.strokeStyle = C.orange; g.lineWidth = 6; g.beginPath(); g.moveTo(sx - 90, sy - 55); g.lineTo(sx + 90, sy + 55); g.stroke();
+  const size = 170;
+  slam("NO UPLOAD.", L, 380, size, C.text, u, BEAT * 3.6);
+  slam("NO SERVER.", L, 380 + size * 1.02, size, C.text, u, BEAT * 4.1);
+  slam("NO ACCOUNT.", L, 380 + size * 2.04, size, C.orange, u, BEAT * 4.6);
+};
+</script>
 </body>
 </html>
