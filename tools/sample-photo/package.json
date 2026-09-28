@@ -1,0 +1,8 @@
+{
+  "name": "metastrip-sample-photo",
+  "private": true,
+  "description": "Paints the demo photos in assets/. See develop.mjs. The site itself still has no dependencies.",
+  "dependencies": {
+    "puppeteer-core": "25.12.0"
+  }
+}

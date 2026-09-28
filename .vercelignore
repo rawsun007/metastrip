@@ -3,3 +3,7 @@
 # 20 MB) would be deployed and every play would bill edge bandwidth on the
 # hobby plan that build.mjs is careful about.
 trailer/
+
+# The script that paints the demo photos in assets/. The photos deploy; the
+# painter that made them does not need to.
+tools/
