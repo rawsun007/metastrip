@@ -68,13 +68,15 @@ function mono(text, x, y, size, color, { align = "left", weight = 400 } = {}) {
   font(size, MONO, weight); g.textAlign = align; g.textBaseline = "alphabetic"; g.fillStyle = color; g.fillText(text, x, y);
 }
 // Text that types itself out, a character per frame-ish, with a block cursor.
-function typed(text, x, y, size, color, t, at, cps = 40, { weight = 400 } = {}) {
+// The cursor stays on after the line is done only with hold: a terminal has
+// one cursor, and three blinking at once read as noise.
+function typed(text, x, y, size, color, t, at, cps = 40, { weight = 400, hold = false } = {}) {
   const n = Math.floor(clamp((t - at) * cps, 0, text.length));
   if (t < at) return;
   mono(text.slice(0, n), x, y, size, color, { weight });
   font(size, MONO, weight);
   const w = g.measureText(text.slice(0, n)).width;
-  if (n < text.length || frameOf(t) % 16 < 8) { g.fillStyle = color; g.fillRect(x + w + 4, y - size * 0.8, size * 0.55, size * 0.95); }
+  if (n < text.length || (hold && frameOf(t) % 16 < 8)) { g.fillStyle = color; g.fillRect(x + w + 4, y - size * 0.8, size * 0.55, size * 0.95); }
 }
 function field(color) { g.fillStyle = color; g.fillRect(0, 0, W, H); }
 
@@ -188,7 +190,7 @@ ACTS.hook = (u, t) => {
     brackets(px - pad, py - pad, pw + pad * 2, ph + pad * 2, 70, close > 0.98 ? C.orange : C.text, 5);
     const sy = py + ph * ((b * 1.7) % 1);
     g.fillStyle = "rgba(251,73,3,0.55)"; g.fillRect(px, sy, pw, 4);
-    typed("> scanning sample-photo.jpg", 80, 110, 34, C.green, t, 0.05, 60);
+    typed("> scanning sample-photo.jpg", 80, 110, 34, C.green, t, 0.05, 60, { hold: true });
     mono(`${SUBJECT.bytes.length.toLocaleString("en-US")} B · JPEG`, W - 80, 110, 30, C.muted, { align: "right" });
     return;
   }
@@ -204,7 +206,53 @@ ACTS.hook = (u, t) => {
   });
   // underneath, the readout that sets up everything after it
   const n = SUBJECT.leak.fields.length + (SUBJECT.leak.gps ? 1 : 0);
-  typed(`> ${n} fields found: gps, device, lens, timestamps`, 66, 70, 32, C.green, u, BEAT * 4.5, 55);
+  typed(`> ${n} fields found: gps, device, lens, timestamps`, 66, 70, 32, C.green, u, BEAT * 4.5, 55, { hold: true });
+};
+</script>
+
+<!-- ===== act 2: locate, "YOUR EXACT LOCATION" ===== -->
+<script>
+// An abstract radar grid, not a map: the demo photo's GPS falls in the
+// Pacific off San Francisco, and a drawn coastline would either show that or
+// fake something else. The coordinates on the readout are the parser's own.
+ACTS.locate = (u, t) => {
+  const b = u / BEAT, gps = SUBJECT.leak.gps;
+  const cx = W * 0.36, cy = H * 0.44;
+  // dot field zooming in on the target
+  const sp = lerp(16, 46, ioE(b / 3.5));
+  for (let x = cx % sp - sp; x < W + sp; x += sp) for (let y = cy % sp - sp; y < H + sp; y += sp) {
+    const d = Math.hypot(x - cx, y - cy);
+    const a = clamp(1 - d / 950) * 0.85 + 0.12;
+    g.fillStyle = `rgba(220,238,255,${a})`; g.fillRect(x - 2.5, y - 2.5, 5, 5);
+  }
+  // graticule through the target, labelled with the real coordinate
+  g.strokeStyle = "rgba(77,162,255,0.45)"; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(0, cy); g.lineTo(W, cy); g.moveTo(cx, 0); g.lineTo(cx, H); g.stroke();
+  mono(`${gps.lat.toFixed(4)}° N`, 24, cy - 14, 26, C.blue);
+  mono(`${Math.abs(gps.lon).toFixed(4)}° W`, cx + 14, 44, 26, C.blue);
+  // the crosshair hunts, then locks on the beat, then pings
+  const lk = oE(b / 1);
+  const hx = lerp(cx + 520, cx, lk) + (b < 1 ? Math.sin(b * 23) * 30 * (1 - lk) : 0);
+  const hy = lerp(cy - 300, cy, lk) + (b < 1 ? Math.cos(b * 19) * 24 * (1 - lk) : 0);
+  crosshair(hx, hy, 46, b >= 1 ? C.orange : C.text, 4);
+  if (b >= 1) brackets(cx - 110, cy - 110, 220, 220, 34, C.orange, 4);
+  for (let k = 0; k < 3; k++) {
+    const pb = (b - 2 - k * 0.5) / 1.4;
+    if (pb > 0 && pb < 1) { g.strokeStyle = `rgba(251,73,3,${1 - pb})`; g.lineWidth = 3; g.beginPath(); g.arc(cx, cy, 40 + pb * 360, 0, Math.PI * 2); g.stroke(); }
+  }
+  // readouts
+  const rx = W * 0.58, at = BEAT * 1.1;
+  typed("TARGET LOCKED", rx, 190, 40, C.orange, u, at, 50, { weight: 600 });
+  typed(`LAT  ${gps.lat.toFixed(6)}° N`, rx, 280, 60, C.text, u, at + 0.25, 45);
+  typed(`LON  ${Math.abs(gps.lon).toFixed(6)}° W`, rx, 362, 60, C.text, u, at + 0.55, 45);
+  typed(`ALT  ${gps.alt} m`, rx, 444, 60, C.text, u, at + 0.85, 45, { hold: true });
+  mono("source: EXIF GPS IFD, sample-photo.jpg", rx, 540, 26, C.muted);
+  // the site's line, on an orange band that slams in across the bottom
+  if (b >= 4) {
+    const p = oE((b - 4) / 0.25);
+    g.fillStyle = C.orange; g.fillRect(0, lerp(H, 690, p), W, H);
+    slam("YOUR EXACT LOCATION", 50, 1010, fit("YOUR EXACT LOCATION", W - 100), C.ink, u, BEAT * 4.05);
+  }
 };
 </script>
 </body>
