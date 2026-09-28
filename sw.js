@@ -13,7 +13,7 @@
    CACHE carries the release version, so shipping a version retires the
    previous cache on activate. */
 
-const CACHE = "metastrip-v1.2.2";
+const CACHE = "metastrip-v1.2.3";
 const CORE = ["./", "./index.html", "./styles.css", "./js/bundle.js"];
 
 /* Things that never change without a new release, so once they are in the
