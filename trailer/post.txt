@@ -1,0 +1,4 @@
+Your photos know where you live. This one knew its exact GPS, the phone, the lens and the second it was taken, until MetaStrip cut all of it out without touching a pixel. Free, open source, and it never sees your files: everything runs in your browser.
+
+The trailer itself carries no metadata. Drop it into MetaStrip and check.
+https://metastrip.vercel.app
