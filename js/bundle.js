@@ -3603,8 +3603,8 @@ function wireSampleButton(btn, path, filename, type, loadingText, idleText) {
 
 wireSampleButton(
   document.getElementById("sampleLeakBtn"),
-  "assets/sample-photo.jpg",
-  "sample-photo.jpg",
+  "assets/sample-sunset.jpg",
+  "sunset.jpg",
   "image/jpeg",
   "Loading...",
   "a leaking photo"
@@ -3619,8 +3619,8 @@ wireSampleButton(
 );
 wireSampleButton(
   document.getElementById("sampleCleanBtn"),
-  "assets/sample-clean.jpg",
-  "sample-clean.jpg",
+  "assets/sample-moonrise.jpg",
+  "moonrise.jpg",
   "image/jpeg",
   "Loading...",
   "an already-clean one"
