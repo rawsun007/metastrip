@@ -255,5 +255,27 @@ ACTS.locate = (u, t) => {
   }
 };
 </script>
+
+<!-- ===== act 3: device, "YOUR DEVICE FINGERPRINT" ===== -->
+<script>
+// A field's value by its label, straight from the parser's output.
+const leakValue = (label) => (SUBJECT.leak.fields.find((f) => f.label === label) || {}).value;
+ACTS.device = (u, t) => {
+  const b = u / BEAT;
+  field(C.blue);
+  const L = 56;
+  // two lines at the same size, spaced by that size so they never collide
+  const size = Math.min(fit("YOUR DEVICE", W - 2 * L), fit("FINGERPRINT", W - 2 * L), 340);
+  slam("YOUR DEVICE", L, 60 + size * 0.86, size, C.ink, u, 0);
+  slam("FINGERPRINT", L, 60 + size * 1.8, size, C.ink, u, BEAT * 0.5);
+  const rows = [["MAKE", leakValue("Camera make")], ["MODEL", leakValue("Camera model")], ["LENS", leakValue("Lens model")], ["SOFTWARE", leakValue("Software")]];
+  rows.forEach(([k, v], i) => {
+    const y = 790 + i * 66, at = BEAT * (1.1 + i * 0.35);
+    if (u < at) return;
+    mono(k, L + 4, y, 34, "rgba(10,10,10,0.6)", { weight: 600 });
+    typed(String(v), L + 270, y, 44, C.ink, u, at, 120, { weight: 600, hold: i === rows.length - 1 });
+  });
+};
+</script>
 </body>
 </html>
