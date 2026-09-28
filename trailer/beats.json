@@ -1,0 +1,213 @@
+{
+ "bpm": 128,
+ "fps": 30,
+ "subject": "../assets/sample-photo.jpg",
+ "site": "metastrip.vercel.app",
+ "note": "Everything is placed in beats; seconds are derived. A beat is 60/128 s.",
+ "acts": [
+  {
+   "id": "hook",
+   "beat": 0,
+   "beats": 8,
+   "start": 0.0,
+   "dur": 3.75
+  },
+  {
+   "id": "locate",
+   "beat": 8,
+   "beats": 8,
+   "start": 3.75,
+   "dur": 3.75
+  },
+  {
+   "id": "device",
+   "beat": 16,
+   "beats": 4,
+   "start": 7.5,
+   "dur": 1.875
+  },
+  {
+   "id": "timeline",
+   "beat": 20,
+   "beats": 4,
+   "start": 9.375,
+   "dur": 1.875
+  },
+  {
+   "id": "formats",
+   "beat": 24,
+   "beats": 4,
+   "start": 11.25,
+   "dur": 1.875
+  },
+  {
+   "id": "strip",
+   "beat": 28,
+   "beats": 9,
+   "start": 13.125,
+   "dur": 4.21875
+  },
+  {
+   "id": "local",
+   "beat": 37,
+   "beats": 7,
+   "start": 17.34375,
+   "dur": 3.28125
+  },
+  {
+   "id": "outro",
+   "beat": 44,
+   "beats": 8,
+   "start": 20.625,
+   "dur": 3.75
+  }
+ ],
+ "duration": 24.375,
+ "hits": [
+  {
+   "type": "scan",
+   "beat": 0.5,
+   "t": 0.23438
+  },
+  {
+   "type": "slam",
+   "beat": 1,
+   "t": 0.46875
+  },
+  {
+   "type": "slam",
+   "beat": 2,
+   "t": 0.9375
+  },
+  {
+   "type": "slam",
+   "beat": 3,
+   "t": 1.40625
+  },
+  {
+   "type": "glitch",
+   "beat": 7.75,
+   "t": 3.63281
+  },
+  {
+   "type": "lock",
+   "beat": 9,
+   "t": 4.21875
+  },
+  {
+   "type": "ping",
+   "beat": 10,
+   "t": 4.6875
+  },
+  {
+   "type": "slam",
+   "beat": 12,
+   "t": 5.625
+  },
+  {
+   "type": "glitch",
+   "beat": 15.75,
+   "t": 7.38281
+  },
+  {
+   "type": "slam",
+   "beat": 16,
+   "t": 7.5
+  },
+  {
+   "type": "tick",
+   "beat": 17,
+   "t": 7.96875
+  },
+  {
+   "type": "glitch",
+   "beat": 19.75,
+   "t": 9.25781
+  },
+  {
+   "type": "slam",
+   "beat": 20,
+   "t": 9.375
+  },
+  {
+   "type": "flip",
+   "beat": 21,
+   "t": 9.84375
+  },
+  {
+   "type": "glitch",
+   "beat": 23.75,
+   "t": 11.13281
+  },
+  {
+   "type": "strobe",
+   "beat": 24,
+   "t": 11.25
+  },
+  {
+   "type": "glitch",
+   "beat": 27.75,
+   "t": 13.00781
+  },
+  {
+   "type": "slam",
+   "beat": 28,
+   "t": 13.125
+  },
+  {
+   "type": "zap",
+   "beat": 32,
+   "t": 15.0
+  },
+  {
+   "type": "clean",
+   "beat": 35,
+   "t": 16.40625
+  },
+  {
+   "type": "glitch",
+   "beat": 36.75,
+   "t": 17.22656
+  },
+  {
+   "type": "slam",
+   "beat": 37,
+   "t": 17.34375
+  },
+  {
+   "type": "bounce",
+   "beat": 40,
+   "t": 18.75
+  },
+  {
+   "type": "slam",
+   "beat": 41,
+   "t": 19.21875
+  },
+  {
+   "type": "glitch",
+   "beat": 43.75,
+   "t": 20.50781
+  },
+  {
+   "type": "search",
+   "beat": 44.5,
+   "t": 20.85938
+  },
+  {
+   "type": "nodata",
+   "beat": 47,
+   "t": 22.03125
+  },
+  {
+   "type": "drop",
+   "beat": 48,
+   "t": 22.5
+  },
+  {
+   "type": "tone",
+   "beat": 48,
+   "t": 22.5
+  }
+ ]
+}
