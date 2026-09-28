@@ -312,5 +312,43 @@ ACTS.timeline = (u, t) => {
   typed("you pressed the button", rx, 868, 34, C.purple, u, BEAT * 2.2 + 0.28, 60, { weight: 600, hold: true });
 };
 </script>
+
+<!-- ===== act 5: formats, every kind of file leaks ===== -->
+<script>
+// From the README's "What it reads and removes" table.
+const STROBE = [
+  ["JPEG", "EXIF · GPS · XMP · IPTC"], ["HEIC", "EXIF · GPS"], ["PNG", "text chunks · AI prompts"],
+  ["DNG", "camera and lens serials"], ["CR3", "the photographer's name"], ["NEF", "maker notes · hidden preview"],
+  ["MP4", "GPS as ISO 6709"], ["MOV", "Live Photo pairing ids"], ["MKV", "muxer tags"],
+  ["MP3", "ID3 tags"], ["FLAC", "Vorbis comments"], ["PDF", "author · producer · XMP"],
+];
+// JPEG PNG HEIC, eight RAW, four video, seven audio, PDF: every format the
+// README lists, counted rather than rounded.
+const FORMAT_COUNT = 3 + 8 + 4 + 7 + 1;
+const FIELDS = [C.orange, C.yellow, C.blue, C.green, C.violet, C.bg];
+ACTS.formats = (u, t) => {
+  const b = u / BEAT;
+  if (b < 3) {
+    const i = Math.min(STROBE.length - 1, Math.floor(b * 4));
+    const bgc = FIELDS[i % FIELDS.length], fg = bgc === C.bg ? C.text : C.ink;
+    field(bgc);
+    const [word, what] = STROBE[i];
+    font(100); const size = Math.min(fit(word, W - 160), 760);
+    g.save(); g.textAlign = "center"; font(size); g.fillStyle = fg;
+    // alternate slight offsets so consecutive words do not sit in one spot
+    g.fillText(word, W / 2 + (i % 2 ? 28 : -28), H / 2 + size * 0.36); g.restore();
+    mono(`.${word.toLowerCase()}`, 60, 90, 40, fg, { weight: 600 });
+    mono(what, 60, H - 60, 44, fg, { weight: 600 });
+    // counts the strobe, not the whole list: "/ 23" here would claim all were shown
+    mono(String(i + 1).padStart(2, "0") + " / " + String(STROBE.length).padStart(2, "0"), W - 60, 90, 40, fg, { align: "right", weight: 600 });
+    return;
+  }
+  // the last beat: the count, slammed
+  field(C.bg);
+  slam(`${FORMAT_COUNT} FORMATS.`, 56, 640, fit(`${FORMAT_COUNT} FORMATS.`, W - 112), C.yellow, u, BEAT * 3);
+  // one beat is too short to type this, so it lands with the slam
+  if (u >= BEAT * 3) mono("photos, raw, video, audio, pdf. all read, all stripped.", 62, 800, 40, C.text);
+};
+</script>
 </body>
 </html>
