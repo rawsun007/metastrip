@@ -1,0 +1,225 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>MetaStrip demo photo painter</title>
+<style>html, body { margin: 0; background: #000; } canvas { display: block; }</style>
+</head>
+<body>
+<canvas id="c" width="1600" height="1000"></canvas>
+<script>
+/* Paints the site's demo photos: one beach, two lights.
+
+   "golden" is the leaking photo (the sun going down over the Pacific, a
+   walker and a dog on the wet sand), "blue" is the already-clean one (the
+   same beach after sunset, a moon up). Everything is drawn, nothing is a
+   photograph, so there is no real person or place in either picture, and
+   every "random" choice is seeded so a repaint is identical. */
+const W = 1600, H = 1000, HORIZON = 575, SHORE = 745;
+const cv = document.getElementById("c"), g = cv.getContext("2d");
+let seed = 1;
+const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const lerp = (a, b, p) => a + (b - a) * p;
+const mix = (c1, c2, p) => c1.map((v, i) => Math.round(lerp(v, c2[i], p)));
+const rgb = (c, a = 1) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+
+const LIGHT = {
+  golden: {
+    sky: [[0, [27, 20, 64]], [0.22, [92, 74, 222]], [0.45, [214, 128, 178]], [0.72, [255, 138, 76]], [1, [255, 214, 150]]],
+    sun: { x: 1030, y: 560, r: 62, core: [255, 236, 200], rim: [251, 73, 3], glow: [255, 150, 60] },
+    sea: [[40, 26, 70], [120, 60, 90]], glitter: [255, 196, 120], sand: [[150, 92, 70], [70, 40, 45]],
+    cloud: [255, 150, 120], cliff: [22, 14, 34], stars: 0,
+  },
+  blue: {
+    sky: [[0, [6, 10, 34]], [0.35, [24, 44, 110]], [0.7, [77, 110, 180]], [0.9, [233, 204, 255]], [1, [255, 190, 170]]],
+    sun: { x: 420, y: 250, r: 34, core: [240, 244, 255], rim: [200, 210, 240], glow: [150, 170, 230], moon: true },
+    sea: [[12, 22, 56], [30, 50, 96]], glitter: [200, 215, 255], sand: [[60, 64, 96], [20, 22, 44]],
+    cloud: [120, 130, 200], cliff: [6, 8, 22], stars: 180,
+  },
+};
+
+function sky(L) {
+  const gr = g.createLinearGradient(0, 0, 0, HORIZON);
+  for (const [p, c] of L.sky) gr.addColorStop(p, rgb(c));
+  g.fillStyle = gr; g.fillRect(0, 0, W, HORIZON + 2);
+  for (let i = 0; i < L.stars; i++) {
+    const x = rnd() * W, y = rnd() * HORIZON * 0.6, a = rnd() * 0.8 * (1 - y / (HORIZON * 0.6));
+    g.fillStyle = `rgba(255,255,255,${a})`; g.fillRect(x, y, rnd() < 0.1 ? 2 : 1, rnd() < 0.1 ? 2 : 1);
+  }
+}
+function sunOrMoon(L) {
+  const s = L.sun;
+  const glow = g.createRadialGradient(s.x, s.y, s.r * 0.5, s.x, s.y, s.r * (s.moon ? 7 : 9));
+  glow.addColorStop(0, rgb(s.glow, s.moon ? 0.35 : 0.75)); glow.addColorStop(1, rgb(s.glow, 0));
+  g.fillStyle = glow; g.fillRect(0, 0, W, HORIZON);
+  g.save(); g.beginPath(); g.rect(0, 0, W, HORIZON); g.clip();
+  const disc = g.createRadialGradient(s.x - s.r * 0.2, s.y - s.r * 0.2, 1, s.x, s.y, s.r);
+  disc.addColorStop(0, rgb(s.core)); disc.addColorStop(1, rgb(s.rim));
+  g.fillStyle = disc; g.beginPath(); g.arc(s.x, s.y, s.r, 0, Math.PI * 2); g.fill();
+  if (s.moon) { g.fillStyle = "rgba(170,180,215,0.18)"; for (const [dx, dy, r] of [[-8, -6, 7], [9, 5, 5], [2, 12, 4]]) { g.beginPath(); g.arc(s.x + dx, s.y + dy, r, 0, Math.PI * 2); g.fill(); } }
+  g.restore();
+}
+function clouds(L, lit) {
+  g.save(); g.filter = "blur(10px)";
+  for (let i = 0; i < 16; i++) {
+    const y = 90 + rnd() * (HORIZON - 190), x = rnd() * W, w = 220 + rnd() * 520, h = 10 + rnd() * 26;
+    const a = 0.16 + rnd() * 0.22;
+    g.fillStyle = rgb(mix(L.cloud, lit, y / HORIZON), a);
+    g.beginPath(); g.ellipse(x, y, w, h, 0, 0, Math.PI * 2); g.fill();
+  }
+  g.restore();
+}
+function headlands(L) {
+  // a faint headland far off to the left, sitting on the horizon
+  g.fillStyle = rgb(mix(L.cliff, L.sky[3][1], 0.55), 0.8);
+  g.beginPath(); g.moveTo(0, HORIZON); g.lineTo(0, HORIZON - 26);
+  for (let x = 0; x <= 360; x += 20) g.lineTo(x, HORIZON - 26 + Math.sin(x / 60) * 8 + x * 0.05);
+  g.lineTo(380, HORIZON); g.fill();
+  // the cliff on the right, running into the sea, with rocks off its foot
+  g.fillStyle = rgb(L.cliff);
+  g.beginPath(); g.moveTo(W, SHORE + 60); g.lineTo(W, 300);
+  const pts = [[1560, 320], [1515, 352], [1490, 348], [1452, 392], [1410, 430], [1370, 478], [1336, 520], [1300, 560], [1262, 600], [1240, 640], [1255, 700], [1310, SHORE + 20]];
+  for (const [x, y] of pts) g.lineTo(x + (rnd() - 0.5) * 6, y + (rnd() - 0.5) * 6);
+  g.closePath(); g.fill();
+  for (const [x, y, w, h] of [[1150, HORIZON + 14, 44, 30], [1195, HORIZON + 22, 26, 18], [1100, HORIZON + 26, 18, 12]]) {
+    g.beginPath(); g.ellipse(x, y, w, h, 0, Math.PI, Math.PI * 2); g.fill();
+  }
+}
+function sea(L) {
+  const gr = g.createLinearGradient(0, HORIZON, 0, SHORE);
+  gr.addColorStop(0, rgb(L.sea[1])); gr.addColorStop(1, rgb(L.sea[0]));
+  g.fillStyle = gr; g.fillRect(0, HORIZON, W, SHORE - HORIZON + 2);
+  // the path of light on the water: short dashes that widen toward us
+  const s = L.sun;
+  for (let i = 0; i < 1400; i++) {
+    const t = rnd() ** 1.6, y = lerp(HORIZON + 2, SHORE, t);
+    const spread = lerp(s.r * 0.9, 340, t);
+    const x = s.x + (rnd() - 0.5) * 2 * spread * (0.4 + rnd() * 0.6);
+    const a = (1 - Math.abs(x - s.x) / spread) * (0.25 + rnd() * 0.6);
+    if (a <= 0) continue;
+    g.fillStyle = rgb(L.glitter, a); g.fillRect(x, y, 6 + rnd() * 26 * (0.4 + t), 1 + t * 2);
+  }
+  // swell lines
+  g.strokeStyle = rgb(mix(L.sea[1], L.glitter, 0.25), 0.25); g.lineWidth = 1.5;
+  for (let k = 0; k < 18; k++) {
+    const y = lerp(HORIZON + 10, SHORE - 10, (k / 18) ** 1.4);
+    g.beginPath(); for (let x = 0; x <= W; x += 30) g.lineTo(x, y + Math.sin(x / (90 + k * 8) + k) * (1 + k * 0.25)); g.stroke();
+  }
+}
+function surf(L) {
+  // broken lines of foam, not ruled ones: each is a run of pieces that thin,
+  // fade and wander, the nearest brightest, over a band of wet shimmer
+  const wash = g.createLinearGradient(0, SHORE - 60, 0, SHORE + 16);
+  wash.addColorStop(0, rgb(L.glitter, 0)); wash.addColorStop(0.7, rgb(L.glitter, 0.10)); wash.addColorStop(1, rgb(L.glitter, 0));
+  g.fillStyle = wash; g.fillRect(0, SHORE - 60, 1320, 76);
+  for (let k = 0; k < 4; k++) {
+    const y0 = SHORE - 56 + k * 17;
+    let x = -30;
+    while (x < 1290) {
+      const len = 50 + rnd() * 220, gap = 4 + rnd() * 40 * (1 - k * 0.2), yj = (rnd() - 0.5) * 7;
+      const a = (0.12 + k * 0.12) * (0.4 + rnd() * 0.6);
+      g.strokeStyle = `rgba(255,250,244,${a})`; g.lineWidth = 1 + k * 0.9 + rnd() * 1.5; g.lineCap = "round";
+      g.beginPath();
+      for (let xx = x; xx <= x + len; xx += 8) g.lineTo(xx, y0 + yj + Math.sin(xx / 80 + k * 1.7) * 4 + Math.sin(xx / 21 + k) * 1.2 - Math.sin((xx - x) / len * Math.PI) * 2);
+      g.stroke();
+      x += len + gap;
+    }
+  }
+}
+function sand(L, lit) {
+  const gr = g.createLinearGradient(0, SHORE, 0, H);
+  gr.addColorStop(0, rgb(L.sand[0])); gr.addColorStop(1, rgb(L.sand[1]));
+  g.fillStyle = gr; g.fillRect(0, SHORE, W, H - SHORE);
+  // Wet sand is a soft mirror: the sky above the horizon, flipped, blurred,
+  // and fading out as the sand dries toward the bottom of the frame.
+  const m = document.createElement("canvas"); m.width = W; m.height = H - SHORE;
+  const mg = m.getContext("2d");
+  mg.filter = "blur(11px)";
+  mg.translate(0, m.height); mg.scale(1, -1);
+  mg.drawImage(cv, 0, HORIZON - m.height, W, m.height, 0, 0, W, m.height);
+  mg.setTransform(1, 0, 0, 1, 0, 0); mg.filter = "none";
+  const fade = mg.createLinearGradient(0, 0, 0, m.height);
+  fade.addColorStop(0, "rgba(0,0,0,0.62)"); fade.addColorStop(0.55, "rgba(0,0,0,0.2)"); fade.addColorStop(1, "rgba(0,0,0,0)");
+  mg.globalCompositeOperation = "destination-in"; mg.fillStyle = fade; mg.fillRect(0, 0, W, m.height);
+  g.drawImage(m, 0, SHORE);
+  // no seam where the sea runs up the sand: the water's colour thins out
+  // over the first stretch of beach
+  const edge = g.createLinearGradient(0, SHORE - 6, 0, SHORE + 70);
+  edge.addColorStop(0, rgb(L.sea[0], 0.95)); edge.addColorStop(1, rgb(L.sea[0], 0));
+  g.fillStyle = edge; g.fillRect(0, SHORE - 6, W, 76);
+  // the light carried onto the sand, as a glow rather than a shape
+  const s = L.sun;
+  g.save(); g.filter = "blur(38px)";
+  const col = g.createLinearGradient(0, SHORE, 0, H);
+  col.addColorStop(0, rgb(lit, 0.5)); col.addColorStop(1, rgb(lit, 0));
+  g.fillStyle = col; g.beginPath(); g.ellipse(s.x, SHORE + 120, 120, 170, 0, 0, Math.PI * 2); g.fill();
+  g.restore();
+  // grain of the dry sand, heavier toward the bottom
+  for (let i = 0; i < 12000; i++) {
+    const y = lerp(SHORE + 30, H, rnd() ** 0.7), x = rnd() * W;
+    g.fillStyle = `rgba(0,0,0,${rnd() * 0.13 * ((y - SHORE) / (H - SHORE))})`; g.fillRect(x, y, 2, 1);
+  }
+}
+function haze(L) {
+  // air: a band of light sitting on the horizon, softening where sky meets sea
+  const hz = g.createLinearGradient(0, HORIZON - 70, 0, HORIZON + 40);
+  const c = L.sky[L.sky.length - 1][1];
+  hz.addColorStop(0, rgb(c, 0)); hz.addColorStop(0.6, rgb(c, 0.35)); hz.addColorStop(1, rgb(c, 0));
+  g.fillStyle = hz; g.fillRect(0, HORIZON - 70, W, 110);
+}
+function walker(L, x, y, dog = true) {
+  const ink = rgb(L.cliff);
+  const fig = () => {
+    g.fillStyle = ink; g.strokeStyle = ink; g.lineCap = "round"; g.lineJoin = "round";
+    g.beginPath(); g.arc(x + 1, y - 104, 10, 0, Math.PI * 2); g.fill();                       // head
+    g.beginPath();                                                                          // a coat, wider at the hem
+    g.moveTo(x - 9, y - 92); g.quadraticCurveTo(x, y - 97, x + 10, y - 92);
+    g.lineTo(x + 15, y - 46); g.lineTo(x - 14, y - 46); g.closePath(); g.fill();
+    g.lineWidth = 7;
+    g.beginPath(); g.moveTo(x - 5, y - 48); g.lineTo(x - 15, y - 2); g.moveTo(x + 5, y - 48); g.lineTo(x + 12, y - 3); g.stroke();   // stride
+    g.lineWidth = 6;
+    g.beginPath(); g.moveTo(x - 9, y - 88); g.lineTo(x - 17, y - 58); g.moveTo(x + 10, y - 88); g.lineTo(x + 24, y - 62); g.stroke();  // arms
+    if (dog) {
+      const dx = x + 78, dy = y - 3;
+      g.beginPath(); g.ellipse(dx, dy - 22, 25, 10, -0.05, 0, Math.PI * 2); g.fill();          // body
+      g.beginPath(); g.ellipse(dx + 27, dy - 33, 9, 7, -0.3, 0, Math.PI * 2); g.fill();         // head
+      g.beginPath(); g.moveTo(dx + 30, dy - 40); g.lineTo(dx + 33, dy - 48); g.lineTo(dx + 26, dy - 42); g.fill();   // ear
+      g.lineWidth = 4.5;
+      g.beginPath(); g.moveTo(dx - 16, dy - 16); g.lineTo(dx - 22, dy); g.moveTo(dx - 6, dy - 15); g.lineTo(dx - 3, dy);
+      g.moveTo(dx + 12, dy - 15); g.lineTo(dx + 18, dy); g.moveTo(dx + 18, dy - 17); g.lineTo(dx + 14, dy); g.stroke();
+      g.lineWidth = 4; g.beginPath(); g.moveTo(dx - 23, dy - 26); g.quadraticCurveTo(dx - 36, dy - 36, dx - 34, dy - 46); g.stroke();   // tail up
+      g.lineWidth = 1.6; g.beginPath(); g.moveTo(x + 24, y - 62); g.quadraticCurveTo(x + 52, y - 26, dx + 22, dy - 30); g.stroke();      // lead
+    }
+  };
+  fig();
+  g.save(); g.globalAlpha = 0.22; g.translate(0, y * 2); g.scale(1, -1); g.filter = "blur(2px)"; fig(); g.restore();
+}
+function gulls(L) {
+  g.strokeStyle = rgb(L.cliff, 0.8); g.lineWidth = 3; g.lineCap = "round";
+  for (const [x, y, s] of [[560, 250, 1], [610, 232, 0.8], [520, 280, 0.65]]) {
+    g.beginPath(); g.moveTo(x - 16 * s, y - 5 * s); g.quadraticCurveTo(x - 6 * s, y - 12 * s, x, y); g.quadraticCurveTo(x + 6 * s, y - 12 * s, x + 16 * s, y - 5 * s); g.stroke();
+  }
+}
+function finish(warm) {
+  // the lens: a soft vignette and fine grain, like a phone at dusk
+  const v = g.createRadialGradient(W / 2, H * 0.52, H * 0.35, W / 2, H * 0.52, H * 0.95);
+  v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,0.38)");
+  g.fillStyle = v; g.fillRect(0, 0, W, H);
+  const im = g.getImageData(0, 0, W, H), d = im.data;
+  for (let i = 0; i < d.length; i += 4) { const n = (rnd() - 0.5) * 10; d[i] += n + warm; d[i + 1] += n; d[i + 2] += n - warm; }
+  g.putImageData(im, 0, 0);
+}
+
+window.paint = function (scene) {
+  seed = scene === "golden" ? 20260706 : 20260707;
+  const L = LIGHT[scene];
+  sky(L); sunOrMoon(L); clouds(L, scene === "golden" ? [255, 190, 140] : [200, 190, 240]);
+  headlands(L); haze(L);
+  sea(L); surf(L); sand(L, L.glitter);
+  if (scene === "golden") { walker(L, 640, 868); gulls(L); }
+  else { walker(L, 900, 900, false); }
+  finish(scene === "golden" ? 3 : -2);
+};
+</script>
+</body>
+</html>
