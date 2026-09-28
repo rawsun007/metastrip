@@ -1,0 +1,179 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>MetaStrip trailer stage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- The site's own faces (Anton, Archivo), plus a mono for the readouts. -->
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;600&display=block" rel="stylesheet">
+<!-- The site's own parsers, loaded from the repo in the order the tests load
+     them. The metadata on screen is what these read out of the real photo. -->
+<script src="../js/score.js"></script>
+<script src="../js/aitags.js"></script>
+<script src="../js/c2pa.js"></script>
+<script src="../js/edits.js"></script>
+<script src="../js/exif.js"></script>
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #000; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script>
+const BEATS = BEATS_JSON;
+const W = 1920, H = 1080;
+const cv = document.getElementById("c"), g = cv.getContext("2d");
+const BEAT = 60 / BEATS.bpm;
+
+// ---------- palette: the site's tokens (styles.css) ----------
+const C = {
+  bg: "#000000", hero: "#dceeff", text: "#ffffff", ink: "#0a0a0a", muted: "#999999", line: "#222222",
+  orange: "#fb4903", yellow: "#ffd731", blue: "#4da2ff", green: "#55db9c", violet: "#e9ccff", purple: "#5c4ade",
+};
+const DISPLAY = "Anton", BODY = "Archivo", MONO = "IBM Plex Mono";
+
+// ---------- time ----------
+const ACT = Object.fromEntries(BEATS.acts.map((a) => [a.id, a]));
+const beatOf = (t) => t / BEAT;
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, p) => a + (b - a) * p;
+const oE = (x) => 1 - Math.pow(1 - clamp(x), 4);                  // hard ease-out
+const iE = (x) => Math.pow(clamp(x), 3);
+const ioE = (x) => { x = clamp(x); return x < 0.5 ? 8 * x ** 4 : 1 - Math.pow(-2 * x + 2, 4) / 2; };
+
+// ---------- seeded noise: every "random" thing is a function of its inputs ----------
+function hash(a, b = 0) { let h = (a * 374761393 + b * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177; h ^= h >>> 16; return (h >>> 0) / 4294967295; }
+const frameOf = (t) => Math.round(t * BEATS.fps);
+
+// ---------- type ----------
+function font(size, face = DISPLAY, weight = 400) { g.font = `${weight} ${size}px "${face}"`; }
+// Size a line so it spans `width`. Big type in this film is meant to crowd,
+// and sometimes crop off, the frame.
+function fit(text, width, face = DISPLAY, weight = 400) {
+  font(100, face, weight); return 100 * width / g.measureText(text).width;
+}
+// A slam: the line lands oversized and snaps to size in a few frames.
+function slam(text, x, y, size, color, t, at, { align = "left", face = DISPLAY, weight = 400, dur = 0.12 } = {}) {
+  const p = (t - at) / dur;
+  if (p < 0) return false;
+  const s = lerp(1.18, 1, oE(p));
+  g.save(); g.translate(x, y); g.scale(s, s);
+  font(size, face, weight); g.textAlign = align; g.textBaseline = "alphabetic"; g.fillStyle = color;
+  g.fillText(text, 0, 0); g.restore();
+  return true;
+}
+function mono(text, x, y, size, color, { align = "left", weight = 400 } = {}) {
+  font(size, MONO, weight); g.textAlign = align; g.textBaseline = "alphabetic"; g.fillStyle = color; g.fillText(text, x, y);
+}
+// Text that types itself out, a character per frame-ish, with a block cursor.
+function typed(text, x, y, size, color, t, at, cps = 40, { weight = 400 } = {}) {
+  const n = Math.floor(clamp((t - at) * cps, 0, text.length));
+  if (t < at) return;
+  mono(text.slice(0, n), x, y, size, color, { weight });
+  font(size, MONO, weight);
+  const w = g.measureText(text.slice(0, n)).width;
+  if (n < text.length || frameOf(t) % 16 < 8) { g.fillStyle = color; g.fillRect(x + w + 4, y - size * 0.8, size * 0.55, size * 0.95); }
+}
+function field(color) { g.fillStyle = color; g.fillRect(0, 0, W, H); }
+
+// ---------- forensic HUD bits ----------
+function brackets(x, y, w, h, len, color, lw = 4) {
+  g.strokeStyle = color; g.lineWidth = lw; g.beginPath();
+  for (const [cx, cy, dx, dy] of [[x, y, 1, 1], [x + w, y, -1, 1], [x, y + h, 1, -1], [x + w, y + h, -1, -1]]) {
+    g.moveTo(cx + dx * len, cy); g.lineTo(cx, cy); g.lineTo(cx, cy + dy * len);
+  }
+  g.stroke();
+}
+function crosshair(x, y, r, color, lw = 3) {
+  g.strokeStyle = color; g.lineWidth = lw; g.beginPath();
+  g.arc(x, y, r, 0, Math.PI * 2);
+  g.moveTo(x - r * 1.6, y); g.lineTo(x - r * 0.4, y); g.moveTo(x + r * 0.4, y); g.lineTo(x + r * 1.6, y);
+  g.moveTo(x, y - r * 1.6); g.lineTo(x, y - r * 0.4); g.moveTo(x, y + r * 0.4); g.lineTo(x, y + r * 1.6);
+  g.stroke();
+}
+
+// ---------- post: scanlines, grain, glitch ----------
+const scan = document.createElement("canvas"); scan.width = W; scan.height = H;
+{ const s = scan.getContext("2d"); s.fillStyle = "rgba(0,0,0,0.16)"; for (let y = 0; y < H; y += 3) s.fillRect(0, y, W, 1); }
+const GRAIN = Array.from({ length: 6 }, (_, k) => {
+  const c = document.createElement("canvas"); c.width = 640; c.height = 360;
+  const x = c.getContext("2d"), im = x.createImageData(640, 360);
+  for (let i = 0; i < im.data.length; i += 4) { const v = hash(i, k + 1) * 255; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; }
+  x.putImageData(im, 0, 0); return c;
+});
+const buf = document.createElement("canvas"); buf.width = W; buf.height = H; const bg = buf.getContext("2d");
+// Glitch: tear the frame into horizontal bands and slide them, then split the
+// colour channels. amount 0..1; seeded per frame so it repeats exactly.
+function glitch(t, amount) {
+  if (amount <= 0) return;
+  const f = frameOf(t);
+  bg.clearRect(0, 0, W, H); bg.drawImage(cv, 0, 0);
+  const bands = 6 + Math.floor(amount * 18);
+  for (let i = 0; i < bands; i++) {
+    const y = Math.floor(hash(f, i) * H), h = 8 + Math.floor(hash(f, i + 50) * 90 * amount);
+    const dx = (hash(f, i + 99) - 0.5) * 260 * amount;
+    g.drawImage(buf, 0, y, W, h, dx, y, W, h);
+  }
+  const split = Math.round(6 + amount * 22);
+  const im = g.getImageData(0, 0, W, H), d = im.data, out = new Uint8ClampedArray(d);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = (y * W + x) * 4;
+    const r = (y * W + Math.min(W - 1, x + split)) * 4, b = (y * W + Math.max(0, x - split)) * 4;
+    out[i] = d[r]; out[i + 2] = d[b + 2];
+  }
+  im.data.set(out); g.putImageData(im, 0, 0);
+}
+function post(t) {
+  g.drawImage(scan, 0, 0);
+  g.globalAlpha = 0.07; g.globalCompositeOperation = "overlay";
+  g.drawImage(GRAIN[frameOf(t) % GRAIN.length], 0, 0, W, H);
+  g.globalAlpha = 1; g.globalCompositeOperation = "source-over";
+  const v = g.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.95);
+  v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,0.45)");
+  g.fillStyle = v; g.fillRect(0, 0, W, H);
+}
+// How much glitch at time t: a burst either side of every "glitch" hit.
+function glitchAt(t) {
+  let a = 0;
+  for (const h of BEATS.hits) if (h.type === "glitch") {
+    const d = (t - h.t) / BEAT;              // beats from the hit
+    if (d > -0.05 && d < 0.35) a = Math.max(a, 1 - Math.abs(d - 0.12) / 0.25);
+  }
+  return clamp(a);
+}
+
+// ---------- the subject and what it leaks ----------
+const SUBJECT = { img: new Image(), bytes: null, leak: null };
+function loadBytes(url) {
+  return new Promise((ok, no) => {
+    const x = new XMLHttpRequest(); x.open("GET", url); x.responseType = "arraybuffer";
+    x.onload = () => ok(x.response); x.onerror = () => no(new Error("could not read " + url)); x.send();
+  });
+}
+
+// ---------- acts register here, one <script> each ----------
+const ACTS = {};
+window.draw = function (t) {
+  g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.filter = "none";
+  field(C.bg);
+  const act = BEATS.acts.find((a) => t >= a.start && t < a.start + a.dur) || BEATS.acts[BEATS.acts.length - 1];
+  if (ACTS[act.id]) ACTS[act.id](t - act.start, t, act);
+  glitch(t, glitchAt(t));
+  post(t);
+};
+
+window.stageReady = (async () => {
+  for (const [w, f] of [[400, DISPLAY], [700, BODY], [800, BODY], [400, MONO], [600, MONO]]) await document.fonts.load(`${w} 40px "${f}"`);
+  await document.fonts.ready;
+  const ab = await loadBytes(BEATS.subject);
+  SUBJECT.bytes = new Uint8Array(ab);
+  SUBJECT.leak = parseMetadata(ab);        // exif.js, the site's own reader
+  SUBJECT.img.src = BEATS.subject; await SUBJECT.img.decode();
+  draw(0);
+  return true;
+})();
+</script>
+</body>
+</html>
