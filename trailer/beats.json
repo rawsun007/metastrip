@@ -1,7 +1,7 @@
 {
  "bpm": 128,
  "fps": 30,
- "subject": "../assets/sample-photo.jpg",
+ "subject": "../assets/sample-sunset.jpg",
  "site": "metastrip.vercel.app",
  "note": "Everything is placed in beats; seconds are derived. A beat is 60/128 s.",
  "acts": [

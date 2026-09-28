@@ -208,7 +208,7 @@ ACTS.hook = (u, t) => {
     brackets(px - pad, py - pad, pw + pad * 2, ph + pad * 2, 70, close > 0.98 ? C.orange : C.text, 5);
     const sy = py + ph * ((b * 1.7) % 1);
     g.fillStyle = "rgba(251,73,3,0.55)"; g.fillRect(px, sy, pw, 4);
-    typed("> scanning sample-photo.jpg", 80, 110, 34, C.green, t, 0.05, 60, { hold: true });
+    typed("> scanning sunset.jpg", 80, 110, 34, C.green, t, 0.05, 60, { hold: true });
     mono(`${SUBJECT.bytes.length.toLocaleString("en-US")} B · JPEG`, W - 80, 110, 30, C.muted, { align: "right" });
     return;
   }
@@ -230,9 +230,9 @@ ACTS.hook = (u, t) => {
 
 <!-- ===== act 2: locate, "YOUR EXACT LOCATION" ===== -->
 <script>
-// An abstract radar grid, not a map: the demo photo's GPS falls in the
-// Pacific off San Francisco, and a drawn coastline would either show that or
-// fake something else. The coordinates on the readout are the parser's own.
+// An abstract radar grid, not a map: drawing a real coastline would mean
+// shipping map data, and the point is the numbers, not the picture. The
+// coordinates on the readout are the parser's own, and they are Ocean Beach.
 ACTS.locate = (u, t) => {
   const b = u / BEAT, gps = SUBJECT.leak.gps;
   const cx = W * 0.36, cy = H * 0.44;
@@ -264,7 +264,7 @@ ACTS.locate = (u, t) => {
   typed(`LAT  ${gps.lat.toFixed(6)}° N`, rx, 280, 60, C.text, u, at + 0.25, 45);
   typed(`LON  ${Math.abs(gps.lon).toFixed(6)}° W`, rx, 362, 60, C.text, u, at + 0.55, 45);
   typed(`ALT  ${gps.alt} m`, rx, 444, 60, C.text, u, at + 0.85, 45, { hold: true });
-  mono("source: EXIF GPS IFD, sample-photo.jpg", rx, 540, 26, C.muted);
+  mono("source: EXIF GPS IFD, sunset.jpg", rx, 540, 26, C.muted);
   // the site's line, on an orange band that slams in across the bottom
   if (b >= 4) {
     const p = oE((b - 4) / 0.25);
@@ -446,7 +446,7 @@ ACTS.local = (u, t) => {
   mono("metastrip.vercel.app", wx + 150, wy + 42, 26, C.muted);
   const iw = 560, ih = 350, ix = wx + (ww - iw) / 2, iy = wy + 140;
   g.drawImage(SUBJECT.img, ix, iy, iw, ih);
-  mono("sample-photo.jpg · cleaned on this device", ix, iy + ih + 50, 24, C.green);
+  mono("sunset.jpg · cleaned on this device", ix, iy + ih + 50, 24, C.green);
   // packets rise toward the top edge and bounce back down inside the window
   for (let k = 0; k < 7; k++) {
     const ph = (b - 3 - k * 0.18) / 0.9;
@@ -480,7 +480,7 @@ ACTS.outro = (u, t) => {
     // the brackets hunt and never lock: there is nothing to lock on to
     const j = (k) => Math.sin(b * 9 + k) * 26 + Math.sin(b * 23 + k * 2) * 10;
     brackets(px - 40 + j(1), py - 40 + j(2), pw + 80 + j(3), ph + 80 + j(4), 60, C.text, 5);
-    typed("> scanning sample-photo.jpg (cleaned)", 80, 110, 34, C.green, u, 0.05, 60);
+    typed("> scanning sunset.jpg (cleaned)", 80, 110, 34, C.green, u, 0.05, 60);
     const cl = SUBJECT.cleanLeak, none = (v) => (v ? String(v) : "none");
     const rows = [["GPS", cl.gps ? `${cl.gps.lat}, ${cl.gps.lon}` : null], ["DEVICE", (cl.fields || []).find((f) => f.label === "Camera model")?.value], ["TIMESTAMPS", (cl.fields || []).find((f) => f.label === "Taken")?.value]];
     rows.forEach(([k, v], i) => {
