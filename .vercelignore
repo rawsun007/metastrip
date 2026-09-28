@@ -1,0 +1,5 @@
+# The trailer's source and its finished reel live in git, not on the site.
+# Vercel serves this repository's root as-is, so without this the reel (about
+# 20 MB) would be deployed and every play would bill edge bandwidth on the
+# hobby plan that build.mjs is careful about.
+trailer/
