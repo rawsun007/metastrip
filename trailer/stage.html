@@ -130,8 +130,8 @@ function post(t) {
   g.globalAlpha = 0.07; g.globalCompositeOperation = "overlay";
   g.drawImage(GRAIN[frameOf(t) % GRAIN.length], 0, 0, W, H);
   g.globalAlpha = 1; g.globalCompositeOperation = "source-over";
-  const v = g.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.95);
-  v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,0.45)");
+  const v = g.createRadialGradient(W / 2, H / 2, H * 0.55, W / 2, H / 2, H * 1.15);
+  v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,0.28)");
   g.fillStyle = v; g.fillRect(0, 0, W, H);
 }
 // How much glitch at time t: a burst either side of every "glitch" hit.
@@ -174,6 +174,38 @@ window.stageReady = (async () => {
   draw(0);
   return true;
 })();
+</script>
+
+<!-- ===== act 1: hook, "YOUR PHOTOS KNOW WHERE YOU LIVE." ===== -->
+<script>
+ACTS.hook = (u, t) => {
+  const b = u / BEAT;
+  if (b < 1) {
+    // the subject under the scanner: brackets close in and lock on
+    const pw = 880, ph = 550, px = (W - pw) / 2, py = (H - ph) / 2 + 20;
+    g.globalAlpha = oE(b / 0.3); g.drawImage(SUBJECT.img, px, py, pw, ph); g.globalAlpha = 1;
+    const close = oE(b / 0.8), pad = lerp(220, 18, close);
+    brackets(px - pad, py - pad, pw + pad * 2, ph + pad * 2, 70, close > 0.98 ? C.orange : C.text, 5);
+    const sy = py + ph * ((b * 1.7) % 1);
+    g.fillStyle = "rgba(251,73,3,0.55)"; g.fillRect(px, sy, pw, 4);
+    typed("> scanning sample-photo.jpg", 80, 110, 34, C.green, t, 0.05, 60);
+    mono(`${SUBJECT.bytes.length.toLocaleString("en-US")} B · JPEG`, W - 80, 110, 30, C.muted, { align: "right" });
+    return;
+  }
+  // three lines, one per beat, each fitted to the full width of the frame
+  const lines = [["YOUR PHOTOS", C.text], ["KNOW WHERE", C.text], ["YOU LIVE.", C.orange]];
+  const L = 60, R = W - 60, width = R - L;
+  // one size for all three: a solid block, not three lines each chasing the width
+  const size = 332;
+  let y = 400;
+  lines.forEach(([txt, col], i) => {
+    slam(txt, L, y, size, col, u, BEAT * (1 + i));
+    y += size * 0.98;
+  });
+  // underneath, the readout that sets up everything after it
+  const n = SUBJECT.leak.fields.length + (SUBJECT.leak.gps ? 1 : 0);
+  typed(`> ${n} fields found: gps, device, lens, timestamps`, 66, 70, 32, C.green, u, BEAT * 4.5, 55);
+};
 </script>
 </body>
 </html>
