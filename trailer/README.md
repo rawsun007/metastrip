@@ -17,7 +17,7 @@ Nothing on screen is typed in. The stage loads the demo photo from
 `../assets` and the site's readers from `../js`:
 
 - the coordinates, device, lens and timestamps are `parseMetadata()` on
-  `assets/sample-photo.jpg`;
+  `assets/sample-sunset.jpg`, the site's leaking demo photo;
 - the hex dump is that file's real bytes, and the cut is what
   `stripMetadata()` does on "Strip all": APP1 out, image data verbatim;
 - the sizes and both checks ("image data identical", "0 fields left") are

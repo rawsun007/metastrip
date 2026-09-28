@@ -22,7 +22,8 @@ glitch works on real pixels.
 
 ## Everything on screen is real
 
-The subject is `assets/sample-photo.jpg`, the demo photo the site ships. The
+The subject is `assets/sample-sunset.jpg`, the demo photo the site ships (a
+painted beach at golden hour, made by `tools/sample-photo/`). The
 stage loads the site's own `js/exif.js` and `js/stripper.js` from the repo:
 
 - The coordinates, device, lens, software and timestamps are what
@@ -37,8 +38,9 @@ stage loads the site's own `js/exif.js` and `js/stripper.js` from the repo:
 - The finished reel is checked by the site's own video reader (sweep.mjs)
   and carries no metadata of its own.
 
-Honest limits: the location act is a radar grid rather than a map, because
-the demo photo's GPS falls in the Pacific off San Francisco; and the packets
+Honest limits: the location act is a radar grid rather than a map, since a
+real coastline would mean shipping map data and the point is the numbers
+(they place the photo on Ocean Beach, San Francisco); and the packets
 bouncing off the browser window are a picture of "nothing leaves your
 device", not a claim that anything tried.
 
@@ -46,7 +48,7 @@ device", not a claim that anything tried.
 
 | Beats | Act | On screen | Sound |
 |---|---|---|---|
-| 0-8 | Hook | The photo under the scanner, then "YOUR PHOTOS / KNOW WHERE / YOU LIVE." one line a beat | Sub drone, data chirps, a hit per slam |
+| 0-8 | Hook | The sunset photo under the scanner, then "YOUR PHOTOS / KNOW WHERE / YOU LIVE." one line a beat | Sub drone, data chirps, a hit per slam |
 | 8-16 | Locate | Radar grid, crosshair locks, real coordinates, "YOUR EXACT LOCATION" | Groove starts on the lock, lock beeps, sonar ping |
 | 16-20 | Device | Blue field, "YOUR DEVICE FINGERPRINT", make, model, lens, software | Typing ticks |
 | 20-24 | Timeline | Violet field, split-flap timestamp, "the exact second you pressed the button" | Flap clatter |
