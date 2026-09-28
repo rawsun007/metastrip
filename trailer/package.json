@@ -1,0 +1,8 @@
+{
+  "name": "metastrip-trailer",
+  "private": true,
+  "description": "Frame capture for the MetaStrip trailer. See bake.sh. The site itself still has no dependencies.",
+  "dependencies": {
+    "puppeteer-core": "25.12.0"
+  }
+}
