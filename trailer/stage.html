@@ -277,5 +277,40 @@ ACTS.device = (u, t) => {
   });
 };
 </script>
+
+<!-- ===== act 4: timeline, "YOUR TIMELINE" ===== -->
+<script>
+// Digits that scramble like a split-flap board, then settle one by one.
+function flap(str, x, y, size, color, u, at, stagger) {
+  font(size); g.textAlign = "left"; g.fillStyle = color;
+  let cx = x;
+  [...str].forEach((ch, i) => {
+    const settle = at + i * stagger;
+    let shown = ch;
+    if (/\d/.test(ch) && u < settle) shown = String(Math.floor(hash(frameOf(u), i + 7) * 10));
+    if (u >= at - 0.05) g.fillText(shown, cx, y);
+    cx += g.measureText(/\d/.test(ch) ? "0" : ch).width;   // fixed advance, so scrambling does not jitter
+  });
+}
+ACTS.timeline = (u, t) => {
+  field(C.violet);
+  const L = 56;
+  const head = Math.min(fit("YOUR TIMELINE", W - 2 * L), 250);
+  slam("YOUR TIMELINE", L, 40 + head * 0.86, head, C.ink, u, 0);
+  const taken = leakValue("Taken");                        // "2026:07:06 12:00:00"
+  const [day, time] = taken.split(" ");
+  flap(day, L, 610, 250, C.purple, u, BEAT * 0.4, 0.05);
+  flap(time, L, 880, 250, C.ink, u, BEAT * 0.8, 0.05);
+  const rx = 1290;
+  if (u > BEAT * 1.6) {
+    mono("TAKEN", rx, 520, 34, "rgba(10,10,10,0.6)", { weight: 600 });
+    mono(taken, rx, 570, 38, C.ink, { weight: 600 });
+    mono("MODIFIED", rx, 650, 34, "rgba(10,10,10,0.6)", { weight: 600 });
+    mono(leakValue("Modified"), rx, 700, 38, C.ink, { weight: 600 });
+  }
+  typed("the exact second", rx, 820, 34, C.purple, u, BEAT * 2.2, 60, { weight: 600 });
+  typed("you pressed the button", rx, 868, 34, C.purple, u, BEAT * 2.2 + 0.28, 60, { weight: 600, hold: true });
+};
+</script>
 </body>
 </html>
